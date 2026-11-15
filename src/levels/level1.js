@@ -1,4 +1,4 @@
-import { sparse, ground, gap } from './builder.js';
+import { sparse, ground, gap, groundDeco } from './builder.js';
 
 // WORLD 1-1 — overworld, ~6.3 screens wide.
 // Rows are bottom-anchored: the last row is the bottom of the world.
@@ -42,6 +42,7 @@ export default {
       [226, 'e'], [232, '^'], [240, ground(8)], [250, '"'], [262, 'xxx'], [265, 'd'], [266, 'xxx']),
     // r23/r24 — ground with two pits (45-47 and 96-99)
     ground(45) + gap(3) + ground(48) + gap(4) + ground(180),
-    ground(45) + gap(3) + ground(48) + gap(4) + ground(180),
+    // Second ground row: decorative only (no collision) to avoid double-body issues
+    groundDeco(45) + gap(3) + groundDeco(48) + gap(4) + groundDeco(180),
   ],
 };

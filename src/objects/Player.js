@@ -13,11 +13,25 @@ const EXTRA_FALL_GRAVITY = 900;
 // ---- Cousin visual/physical constants ----
 const COUSIN_SCALE = 0.2;          // visual scale on 428x256 source frames
 const COUSIN_BODY_W = 16;          // collision width (world units)
-const COUSIN_BODY_H = 32;          // collision height (world units)
-const COUSIN_ORIGIN_Y = 1;         // origin at feet (bottom center)
-const COUSIN_BODY_OFFSET_X = 8;    // centered horizontally
-const COUSIN_BODY_OFFSET_Y = 222;  // body top at frame y=222, bottom at visual feet (frame y=254)
-const ATTACK_DURATION = 350;       // ms
+const COUSIN_BODY_H = 22;          // collision height (world units) — 1px taller for reliable ground contact
+const COUSIN_ORIGIN_Y = 0.5;       // center origin (like original AstroHop) for correct body-sprite sync
+// Sprite scale 0.2 scales body AND offset.
+// Body centered horizontally: body.x = sprite.x - body.width/2.
+// Phaser: body.x = sprite.x - displayOriginX + offsetX*sprite.scale.
+// displayOriginX = 42.8, body.width/2 = 8. => offsetX*0.2 = 34.8 => offsetX = 174.
+const COUSIN_BODY_OFFSET_X = 174;
+// Visual feet at frame y=254 (2px from frame bottom 256).
+// At scale 0.2: visual feet 2px * 0.2 = 0.4 world units above frame bottom.
+// displayHeight = 256 * 0.2 = 51.2. Frame bottom = sprite.y + displayHeight/2 = sprite.y + 25.6.
+// Visual feet = sprite.y + 25.6 - 0.4 = sprite.y + 25.2.
+// Physics body height 22, centered on sprite. Body bottom = sprite.y + 11.
+// Want body bottom = visual feet + 0.5px penetration = sprite.y + 25.7.
+// Body.bottom = sprite.topLeft.y + offsetY*sprite.scale + bodyH = (sprite.y - 25.6) + offsetY*0.2 + 22.
+// Set = sprite.y + 25.7  =>  offsetY*0.2 = 29.3 => offsetY = 146.5.
+// Use 152 for ~0.6px penetration into ground, reliable contact without visual change.
+// Higher offsetY pushes body down (larger positive offset = lower body).
+const COUSIN_BODY_OFFSET_Y = 152;
+const ATTACK_DURATION = 350;
 
 /**
  * The cousin player — 16-frame atlas, no power-up states.
@@ -41,8 +55,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setScale(COUSIN_SCALE);
     this.setOrigin(0.5, COUSIN_ORIGIN_Y);
 
-    // Fixed collision body, anchored at feet
-    this.body.setSize(COUSIN_BODY_W, COUSIN_BODY_H);
+    // Fixed collision body, anchored to visual feet
+    // Sprite scale 0.2 scales body AND offset, so set base size 5x larger and offset 5x larger
+    this.body.setSize(COUSIN_BODY_W / COUSIN_SCALE, COUSIN_BODY_H / COUSIN_SCALE);
     this.body.setOffset(COUSIN_BODY_OFFSET_X, COUSIN_BODY_OFFSET_Y);
     this.body.setMaxVelocity(MAX_RUN_SPEED, MAX_FALL_SPEED);
     this.body.setDragX(DRAG);
@@ -51,6 +66,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.attackTimer = null;
     this.isDead = false;
     this.wasOnFloor = true;
+    this.invulnerable = false;
+    this.invulnTimer = null;
   }
 
   /** Called by GameScene every frame with the merged input state. */
@@ -112,9 +129,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.body.setVelocityX(0);
     this.anims.play('player-attack', true);
 
-    // Fire the blue fireball immediately — the visual fireball art is baked
-    // into frames 8-10, this spawns the actual projectile that hits enemies.
-    this.spawnProjectile();
+    // Fire the blue fireball via scene (matches original AstroHop)
+    if (this.scene.shootFireball) this.scene.shootFireball(this);
 
     // Lock movement for the full attack animation
     this.attackTimer = this.scene.time.delayedCall(ATTACK_DURATION, () => {
@@ -123,23 +139,33 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-  spawnProjectile() {
-    if (!this.scene) return;
-    const dir = this.flipX ? -1 : 1;
-    const px = this.x + dir * (this.width * 0.6);
-    const py = this.y - this.height * 0.35;
+  /** Provide spawn position for fireball (visual center of sprite). */
+  getFireballSpawnPoint() {
+    // Sprite origin at center (0.5, 0.5), visual center = sprite position
+    return {
+      x: this.x + (this.flipX ? -this.displayWidth * 0.5 : this.displayWidth * 0.5),
+      y: this.y
+    };
+  }
 
-    // Create projectile and add to physics group — the group will enable physics
-    const proj = this.scene.fireballs.create(px, py, 'fireball');
-    proj.body.setAllowGravity(false);
-    proj.body.setVelocityX(600 * dir);
-    proj.setScale(0.8);
-    proj.setDepth(3);
-    proj.setData('fromPlayer', true);
-
-    // Auto-cleanup after 800ms or when off-screen
-    this.scene.time.delayedCall(800, () => {
-      if (proj.active) proj.destroy();
+  /** Make player temporarily invulnerable after taking damage. */
+  makeInvulnerable(duration = 1200) {
+    this.invulnerable = true;
+    // Blink effect
+    this.scene.tweens.add({
+      targets: this,
+      alpha: 0.3,
+      duration: 100,
+      yoyo: true,
+      repeat: duration / 200 - 1,
+      onComplete: () => {
+        this.setAlpha(1);
+        this.invulnerable = false;
+      }
+    });
+    if (this.invulnTimer) this.invulnTimer.remove();
+    this.invulnTimer = this.scene.time.delayedCall(duration, () => {
+      this.invulnerable = false;
     });
   }
 
@@ -161,15 +187,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (!this.isDead && this.body) {
       const onFloor = this.body.onFloor();
       if (onFloor && !this.wasOnFloor) {
-        // Brief scale pulse
-        this.scene.tweens.add({
-          targets: this,
-          scaleY: COUSIN_SCALE * 0.85,
-          scaleX: COUSIN_SCALE * 1.1,
-          duration: 60,
-          yoyo: true,
-          onComplete: () => this.setScale(COUSIN_SCALE),
-        });
+        // Brief visual squash using a separate scale tween that doesn't affect physics body
+        // We use setScale on the sprite which Phaser syncs to body — so skip for now
+        // to keep physics body stable during landing
       }
       this.wasOnFloor = onFloor;
     }

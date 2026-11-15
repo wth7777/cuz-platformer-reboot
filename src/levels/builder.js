@@ -15,3 +15,6 @@ export const gap = (n) => ' '.repeat(n);
 
 /** n solid tiles. */
 export const ground = (n) => 'X'.repeat(n);
+
+/** n decorative ground tiles (visual only, no collision). */
+export const groundDeco = (n) => 'x'.repeat(n);

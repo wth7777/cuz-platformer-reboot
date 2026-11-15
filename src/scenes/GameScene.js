@@ -4,13 +4,9 @@ import Walker from '../objects/Walker.js';
 import { touchState } from '../input/TouchControls.js';
 import { LEVELS, THEMES } from '../levels/index.js';
 import { sfx } from '../audio/sfx.js';
-import { GAME_ZOOM } from '../config.js';
+import { GAME_ZOOM, TILE, ROWS, GAME_WIDTH, GAME_HEIGHT } from '../config.js';
 
 // ---- World ----
-const GAME_WIDTH = 800;
-const GAME_HEIGHT = 450;
-const TILE = 18;
-const ROWS = GAME_HEIGHT / TILE; // 25 — world height is fixed
 
 // ---- Tile frame indices in the 'tiles' spritesheet ----
 const T = {
@@ -366,7 +362,9 @@ export default class GameScene extends Phaser.Scene {
     const floorRow = this.findFloorRow(col, fromRow);
     const feetY = floorRow * TILE;
 
-    this.player = new Player(this, col * TILE + TILE / 2, feetY - 24);
+    // Cousin has center origin (0.5, 0.5). Visual feet at sprite.y + 25.2.
+    // Spawn with sprite.y = feetY - 25.2 so visual feet rest on ground top.
+    this.player = new Player(this, col * TILE + TILE / 2, feetY - 25.2);
     // icy themes have less friction — the classic slide
     if (this.theme.dragFactor) this.player.setDragFactor(this.theme.dragFactor);
 
@@ -391,12 +389,6 @@ export default class GameScene extends Phaser.Scene {
       });
       return;
     }
-
-    // feet exactly on the floor — cousin has origin at bottom (y=1),
-    // visual feet are 0.4 world units above sprite.y (2 source px * 0.2 scale).
-    // So sprite.y = feetY + 0.4 to put visual feet at ground top.
-    this.player.y = feetY + 0.4;
-    this.player.body.reset(this.player.x, this.player.y);
   }
 
   // ----------------------------------------------------------- parallax
@@ -602,16 +594,17 @@ export default class GameScene extends Phaser.Scene {
 
   // ---------------------------------------------------------- fireballs
 
-  shootFireball() {
+  shootFireball(player) {
     const active = this.fireballs.getChildren().filter((f) => f.active).length;
     if (active >= MAX_FIREBALLS) return;
 
     sfx.play('fireball');
-    const dir = this.player.flipX ? -1 : 1;
-    const ball = this.fireballs.create(this.player.x + dir * 14, this.player.y, 'fireball');
+    const spawn = player.getFireballSpawnPoint();
+    const dir = player.flipX ? -1 : 1;
+    const ball = this.fireballs.create(spawn.x + dir * 8, spawn.y, 'fireball');
     ball.setDepth(2);
     ball.setCircle(5);
-    ball.setVelocity(dir * FIREBALL_SPEED, 80);
+    ball.setVelocity(dir * FIREBALL_SPEED, 60);
     ball.body.setAngularVelocity(dir * 600);
 
     this.time.delayedCall(FIREBALL_LIFETIME, () => {
@@ -711,7 +704,10 @@ export default class GameScene extends Phaser.Scene {
 
   hurtPlayer() {
     const p = this.player;
-    if (p.isDead || this.autoPhase) return;
+    if (p.isDead || p.invulnerable || this.autoPhase) return;
+    p.makeInvulnerable();
+    // For now, cousin has no power states - one hit = death
+    // But with invulnerability frames to prevent instant re-death
     this.killPlayer();
   }
 
