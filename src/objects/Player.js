@@ -20,17 +20,16 @@ const COUSIN_ORIGIN_Y = 0.5;       // center origin (like original AstroHop) for
 // Phaser: body.x = sprite.x - displayOriginX + offsetX*sprite.scale.
 // displayOriginX = 42.8, body.width/2 = 8. => offsetX*0.2 = 34.8 => offsetX = 174.
 const COUSIN_BODY_OFFSET_X = 174;
-// Visual feet at frame y=254 (2px from frame bottom 256).
-// At scale 0.2: visual feet 2px * 0.2 = 0.4 world units above frame bottom.
+// Visual feet at frame y=253 (3px from frame bottom 256, measured from actual atlas).
+// At scale 0.2: visual feet 3px * 0.2 = 0.6 world units above frame bottom.
 // displayHeight = 256 * 0.2 = 51.2. Frame bottom = sprite.y + displayHeight/2 = sprite.y + 25.6.
-// Visual feet = sprite.y + 25.6 - 0.4 = sprite.y + 25.2.
-// Physics body height 22, centered on sprite. Body bottom = sprite.y + 11.
-// Want body bottom = visual feet + 0.5px penetration = sprite.y + 25.7.
+// Visual feet = sprite.y + 25.6 - 0.6 = sprite.y + 25.0.
+// Physics body height 22, centered on sprite. Body bottom = sprite.y + 11 with zero offset.
+// Want body bottom = visual feet = sprite.y + 25.0.
 // Body.bottom = sprite.topLeft.y + offsetY*sprite.scale + bodyH = (sprite.y - 25.6) + offsetY*0.2 + 22.
-// Set = sprite.y + 25.7  =>  offsetY*0.2 = 29.3 => offsetY = 146.5.
-// Use 152 for ~0.6px penetration into ground, reliable contact without visual change.
-// Higher offsetY pushes body down (larger positive offset = lower body).
-const COUSIN_BODY_OFFSET_Y = 152;
+// Set = sprite.y + 25.0  =>  offsetY*0.2 = 28.6 => offsetY = 143.
+// Use 143 for body bottom exactly at visual feet (no penetration, perfect alignment).
+const COUSIN_BODY_OFFSET_Y = 143;
 const ATTACK_DURATION = 350;
 
 /**

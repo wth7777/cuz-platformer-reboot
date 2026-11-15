@@ -115,10 +115,6 @@ export default class GameScene extends Phaser.Scene {
     cam.setZoom(GAME_ZOOM);
     cam.fadeIn(250);
 
-    // DEBUG: enable physics debug drawing
-    this.physics.world.createDebugGraphic();
-    this.physics.world.debugGraphic.setDepth(1000);
-
     // --- Physics wiring
     this.physics.add.collider(this.player, this.solids);
     this.physics.add.collider(this.player, this.blocks, this.onPlayerBlockCollide, null, this);
@@ -366,9 +362,9 @@ export default class GameScene extends Phaser.Scene {
     const floorRow = this.findFloorRow(col, fromRow);
     const feetY = floorRow * TILE;
 
-    // Cousin has center origin (0.5, 0.5). Visual feet at sprite.y + 25.2.
-    // Spawn with sprite.y = feetY - 25.2 so visual feet rest on ground top.
-    this.player = new Player(this, col * TILE + TILE / 2, feetY - 25.2);
+    // Cousin has center origin (0.5, 0.5). Visual feet at sprite.y + 25.0.
+    // Spawn with sprite.y = feetY - 25.0 so visual feet rest on ground top.
+        this.player = new Player(this, col * TILE + TILE / 2, feetY - 25.0);
     // icy themes have less friction — the classic slide
     if (this.theme.dragFactor) this.player.setDragFactor(this.theme.dragFactor);
 
