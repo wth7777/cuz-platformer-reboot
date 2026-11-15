@@ -63,7 +63,6 @@ export default class GameScene extends Phaser.Scene {
   init(data) {
     this.levelId = data.levelId ?? 'level1';
     this.spawnColOverride = data.spawnCol ?? null;
-    this.startPower = data.powerState ?? 'SMALL';
     this.returnTo = data.returnTo ?? null; // set while inside a bonus room
     this.exitViaPipe = data.exitViaPipe ?? false; // rise out of the pipe at spawnCol
     this.keepTime = data.keepTime ?? false; // pipe travel keeps the level timer
@@ -368,10 +367,6 @@ export default class GameScene extends Phaser.Scene {
     const feetY = floorRow * TILE;
 
     this.player = new Player(this, col * TILE + TILE / 2, feetY - 24);
-    if (this.startPower !== 'SMALL') {
-      this.player.powerState = this.startPower;
-      this.player.applyState();
-    }
     // icy themes have less friction — the classic slide
     if (this.theme.dragFactor) this.player.setDragFactor(this.theme.dragFactor);
 
@@ -435,9 +430,8 @@ export default class GameScene extends Phaser.Scene {
     if (type === 'question') {
       this.openQuestionBlock(block);
     } else if (type === 'brick') {
-      // classic rule: only BIG or FIRE can smash bricks — small just bonks
-      if (this.player.powerState === 'SMALL') this.bumpBlock(block);
-      else this.breakBrick(block);
+      // cousin can always break bricks
+      this.breakBrick(block);
     }
   }
 
@@ -462,11 +456,9 @@ export default class GameScene extends Phaser.Scene {
         yoyo: true,
         onComplete: () => coin.destroy(),
       });
-    } else if (content === 'powerup') {
-      if (this.player.powerState === 'SMALL') this.spawnWalkingItem(block, 'mushroom', 'tiles', T.MUSHROOM);
-      else this.spawnFireGem(block);
-    } else if (content === 'star') {
-      this.spawnStar(block);
+    } else if (content === 'powerup' || content === 'star') {
+      // generic pickup — just gives points
+      this.spawnWalkingItem(block, 'pickup', 'tiles', T.MUSHROOM);
     }
   }
 
@@ -601,41 +593,9 @@ export default class GameScene extends Phaser.Scene {
     const kind = item.getData('kind');
     item.destroy();
 
-    this.sparkle(item.x, item.y, kind === 'oneup' ? 0x9dff8d : 0xffe066);
-
-    if (kind === 'mushroom') {
-      sfx.play('powerup');
-      this.addScore(SCORE_POWERUP, player.x, player.y - 24);
-      if (player.powerState === 'SMALL') player.grow();
-    } else if (kind === 'fireGem') {
-      sfx.play('powerup');
-      this.addScore(SCORE_POWERUP, player.x, player.y - 24);
-      player.upgradeToFire();
-    } else if (kind === 'star') {
-      sfx.play('powerup');
-      this.addScore(SCORE_POWERUP, player.x, player.y - 24);
-      player.startStar();
-    } else if (kind === 'oneup') {
-      sfx.play('oneup');
-      this.registry.values.lives += 1;
-      const popup = this.add
-        .text(player.x, player.y - 24, '1-UP!', {
-          fontFamily: 'monospace',
-          fontSize: '14px',
-          fontStyle: 'bold',
-          color: '#9dff8d',
-        })
-        .setOrigin(0.5)
-        .setStroke('#000000', 3)
-        .setDepth(10);
-      this.tweens.add({
-        targets: popup,
-        y: popup.y - 32,
-        alpha: 0,
-        duration: 900,
-        onComplete: () => popup.destroy(),
-      });
-    }
+    this.sparkle(item.x, item.y, 0xffe066);
+    this.addScore(SCORE_POWERUP, player.x, player.y - 24);
+    // simple pickups just give points; no power-up state changes
   }
 
   // ---------------------------------------------------------- fireballs
@@ -659,6 +619,8 @@ export default class GameScene extends Phaser.Scene {
 
   onFireballBounce(a, b) {
     const ball = a.texture && a.texture.key === 'fireball' ? a : b;
+    // Ensure ball is the fireball (has dynamic body with setVelocityY)
+    if (!ball.body || typeof ball.setVelocityY !== 'function') return;
     if (ball.body.blocked.left || ball.body.blocked.right) {
       this.poof(ball);
     } else if (ball.body.blocked.down) {
@@ -715,13 +677,6 @@ export default class GameScene extends Phaser.Scene {
   onPlayerEnemyContact(player, enemy) {
     if (player.isDead || enemy.isSquashed || this.autoPhase) return;
 
-    if (player.starActive) {
-      sfx.play('stomp');
-      enemy.knockAway(player.x);
-      this.addScore(SCORE_STAR_KILL, enemy.x, enemy.y - 16);
-      return;
-    }
-
     const stomping =
       player.body.velocity.y > 0 &&
       player.body.bottom < enemy.body.center.y + 4;
@@ -754,14 +709,8 @@ export default class GameScene extends Phaser.Scene {
 
   hurtPlayer() {
     const p = this.player;
-    if (p.isDead || p.invulnerable || p.isTransforming || p.starActive || this.autoPhase) return;
-
-    if (p.powerState === 'SMALL') {
-      this.killPlayer();
-    } else {
-      sfx.play('hurt');
-      p.downgrade();
-    }
+    if (p.isDead || this.autoPhase) return;
+    this.killPlayer();
   }
 
   killPlayer() {
@@ -855,7 +804,6 @@ export default class GameScene extends Phaser.Scene {
       } else {
         this.scene.start('IntroScene', {
           levelId: this.level.next,
-          powerState: this.player.powerState,
         });
       }
     });
@@ -912,7 +860,7 @@ export default class GameScene extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,SHIFT,X');
     this.jumpWasHeld = false;
-    this.fireWasHeld = false;
+    this.attackWasHeld = false;
   }
 
   // -------------------------------------------------------------- update
@@ -946,18 +894,14 @@ export default class GameScene extends Phaser.Scene {
       this.cursors.space.isDown ||
       this.keys.W.isDown ||
       touchState.jump;
-    const fireHeld = this.keys.SHIFT.isDown || this.keys.X.isDown || touchState.fire;
+    const attackHeld = this.keys.SHIFT.isDown || this.keys.X.isDown || touchState.fire;
 
     const jumpPressed = jumpHeld && !this.jumpWasHeld;
-    const firePressed = fireHeld && !this.fireWasHeld;
+    const attackPressed = attackHeld && !this.attackWasHeld;
     this.jumpWasHeld = jumpHeld;
-    this.fireWasHeld = fireHeld;
+    this.attackWasHeld = attackHeld;
 
-    this.player.handleInput({ left, right, jumpHeld, jumpPressed });
-
-    if (firePressed && this.player.powerState === 'FIRE' && !this.player.isTransforming) {
-      this.shootFireball();
-    }
+    this.player.handleInput({ left, right, jumpHeld, jumpPressed, attackPressed });
 
     // standing on a secret pipe + Down = travel
     if (down && this.pipeUnder && this.player.body.onFloor()) {
@@ -966,7 +910,6 @@ export default class GameScene extends Phaser.Scene {
       const target = this.level.secret
         ? {
             levelId: this.level.secret.room,
-            powerState: this.player.powerState,
             returnTo: { levelId: this.levelId, spawnCol: this.level.secret.exitCol },
             keepTime: true,
             consumed,
@@ -976,7 +919,6 @@ export default class GameScene extends Phaser.Scene {
             // safe fallback if the return info was somehow lost)
             levelId: this.returnTo?.levelId ?? 'level1',
             spawnCol: this.returnTo?.spawnCol ?? null,
-            powerState: this.player.powerState,
             exitViaPipe: true,
             keepTime: true,
             consumed,

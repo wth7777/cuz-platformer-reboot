@@ -10,200 +10,52 @@ const JUMP_VELOCITY = -480;
 const JUMP_CUT_VELOCITY = -160;
 const EXTRA_FALL_GRAVITY = 900;
 
-// ---- Power-up tuning ----
-const BIG_SCALE = 1.5; // ~2 tiles tall, like classic big Mario
-const STAR_DURATION = 8000;
-const STAR_WARNING = 2000; // flash faster during the last 2s
-const HURT_INVULN_DURATION = 2000;
-const STAR_TINTS = [0xffffff, 0xffe066, 0x66e0ff, 0xff8de1, 0x9dff8d, 0xffa05c];
+// ---- Cousin visual/physical constants ----
+const COUSIN_SCALE = 0.2;          // visual scale on 428x256 source frames
+const COUSIN_BODY_W = 16;          // collision width (world units)
+const COUSIN_BODY_H = 32;          // collision height (world units)
+const COUSIN_ORIGIN_Y = 1;         // origin at feet (bottom center)
+const COUSIN_BODY_OFFSET_X = 8;    // centered horizontally
+const COUSIN_BODY_OFFSET_Y = -32;  // body bottom at frame bottom
+const ATTACK_DURATION = 350;       // ms
 
 /**
- * The player, with a small state machine for power-ups:
- *
- *   SMALL ──mushroom──▶ BIG ──fire gem──▶ FIRE
- *     ▲                  │                  │
- *     └────hit───────────┘◀───────hit───────┘   (SMALL + hit = death)
- *
- * STAR is not a state in the chain — it's a temporary *overlay* flag that
- * can stack on any state, because being invincible doesn't change what
- * you are, only how contacts resolve.
+ * The cousin player — 16-frame atlas, no power-up states.
+ * Animations (defined in PreloadScene):
+ *   player-idle    (frame_0)
+ *   player-run     (frame_1-4)
+ *   player-jump    (frame_5-7)
+ *   player-attack  (frame_8-10)  — includes blue fireball artwork
+ *   player-crouch  (frame_11)
+ *   player-hurt    (frame_12-14)
+ *   player-die     (frame_15)
  */
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
-    super(scene, x, y, 'chars', 0);
+    super(scene, x, y, 'player', 'frame_0');
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
-    this.powerState = 'SMALL';
-    this.starUntil = 0; // timestamp when invincibility runs out
-    this.invulnerable = false; // brief mercy window after taking a hit
-    this.isTransforming = false; // mid grow/shrink freeze-frame
-    this.isDead = false;
-    this.jumpWasHeld = false;
-    this.wasOnFloor = true;
-    this.stretchTween = null;
-
-    this.setDepth(2); // in front of items (1), terrain (0) and the sky (-10)
+    this.setDepth(2);
     this.setCollideWorldBounds(true);
+    this.setScale(COUSIN_SCALE);
+    this.setOrigin(0.5, COUSIN_ORIGIN_Y);
+
+    // Fixed collision body, anchored at feet
+    this.body.setSize(COUSIN_BODY_W, COUSIN_BODY_H);
+    this.body.setOffset(COUSIN_BODY_OFFSET_X, COUSIN_BODY_OFFSET_Y);
     this.body.setMaxVelocity(MAX_RUN_SPEED, MAX_FALL_SPEED);
     this.body.setDragX(DRAG);
-    this.applyState();
+
+    this.isAttacking = false;
+    this.attackTimer = null;
+    this.isDead = false;
+    this.wasOnFloor = true;
   }
-
-  get starActive() {
-    return this.scene && this.scene.time.now < this.starUntil;
-  }
-
-  /** FIRE uses the orange character's animations — a Kenney palette swap. */
-  get animPrefix() {
-    return this.powerState === 'FIRE' ? 'fire' : 'player';
-  }
-
-  get baseScale() {
-    return this.powerState === 'SMALL' ? 1 : BIG_SCALE;
-  }
-
-  /** Icy levels pass a factor < 1: less drag = longer slides. */
-  setDragFactor(factor) {
-    this.body.setDragX(DRAG * factor);
-  }
-
-  /** Squash & stretch: cartoon elasticity on jump (tall) and land (flat).
-   *  Purely visual — syncBodyToScale keeps the hitbox constant throughout. */
-  squashStretch(sx, sy) {
-    if (this.isTransforming) return;
-    const s = this.baseScale;
-    if (this.stretchTween) this.stretchTween.stop();
-    this.setScale(s * sx, s * sy);
-    this.syncBodyToScale();
-    this.stretchTween = this.scene.tweens.add({
-      targets: this,
-      scaleX: s,
-      scaleY: s,
-      duration: 140,
-      ease: 'Quad.easeOut',
-      onUpdate: () => this.syncBodyToScale(),
-      onComplete: () => this.syncBodyToScale(),
-    });
-  }
-
-  /** Re-derive scale + physics body from the current power state. */
-  applyState() {
-    this.setScale(this.baseScale);
-    this.syncBodyToScale();
-  }
-
-  /**
-   * Keep the EFFECTIVE collision box constant no matter how the sprite
-   * is scaled. Arcade bodies are sized in unscaled frame pixels and
-   * multiplied by the sprite scale — so visual tricks like squash &
-   * stretch would warp the hitbox (and a taller body on take-off
-   * cancels the jump against the floor!). We divide it back out and
-   * anchor the body bottom to the frame bottom (the feet).
-   */
-  syncBodyToScale() {
-    const effW = 16;
-    const effH = this.powerState === 'SMALL' ? 20 : 30;
-    const unitW = effW / this.scaleX;
-    const unitH = effH / this.scaleY;
-    this.body.setSize(unitW, unitH);
-    // The sprite origin is its CENTRE, so a squashed frame's bottom edge
-    // rises with scaleY — anchoring the body to the frame bottom would
-    // lift it off the floor (and re-trigger landing forever). Anchor the
-    // body bottom to the at-rest feet position instead:
-    //   bodyBottom = y + 12 * baseScale   (constant for any squash)
-    const offY = 12 + (12 * this.baseScale) / this.scaleY - unitH;
-    this.body.setOffset((24 - unitW) / 2, offY);
-  }
-
-  // ------------------------------------------------------- transitions
-
-  /** Mushroom collected while SMALL. */
-  grow() {
-    this.changeState('BIG');
-  }
-
-  /** Fire gem collected. */
-  upgradeToFire() {
-    // Edge case: gem grabbed while SMALL (e.g. after getting hit while
-    // it was on its block) — one step up, like the mushroom.
-    this.changeState(this.powerState === 'SMALL' ? 'BIG' : 'FIRE');
-  }
-
-  /** Hit while BIG or FIRE: one step down + a mercy window. */
-  downgrade() {
-    this.changeState(this.powerState === 'FIRE' ? 'BIG' : 'SMALL');
-    this.invulnerable = true;
-    // blink for the whole invulnerability window
-    this.scene.tweens.add({
-      targets: this,
-      alpha: 0.3,
-      duration: 100,
-      yoyo: true,
-      repeat: HURT_INVULN_DURATION / 200 - 1,
-      onComplete: () => {
-        this.setAlpha(1);
-        this.invulnerable = false;
-      },
-    });
-  }
-
-  /**
-   * Shared transition: brief freeze-frame (physics paused, like classic
-   * Mario) + a scale pulse, with the feet kept planted on the ground.
-   */
-  changeState(newState) {
-    if (this.isTransforming || newState === this.powerState) return;
-    this.isTransforming = true;
-    if (this.stretchTween) this.stretchTween.stop(); // both animate scale
-
-    // Feet sit at the frame bottom: screenY = y + 12 * scale.
-    // Keep them planted when the scale changes.
-    const oldFeet = this.y + 12 * this.scale;
-    this.powerState = newState;
-    this.applyState();
-    this.y = oldFeet - 12 * this.scale;
-    this.body.reset(this.x, this.y); // snap the body to the new position
-
-    this.scene.physics.world.pause();
-    const finalScale = this.scale;
-    this.setScale(finalScale * 0.75);
-    this.scene.tweens.add({
-      targets: this,
-      scale: finalScale,
-      duration: 120,
-      yoyo: true,
-      repeat: 1,
-      onComplete: () => {
-        this.setScale(finalScale);
-        this.syncBodyToScale();
-        this.isTransforming = false;
-        this.scene.physics.world.resume();
-      },
-    });
-  }
-
-  startStar() {
-    this.starUntil = this.scene.time.now + STAR_DURATION;
-  }
-
-  /** Death visuals: flip and fall through the world (scene handles restart). */
-  die() {
-    this.isDead = true;
-    this.body.checkCollision.none = true;
-    this.setCollideWorldBounds(false);
-    this.body.setAccelerationX(0);
-    this.body.setDragX(0);
-    this.body.setVelocity(0, -420);
-    this.setFlipY(true);
-    this.anims.play(`${this.animPrefix}-jump`);
-  }
-
-  // ----------------------------------------------------------- updates
 
   /** Called by GameScene every frame with the merged input state. */
-  handleInput({ left, right, jumpHeld, jumpPressed }) {
-    if (this.isDead || this.isTransforming) return;
+  handleInput({ left, right, jumpHeld, jumpPressed, attackPressed }) {
+    if (this.isDead || this.isAttacking) return;
 
     const body = this.body;
     const onGround = body.onFloor();
@@ -221,39 +73,105 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (jumpPressed && onGround) {
       body.setVelocityY(JUMP_VELOCITY);
       sfx.play('jump');
-      this.squashStretch(0.82, 1.18); // stretch tall on take-off
     }
     if (!jumpHeld && body.velocity.y < JUMP_CUT_VELOCITY) {
       body.setVelocityY(JUMP_CUT_VELOCITY);
     }
     body.setGravityY(body.velocity.y > 0 ? EXTRA_FALL_GRAVITY : 0);
 
-    if (!onGround) this.anims.play(`${this.animPrefix}-jump`, true);
-    else if (Math.abs(body.velocity.x) > 10) this.anims.play(`${this.animPrefix}-run`, true);
-    else this.anims.play(`${this.animPrefix}-idle`, true);
+    // Attack — play once, lock movement until frame 10 finishes
+    if (attackPressed && onGround && !this.isAttacking) {
+      this.startAttack();
+    }
+
+    // Animation selection (non-attack states)
+    if (!this.isAttacking) {
+      if (body.velocity.y < 0) {
+        if (this.anims.currentAnim?.key !== 'player-jump') {
+          this.anims.play('player-jump', true);
+        }
+      } else if (!onGround) {
+        if (this.anims.currentAnim?.key !== 'player-jump') {
+          this.anims.play('player-jump', true);
+        }
+      } else if (Math.abs(body.velocity.x) > 10) {
+        if (this.anims.currentAnim?.key !== 'player-run') {
+          this.anims.play('player-run', true);
+        }
+      } else {
+        if (this.anims.currentAnim?.key !== 'player-idle') {
+          this.anims.play('player-idle', true);
+        }
+      }
+    }
+  }
+
+  startAttack() {
+    this.isAttacking = true;
+    this.body.setAccelerationX(0);
+    this.body.setVelocityX(0);
+    this.anims.play('player-attack', true);
+
+    // Fire the blue fireball immediately — the visual fireball art is baked
+    // into frames 8-10, this spawns the actual projectile that hits enemies.
+    this.spawnProjectile();
+
+    // Lock movement for the full attack animation
+    this.attackTimer = this.scene.time.delayedCall(ATTACK_DURATION, () => {
+      this.isAttacking = false;
+      this.attackTimer = null;
+    });
+  }
+
+  spawnProjectile() {
+    if (!this.scene) return;
+    const dir = this.flipX ? -1 : 1;
+    const px = this.x + dir * (this.width * 0.6);
+    const py = this.y - this.height * 0.35;
+
+    // Create projectile and add to physics group — the group will enable physics
+    const proj = this.scene.fireballs.create(px, py, 'fireball');
+    proj.body.setAllowGravity(false);
+    proj.body.setVelocityX(600 * dir);
+    proj.setScale(0.8);
+    proj.setDepth(3);
+    proj.setData('fromPlayer', true);
+
+    // Auto-cleanup after 800ms or when off-screen
+    this.scene.time.delayedCall(800, () => {
+      if (proj.active) proj.destroy();
+    });
+  }
+
+  /** Death visuals: play die anim, freeze physics, scene handles restart. */
+  die() {
+    if (this.isDead) return;
+    this.isDead = true;
+    this.body.checkCollision.none = true;
+    this.body.setAccelerationX(0);
+    this.body.setDragX(0);
+    this.body.setVelocity(0, 0);
+    this.anims.play('player-die', true);
   }
 
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
 
-    // Landing: squash flat for a moment
+    // Landing squash feedback (visual only — body size stays constant)
     if (!this.isDead && this.body) {
       const onFloor = this.body.onFloor();
-      if (onFloor && !this.wasOnFloor) this.squashStretch(1.18, 0.82);
-      this.wasOnFloor = onFloor;
-    }
-
-    // Star rainbow flash — driven by time, faster as it runs out
-    if (this.starUntil > 0) {
-      const remaining = this.starUntil - time;
-      if (remaining <= 0) {
-        this.starUntil = 0;
-        this.clearTint();
-      } else {
-        const interval = remaining < STAR_WARNING ? 45 : 90;
-        const idx = Math.floor(time / interval) % STAR_TINTS.length;
-        this.setTint(STAR_TINTS[idx]);
+      if (onFloor && !this.wasOnFloor) {
+        // Brief scale pulse
+        this.scene.tweens.add({
+          targets: this,
+          scaleY: COUSIN_SCALE * 0.85,
+          scaleX: COUSIN_SCALE * 1.1,
+          duration: 60,
+          yoyo: true,
+          onComplete: () => this.setScale(COUSIN_SCALE),
+        });
       }
+      this.wasOnFloor = onFloor;
     }
   }
 }

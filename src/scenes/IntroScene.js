@@ -9,7 +9,6 @@ export default class IntroScene extends Phaser.Scene {
 
   init(data) {
     this.levelId = data.levelId ?? 'level1';
-    this.powerState = data.powerState ?? 'SMALL'; // carried across levels
   }
 
   create() {
@@ -28,7 +27,7 @@ export default class IntroScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     // lives: the hero's face next to the count
-    this.add.sprite(width / 2 - 30, height / 2 + 14, 'chars', 0);
+    this.add.sprite(width / 2 - 30, height / 2 + 14, 'chars', 0).setScale(0.8);
     this.add
       .text(width / 2 + 4, height / 2 + 14, `× ${this.registry.get('lives') ?? 3}`, {
         fontFamily: 'monospace',
@@ -39,7 +38,7 @@ export default class IntroScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
 
     this.time.delayedCall(2000, () =>
-      this.scene.start('GameScene', { levelId: this.levelId, powerState: this.powerState })
+      this.scene.start('GameScene', { levelId: this.levelId })
     );
   }
 }
