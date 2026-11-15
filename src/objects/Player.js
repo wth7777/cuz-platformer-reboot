@@ -16,7 +16,7 @@ const COUSIN_BODY_W = 16;          // collision width (world units)
 const COUSIN_BODY_H = 32;          // collision height (world units)
 const COUSIN_ORIGIN_Y = 1;         // origin at feet (bottom center)
 const COUSIN_BODY_OFFSET_X = 8;    // centered horizontally
-const COUSIN_BODY_OFFSET_Y = -32;  // body bottom at frame bottom
+const COUSIN_BODY_OFFSET_Y = 222;  // body top at frame y=222, bottom at visual feet (frame y=254)
 const ATTACK_DURATION = 350;       // ms
 
 /**

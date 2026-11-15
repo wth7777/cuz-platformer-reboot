@@ -392,8 +392,10 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
 
-    // feet exactly on the floor, whatever the current scale
-    this.player.y = feetY - 12 * this.player.scale;
+    // feet exactly on the floor — cousin has origin at bottom (y=1),
+    // visual feet are 0.4 world units above sprite.y (2 source px * 0.2 scale).
+    // So sprite.y = feetY + 0.4 to put visual feet at ground top.
+    this.player.y = feetY + 0.4;
     this.player.body.reset(this.player.x, this.player.y);
   }
 
