@@ -115,6 +115,10 @@ export default class GameScene extends Phaser.Scene {
     cam.setZoom(GAME_ZOOM);
     cam.fadeIn(250);
 
+    // DEBUG: enable physics debug drawing
+    this.physics.world.createDebugGraphic();
+    this.physics.world.debugGraphic.setDepth(1000);
+
     // --- Physics wiring
     this.physics.add.collider(this.player, this.solids);
     this.physics.add.collider(this.player, this.blocks, this.onPlayerBlockCollide, null, this);
