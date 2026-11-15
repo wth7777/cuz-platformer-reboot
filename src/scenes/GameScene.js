@@ -4,6 +4,7 @@ import Walker from '../objects/Walker.js';
 import { touchState } from '../input/TouchControls.js';
 import { LEVELS, THEMES } from '../levels/index.js';
 import { sfx } from '../audio/sfx.js';
+import { GAME_ZOOM } from '../config.js';
 
 // ---- World ----
 const GAME_WIDTH = 800;
@@ -113,6 +114,10 @@ export default class GameScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.setBounds(0, 0, this.worldWidth, GAME_HEIGHT);
     cam.startFollow(this.player, true, 0.12, 0.12);
+    // Closer action perspective (Phase 2) — zooms the view in around the
+    // player. Bounds still clamp the camera inside the level, so no empty
+    // space is shown at either end of the world.
+    cam.setZoom(GAME_ZOOM);
     cam.fadeIn(250);
 
     // --- Physics wiring
