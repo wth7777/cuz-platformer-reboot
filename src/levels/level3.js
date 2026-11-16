@@ -13,8 +13,8 @@ export default {
   rows: [
     // r13 — star above the high route (removed)
     sparse(W),
-    // r14 — flag
-    sparse(W, [248, 'F']),
+    // r14 — tattoo shop
+    sparse(W, [248, 'T']),
     // r15 — coins above the high platforms
     sparse(W, [63, 'ccc'], [97, 'ccc'], [181, 'cccc']),
     // r16

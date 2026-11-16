@@ -47,6 +47,9 @@ export default class PreloadScene extends Phaser.Scene {
     // --- Decorative graveyard spritesheet (35 sprites - for background/scenery)
     this.load.atlas('graveyard-decor', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.png', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.json');
 
+    // --- Tattoo shop (level ending destination)
+    this.load.atlas('tattooshop', 'assets/tattooshop/tattooshop.png', 'assets/tattooshop/tattooshop.json');
+
     // --- Graveyard music
     this.load.audio('graveyard-music', 'assets/audio/graveyard-music.ogg');
     this.load.audio('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
@@ -222,6 +225,23 @@ export default class PreloadScene extends Phaser.Scene {
       frames: this.anims.generateFrameNumbers('tiles', { frames: [111, 112] }),
       frameRate: 3,
       repeat: -1,
+    });
+
+    // --- Tattoo shop animations ---
+    // Idle: frames 0-4 (building with closed door, subtle movement)
+    this.anims.create({
+      key: 'tattooshop-idle',
+      frames: this.anims.generateFrameNames('tattooshop', { start: 0, end: 4, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 8,
+      repeat: -1,
+    });
+
+    // Entrance: frames 5-15 (door opens, skull smoke appears, door closes) - plays once
+    this.anims.create({
+      key: 'tattooshop-entrance',
+      frames: this.anims.generateFrameNames('tattooshop', { start: 5, end: 15, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 8,
+      repeat: 0,
     });
   }
 }

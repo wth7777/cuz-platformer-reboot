@@ -15,7 +15,7 @@ export default {
   width: W,
   rows: [
     // r13 — coins over platform
-    sparse(W, [59, 'ccc'], [256, 'F']),
+    sparse(W, [59, 'ccc'], [256, 'T']),
     // r14 — upper brick deck; coins; high-route platforms
     sparse(W, [24, 'ccc'], [82, 'BBBB'], [121, 'ccc'], [179, 'cccc'], [187, 'PPPPPP'], [197, 'cccc']),
     // r15

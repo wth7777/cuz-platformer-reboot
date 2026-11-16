@@ -41,6 +41,10 @@ const DECOR = {
 
 const STOMP_BOUNCE = -300;
 
+// Tattoo shop scale: frame is 384x256, target ~11 tiles (198px) tall
+// 256 * scale = 198 → scale ≈ 0.77
+const TATTOO_SHOP_SCALE = 0.77;
+
 // ---- Fireballs ----
 const FIREBALL_SPEED = 300;
 const FIREBALL_BOUNCE_VY = -170;
@@ -141,8 +145,8 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.coins, this.onCollectCoin, null, this);
     this.physics.add.overlap(this.player, this.items, this.onCollectItem, null, this);
     this.physics.add.overlap(this.fireballs, this.enemies, this.onFireballHitsEnemy, null, this);
-    if (this.flagZone) {
-      this.physics.add.overlap(this.player, this.flagZone, this.startFlagSequence, null, this);
+    if (this.tattooShopZone) {
+      this.physics.add.overlap(this.player, this.tattooShopZone, this.startTattooShopSequence, null, this);
     }
   }
 
@@ -227,8 +231,8 @@ export default class GameScene extends Phaser.Scene {
             this.spawnRow = row; // floor is searched from HERE down (rooms have ceilings!)
             break;
           // Pipes removed: T, t
-          case 'F':
-            this.buildFlag(col, row);
+          case 'T':
+            this.buildTattooShop(col, row);
             break;
           case 'd':
             this.buildDoor(col, row);
@@ -294,19 +298,27 @@ export default class GameScene extends Phaser.Scene {
 
   // buildPipe removed - no pipes in graveyard
 
-  buildFlag(col, topRow) {
+  buildTattooShop(col, topRow) {
     const bottomRow = this.findFloorRow(col, topRow);
     const x = col * TILE + TILE / 2;
 
-    this.flagSprite = this.add.sprite(x, topRow * TILE + TILE / 2, 'tiles', T.FLAG);
-    this.flagSprite.play('flag-wave');
-    for (let row = topRow + 1; row < bottomRow; row++) {
-      this.add.image(x, row * TILE + TILE / 2, 'tiles', T.POLE);
-    }
+    // Tattoo shop sprite (animated) - origin at bottom center so feet sit on ground
+    this.tattooShopSprite = this.add.sprite(x, bottomRow * TILE, 'tattooshop', 'frame_0')
+      .setOrigin(0.5, 1)
+      .setScale(TATTOO_SHOP_SCALE)
+      .setDepth(5);
+    this.tattooShopSprite.play('tattooshop-idle');
 
-    this.flagInfo = { x, topY: topRow * TILE, bottomY: bottomRow * TILE };
-    this.flagZone = this.add.zone(x, (topRow * TILE + bottomRow * TILE) / 2, 10, bottomRow * TILE - topRow * TILE);
-    this.physics.add.existing(this.flagZone, true);
+    // Tattoo shop info for completion logic (reuse flagInfo structure)
+    this.tattooShopInfo = { x, topY: topRow * TILE, bottomY: bottomRow * TILE };
+
+    // Trigger zone at the ENTRANCE (door area) - bottom 2 tiles of building
+    // Building height ~11 tiles, so entrance zone covers bottom ~2 tiles
+    const buildingHeightTiles = 11;
+    const entranceZoneHeight = 2 * TILE;
+    const entranceZoneY = bottomRow * TILE - entranceZoneHeight / 2;
+    this.tattooShopZone = this.add.zone(x, entranceZoneY, 10, entranceZoneHeight);
+    this.physics.add.existing(this.tattooShopZone, true);
   }
 
   buildDoor(col, row) {
@@ -691,17 +703,23 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  // -------------------------------------------- flag & level transitions
+  // -------------------------------------------- tattoo shop & level transitions
 
-  startFlagSequence(player, zone) {
+  startTattooShopSequence(player, zone) {
     if (this.autoPhase || player.isDead) return;
-    this.autoPhase = 'flag';
+
+    // Prevent re-triggering
+    this.physics.world.removeCollider(this.tattooShopCollider);
+    this.tattooShopZone.destroy();
+    this.tattooShopZone = null;
+
+    this.autoPhase = 'tattooshop';
     sfx.stopMusic();
-    sfx.play('flag');
+    sfx.play('flag'); // reuse flag fanfare sound
 
-    const { x, topY, bottomY } = this.flagInfo;
+    const { x, topY, bottomY } = this.tattooShopInfo;
 
-    // higher grab = more points: 100 (bottom) … 5000 (top)
+    // Award points based on approach (reuse flag scoring)
     const ratio = Phaser.Math.Clamp((bottomY - player.body.bottom) / (bottomY - topY), 0, 1);
     const points = 100 + Math.round(ratio * 49) * 100;
     this.addScore(points, x, topY - 10);
@@ -711,18 +729,24 @@ export default class GameScene extends Phaser.Scene {
     player.x = x + 10;
     player.anims.play(`${player.animPrefix}-jump`);
 
-    // flag + player slide down the pole together
-    this.tweens.add({ targets: this.flagSprite, y: bottomY - TILE, duration: 700 });
-    this.tweens.add({
-      targets: player,
-      y: bottomY - 12 * player.scale,
-      duration: 400 + ratio * 500,
-      onComplete: () => {
-        player.body.enable = true;
-        player.body.reset(player.x, player.y);
-        player.setFlipX(false);
-        this.autoPhase = 'walk'; // update() walks them to the door
-      },
+    // Stop idle animation, play entrance animation once
+    this.tattooShopSprite.stop();
+    this.tattooShopSprite.play('tattooshop-entrance');
+
+    // When entrance animation completes, transition to level completion
+    this.tattooShopSprite.once('animationcomplete-tattooshop-entrance', () => {
+      player.body.enable = true;
+      player.body.reset(player.x, player.y);
+      player.setFlipX(false);
+      this.finishLevel();
+    });
+
+    // Fallback: if animation doesn't fire, still complete level after duration
+    // 11 frames at 8fps = 1.375s, add buffer
+    this.time.delayedCall(2000, () => {
+      if (this.autoPhase === 'tattooshop') {
+        this.finishLevel();
+      }
     });
   }
 
@@ -811,7 +835,7 @@ export default class GameScene extends Phaser.Scene {
       if (this.doorX === null || this.player.x >= this.doorX - 2) this.finishLevel();
       return;
     }
-    if (this.autoPhase) return; // pipe / flag / done — tweens are in charge
+    if (this.autoPhase) return; // pipe / flag / done / tattooshop — tweens/animations are in charge
 
     const left = this.cursors.left.isDown || this.keys.A.isDown || touchState.left;
     const right = this.cursors.right.isDown || this.keys.D.isDown || touchState.right;

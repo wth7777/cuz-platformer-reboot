@@ -13,8 +13,8 @@ export default {
   rows: [
     // r13 — star above the upper brick deck (removed)
     sparse(W),
-    // r14 — coins; flag
-    sparse(W, [70, 'cccc'], [221, 'F']),
+    // r14 — coins; tattoo shop
+    sparse(W, [70, 'cccc'], [221, 'T']),
     // r15 — upper brick deck
     sparse(W, [112, 'BBBB']),
     // r16 — coins above the platforms
