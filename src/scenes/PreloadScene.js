@@ -38,6 +38,7 @@ export default class PreloadScene extends Phaser.Scene {
       frameHeight: 24,
     });
     this.load.atlas('player', 'assets/player/cousin-atlas.png', 'assets/player/cousin-atlas.json');
+    this.load.atlas('zombie', 'assets/zombie/zombie-atlas.png', 'assets/zombie/zombie-atlas.json');
   }
 
   create() {
@@ -207,6 +208,14 @@ export default class PreloadScene extends Phaser.Scene {
       key: 'walker-walk',
       frames: this.anims.generateFrameNumbers('chars', { frames: [18, 19] }),
       frameRate: 6,
+      repeat: -1,
+    });
+
+    // Zombie enemy: 8-frame walk cycle (custom artwork)
+    this.anims.create({
+      key: 'zombie-walk',
+      frames: this.anims.generateFrameNames('zombie', { start: 0, end: 7, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 8,
       repeat: -1,
     });
 

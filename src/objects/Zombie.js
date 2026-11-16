@@ -4,35 +4,45 @@ const WALK_SPEED = 30; // slower than player
 const PURSUE_SPEED = 45; // faster when chasing
 const PURSUE_RANGE = 220; // horizontal detection distance
 
-// Zombie enemy using Kenney characters tileset (same as Walker).
-// Frames 18-19 = two-frame walk cycle.
-// Built on the same Arcade.Sprite pattern as Walker.
+// Zombie enemy using supplied custom artwork (8 frames, 332x503 each).
+// walk = frames 0-7 (8-frame cycle).
 export default class Zombie extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, gridKey = null) {
-    // Kenney chars: 24x24 frames, frame 18 = walk frame 1
-    super(scene, x, y, 'chars', 18);
+    // Custom zombie atlas: 8 frames @ 332x503 (4x2 grid), facing right.
+    super(scene, x, y, 'zombie', 'frame_0');
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
     this.gridKey = gridKey;
 
-    // Collision body - matches Walker proportions for ground alignment
-    // Origin is top-left (0,0) for Kenney tileset
-    this.body.setSize(16, 14);
-    this.body.setOffset(4, 10); // body bottom = sprite.y + 10 + 14 = sprite.y + 24 = frame bottom
+    // Collision body sized to the scaled sprite.
+    // Sprite scale 0.25 scales body AND offset.
+    // Size is pre-scale (divided by 0.25 so effective = 16x20).
+    // Offset is pre-scale too (NOT divided by scale — Phaser multiplies by scale).
+    // Visual feet: frame bottom=492px of 503px → 11px padding → sprite.y + 22.3
+    // Body height 20: body.bottom = (sprite.y - 25.15) + offsetY_eff + 20 = sprite.y + 22.3
+    // displayHeight = 503 * 0.25 = 125.75. Frame bottom = sprite.y + 62.875.
+    // Visual feet = 62.875 - (11 * 0.25) = 62.875 - 2.75 = 60.125
+    // Body height 20: body.bottom = sprite.topLeft.y + offsetY_eff + 20
+    // sprite.topLeft.y = sprite.y - 62.875
+    // body.bottom = sprite.y - 62.875 + offsetY*0.25 + 20 = sprite.y + 60.125
+    // offsetY*0.25 = 103 → offsetY = 412
+    // Center body horizontally: visual center at sprite.x (frame center fills width)
+    // body.x + 8 = sprite.x → body.x = sprite.x - 8
+    // body.x = (sprite.x - 41.5) + offsetX_eff → offsetX_eff = 33.5 → offsetX = 134
+    this.body.setSize(16 / 0.25, 20 / 0.25);
+    this.body.setOffset(134, 412);
     this.setDepth(1);
     this.setCollideWorldBounds(true);
-    this.setScale(1.5); // makes 24px frame ~60px on screen at zoom 1.67
+    this.setScale(0.25);
 
     this.direction = -1; // start walking left
     this.isSquashed = false;
     this.isDead = false;
 
-    // Zombie walk animation (reuses walker-walk frames 18-19)
+    // Play walk animation if available
     if (this.scene.anims.exists('zombie-walk')) {
       this.play('zombie-walk');
-    } else if (this.scene.anims.exists('walker-walk')) {
-      this.play('walker-walk');
     }
   }
 

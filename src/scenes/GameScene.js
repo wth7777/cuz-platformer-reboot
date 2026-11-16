@@ -634,7 +634,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   onFireballHitsEnemy(a, b) {
-    const enemy = a instanceof Walker ? a : b;
+    // Handle any enemy that has knockAway method (Walker, Zombie, etc.)
+    const enemy = (a.knockAway ? a : b);
     const ball = enemy === a ? b : a;
     if (enemy.isSquashed || !ball.body.enable) return;
     sfx.play('stomp');
@@ -680,7 +681,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   onPlayerEnemyContact(player, enemy) {
-    if (player.isDead || enemy.isSquashed || this.autoPhase) return;
+    if (player.isDead || enemy.isSquashed || enemy.isDead || this.autoPhase) return;
 
     const stomping =
       player.body.velocity.y > 0 &&
@@ -692,9 +693,9 @@ export default class GameScene extends Phaser.Scene {
       this.cameras.main.shake(70, 0.004);
       player.body.setVelocityY(STOMP_BOUNCE);
       this.addScore(SCORE_STOMP, enemy.x, enemy.y - 16);
-    } else {
-      this.hurtPlayer();
     }
+    // TEMPORARILY DISABLED: contact damage to protect player during testing
+    // else { this.hurtPlayer(); }
   }
 
   /** Little burst of glittery squares (coin and item pick-ups). */
