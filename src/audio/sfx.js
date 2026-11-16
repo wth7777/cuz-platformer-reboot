@@ -20,10 +20,18 @@ class Sfx {
       this.muted = false;
     }
 
+    // Track loading promises for each music track
+    this.musicLoadingPromises = {};
+
     // Browsers only allow audio after a user gesture — create/resume the
     // context on the first interaction (the title screen tap counts).
     const unlock = () => {
       this.ensure();
+      // Process any pending preloads now that context exists
+      if (this.pendingPreloads) {
+        this.pendingPreloads.forEach(({ key, url }) => this.loadAudioBuffer(key, url));
+        this.pendingPreloads = null;
+      }
       if (this.pendingMusic) {
         const kind = this.pendingMusic;
         this.pendingMusic = null;
@@ -159,11 +167,15 @@ class Sfx {
   //
   // If files are not found, falls back to synthesized retro loops.
 
-  startMusic(kind) {
+  async startMusic(kind) {
+    // Ensure audio context exists
     if (!this.ctx) {
-      this.pendingMusic = kind; // starts on the first user gesture
+      this.pendingMusic = kind;
       return;
     }
+    this.ensure();
+
+    // Stop any currently playing music
     this.stopMusic();
 
     // Map music kinds to audio file keys
@@ -177,12 +189,38 @@ class Sfx {
 
     // Try to load from preloaded audio cache
     const audioCache = this.ctx.audioCache || {};
+
+    // If audio is already cached, play it immediately
     if (audioCache[audioKey]) {
       this.playMusicBuffer(audioCache[audioKey], true);
       return;
     }
 
-    // Fallback to synthesized retro loops if no external music loaded
+    // If audio is currently loading, wait for it
+    if (this.musicLoadingPromises[audioKey]) {
+      try {
+        const audioBuffer = await this.musicLoadingPromises[audioKey];
+        if (audioBuffer) {
+          this.playMusicBuffer(audioBuffer, true);
+          return;
+        }
+      } catch (err) {
+        console.warn(`[SFX] Failed to load music ${audioKey}:`, err);
+      }
+    }
+
+    // Not cached, not loading - start loading it now and wait
+    try {
+      const audioBuffer = await this.loadAudioBuffer(audioKey, `assets/audio/${audioKey}.ogg`);
+      if (audioBuffer) {
+        this.playMusicBuffer(audioBuffer, true);
+        return;
+      }
+    } catch (err) {
+      console.warn(`[SFX] Failed to load music ${audioKey}:`, err);
+    }
+
+    // Fallback to synthesized retro loops if external music fails
     this.startSynthesizedMusic(kind);
   }
 
@@ -198,6 +236,37 @@ class Sfx {
     this.musicSource.loop = loop;
     this.musicSource.connect(this.musicGain);
     this.musicSource.start(0);
+  }
+
+  /** Load an external audio file and return a promise that resolves with the decoded buffer. */
+  loadAudioBuffer(key, url) {
+    // Return existing promise if already loading
+    if (this.musicLoadingPromises[key]) {
+      return this.musicLoadingPromises[key];
+    }
+
+    const promise = fetch(url)
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => this.ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        if (!this.ctx.audioCache) this.ctx.audioCache = {};
+        this.ctx.audioCache[key] = audioBuffer;
+        console.log(`[SFX] Loaded music: ${key}`);
+        return audioBuffer;
+      })
+      .catch(err => {
+        console.warn(`[SFX] Failed to load music ${key}:`, err);
+        throw err;
+      })
+      .finally(() => {
+        delete this.musicLoadingPromises[key];
+      });
+
+    this.musicLoadingPromises[key] = promise;
+    return promise;
   }
 
   /** Synthesized fallback music (original retro loops). */
@@ -288,21 +357,8 @@ class Sfx {
       this.pendingPreloads.push({ key, url });
       return;
     }
-    this.loadAudioBuffer(key, url);
-  }
-
-  loadAudioBuffer(key, url) {
-    fetch(url)
-      .then(response => response.arrayBuffer())
-      .then(arrayBuffer => this.ctx.decodeAudioData(arrayBuffer))
-      .then(audioBuffer => {
-        if (!this.ctx.audioCache) this.ctx.audioCache = {};
-        this.ctx.audioCache[key] = audioBuffer;
-        console.log(`[SFX] Loaded music: ${key}`);
-      })
-      .catch(err => {
-        console.warn(`[SFX] Failed to load music ${key}:`, err);
-      });
+    // Start loading but don't await - fire and forget for preload
+    this.loadAudioBuffer(key, url).catch(() => {});
   }
 }
 
