@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import Player from '../objects/Player.js';
 import Walker from '../objects/Walker.js';
+import Zombie from '../objects/Zombie.js';
 import { touchState } from '../input/TouchControls.js';
 import { LEVELS, THEMES } from '../levels/index.js';
 import { sfx } from '../audio/sfx.js';
@@ -104,6 +105,14 @@ export default class GameScene extends Phaser.Scene {
 
     this.parseGrid();
     this.spawnPlayer();
+
+    // === TEMPORARY TEST SPAWN — Zombie only (Phase 3) ===
+    // Spawn one zombie near the player for isolated testing.
+    // Ground is at row 24 (feetY = 432). Spawn in air, gravity drops it.
+    const TEST_ENEMY_Y = 100;
+    this.enemies.add(new Zombie(this, 150, TEST_ENEMY_Y, 'test_zombie_1'));
+    // === END TEMPORARY TEST SPAWN ===
+
     this.setupInput();
 
     const cam = this.cameras.main;
@@ -225,7 +234,8 @@ export default class GameScene extends Phaser.Scene {
             break;
           }
           case 'e':
-            if (!gone) this.enemies.add(new Walker(this, x, y, key));
+            // TEMPORARILY DISABLED for Phase 3 isolated zombie test
+            // if (!gone) this.enemies.add(new Walker(this, x, y, key));
             break;
           case 'p':
             this.spawnCol = col;
