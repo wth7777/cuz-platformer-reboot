@@ -30,12 +30,13 @@ const T = {
 };
 
 // Graveyard decor from graveyard-decor atlas
+// Sprites scaled to fit 18x18 tile grid proportionally
 const DECOR = {
-  '>': { atlas: 'graveyard-decor', frame: 'struct_04b' }, // sign → gate/fence
-  '*': { atlas: 'graveyard-decor', frame: 'tile_18' },   // bush → tombstone
-  '^': { atlas: 'graveyard-decor', frame: 'struct_01' }, // pine → monument
-  '"': { atlas: 'graveyard-decor', frame: 'tile_14' },   // sprout → grave marker
-  o: { atlas: 'graveyard-decor', frame: 'tile_18' },     // snowman → tombstone
+  '>': { atlas: 'graveyard-decor', frame: 'struct_04b', scale: 0.30 }, // gate/fence (364x237) → ~72px tall
+  '*': { atlas: 'graveyard-decor', frame: 'tile_18', scale: 0.27 },    // bush → tombstone (132x132) → ~36px tall
+  '^': { atlas: 'graveyard-decor', frame: 'struct_01', scale: 0.21 },  // pine → monument (211x258) → ~54px tall
+  '"': { atlas: 'graveyard-decor', frame: 'tile_14', scale: 0.23 },    // sprout → grave marker (123x105) → ~24px tall
+  o: { atlas: 'graveyard-decor', frame: 'tile_18', scale: 0.27 },      // snowman → tombstone (132x132) → ~36px tall
 };
 
 const STOMP_BOUNCE = -300;
@@ -235,7 +236,9 @@ export default class GameScene extends Phaser.Scene {
           default:
             if (DECOR[ch]) {
               const decor = DECOR[ch];
-              this.add.image(x, (row + 1) * TILE, decor.atlas, decor.frame).setOrigin(0.5, 1);
+              this.add.image(x, (row + 1) * TILE, decor.atlas, decor.frame)
+                .setOrigin(0.5, 1)
+                .setScale(decor.scale || 1);
             }
         }
         col++;
