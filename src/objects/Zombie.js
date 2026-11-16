@@ -40,9 +40,9 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     this.setScale(0.1144);
     this.setOrigin(0.5, 0.5); // lock origin to center so visual/body math is consistent
 
-    // Debug visualization: shows sprite bottom, body bottom, ground level
-    this._debugGfx = this.scene.add.graphics({ lineStyle: { width: 1, color: 0xffff00, alpha: 0.8 } });
-    this._debugGfx.setDepth(100);
+    // Visual feet alignment: body is correct at offsetY=317, but sprite renders slightly high.
+    // Apply a small constant visual offset so feet sit on the tile.
+    this._visualOffsetY = 2.0; // push sprite down by 2px so feet touch tile
 
     this.direction = -1; // start walking left
     this.isSquashed = false;
@@ -107,38 +107,9 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     // When moving RIGHT (direction > 0), no flip (faces right).
     this.setFlipX(this.direction < 0);
 
-    // Align visual feet with physics body bottom when on ground.
-    // This corrects for per-frame vertical variation in the animation frames.
-    if (this.body.onFloor()) {
-      const frame = this.frame;
-      // Frame bottom in texture coordinates (cutY + height)
-      const frameBottomPx = frame.cutY + frame.height;
-      // Visual feet offset from sprite top in world pixels
-      const visualFeetOffset = frameBottomPx * this.scale;
-      // Display height in world pixels
-      const displayHeight = frame.height * this.scale;
-      // Align sprite so visual feet = body bottom
-      this.y = this.body.y + this.body.height + displayHeight / 2 - visualFeetOffset;
-    }
-
-    // Debug visualization: draw lines showing sprite bottom, body bottom, ground
-    if (this._debugGfx) {
-      this._debugGfx.clear();
-      const cam = this.scene.cameras.main;
-      const screenX = this.x - cam.scrollX;
-      const spriteBottom = this.y + this.displayHeight / 2;
-      const bodyBottom = this.body.bottom;
-      const groundY = this.body.bottom; // body rests on ground
-      // Sprite bottom (yellow)
-      this._debugGfx.lineStyle(2, 0xffff00, 1);
-      this._debugGfx.lineBetween(screenX - 20, spriteBottom, screenX + 20, spriteBottom);
-      // Body bottom (cyan)
-      this._debugGfx.lineStyle(2, 0x00ffff, 1);
-      this._debugGfx.lineBetween(screenX - 20, bodyBottom, screenX + 20, bodyBottom);
-      // Ground (green)
-      this._debugGfx.lineStyle(2, 0x00ff00, 1);
-      this._debugGfx.lineBetween(screenX - 20, groundY, screenX + 20, groundY);
-    }
+    // Apply constant visual offset so feet touch tile surface.
+    // Simple render adjustment, no physics fighting.
+    this.y += this._visualOffsetY;
   }
 
   /** Killed by blue fireball: flip and fall away, then destroy. */
