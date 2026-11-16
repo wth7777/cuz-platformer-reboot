@@ -38,11 +38,7 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(1);
     this.setCollideWorldBounds(true);
     this.setScale(0.1144);
-    // Visual alignment: zombie's feet are higher in the sprite than the absolute bottom pixel.
-    // Adjust originY downward (lower on sprite) to shift render position down ~3.5 world units
-    // without affecting physics body. displayHeight = 503 * 0.1144 = 57.54.
-    // Origin shift of 0.061 moves render by 57.54 * 0.061 ≈ 3.5 units.
-    this.setOrigin(0.5, 0.439); // was 0.5, lowered to push sprite down visually
+    this.setOrigin(0.5, 0.5); // lock origin to center so visual/body math is consistent
 
     this.direction = -1; // start walking left
     this.isSquashed = false;
