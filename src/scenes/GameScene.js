@@ -106,19 +106,6 @@ export default class GameScene extends Phaser.Scene {
     this.parseGrid();
     this.spawnPlayer();
 
-    // === TEMPORARY TEST: Zombie spawn for alignment verification ===
-    // Spawn on same ground row as player (col 3), offset to the right
-    const testZombie = new Zombie(this, 200, 100, 'test_zombie');
-    this.enemies.add(testZombie);
-    // Freeze after landing so we can inspect alignment
-    this.time.delayedCall(1500, () => {
-      if (testZombie && testZombie.body) {
-        testZombie.body.moves = false;
-        testZombie.body.setVelocity(0, 0);
-      }
-    });
-    // === END TEMPORARY TEST ===
-
     this.setupInput();
 
     const cam = this.cameras.main;
@@ -240,7 +227,7 @@ export default class GameScene extends Phaser.Scene {
             break;
           }
           case 'e':
-            // TEMPORARIY DISABLED for Phase 3 isolated zombie test
+            // TEMPORARILY DISABLED for Phase 3 isolated zombie test
             // if (!gone) this.enemies.add(new Walker(this, x, y, key));
             break;
           case 'p':
