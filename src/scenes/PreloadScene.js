@@ -43,9 +43,9 @@ export default class PreloadScene extends Phaser.Scene {
     // --- Decorative graveyard spritesheet (35 sprites - for background/scenery)
     this.load.atlas('graveyard-decor', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.png', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.json');
 
-    // --- Graveyard music (to be provided by user)
-    // this.load.audio('graveyard-music', 'assets/audio/graveyard-music.ogg');
-    // this.load.audio('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
+    // --- Graveyard music
+    this.load.audio('graveyard-music', 'assets/audio/graveyard-music.ogg');
+    this.load.audio('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
   }
 
   create() {
@@ -95,10 +95,9 @@ export default class PreloadScene extends Phaser.Scene {
     this.registry.set('time', 300);
     this.registry.set('world', '1-1');
 
-    // Preload external graveyard music (user provides files in assets/audio/)
-    // Uncomment when music files are available:
-    // sfx.preloadMusic('graveyard-music', 'assets/audio/graveyard-music.ogg');
-    // sfx.preloadMusic('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
+    // Preload external graveyard music
+    sfx.preloadMusic('graveyard-music', 'assets/audio/graveyard-music.ogg');
+    sfx.preloadMusic('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
 
     this.scene.start('TitleScene');
   }
