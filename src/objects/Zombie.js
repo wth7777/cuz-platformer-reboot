@@ -6,7 +6,7 @@ const PURSUE_RANGE = 220; // horizontal detection distance
 
 // Zombie enemy using supplied custom artwork (8 frames, 332x503 each).
 // walk = frames 0-7 (8-frame cycle).
-// Scale 0.104 matches player height (~50px visible).
+// Scale 0.1144 (~10% larger than 0.104) — slightly bigger than player.
 // Artwork faces RIGHT by default.
 export default class Zombie extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, gridKey = null) {
@@ -18,26 +18,27 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     this.gridKey = gridKey;
 
     // Collision body sized to the scaled sprite.
-    // Sprite scale 0.104 scales body AND offset.
-    // Size is pre-scale (divided by 0.104 so effective = 16x20).
+    // Sprite scale 0.1144 scales body AND offset.
+    // Size is pre-scale (divided by 0.1144 so effective = 16x20).
     // Offset is pre-scale too (NOT divided by scale — Phaser multiplies by scale).
-    // Visual feet: frame bottom=492px of 503px → 11px padding → sprite.y + 25.0
-    // displayHeight = 503 * 0.104 = 52.3. Frame bottom = sprite.y + 26.15.
-    // Visual feet = frame bottom - 11*0.104 = sprite.y + 26.15 - 1.14 = sprite.y + 25.01.
+    // Visual feet: frame bottom=492px of 503px → 11px padding
+    // displayHeight = 503 * 0.1144 = 57.54. Frame bottom = sprite.y + 28.77.
+    // Visual feet = frame bottom - 11*0.1144 = sprite.y + 28.77 - 1.26 = sprite.y + 27.51.
     // Body height 20: body.bottom = sprite.topLeft.y + offsetY_eff + 20
-    // sprite.topLeft.y = sprite.y - 26.15
-    // body.bottom = sprite.y - 26.15 + offsetY*0.104 + 20 = sprite.y + 25.0
-    // offsetY*0.104 = 31.15 → offsetY = 300
+    // sprite.topLeft.y = sprite.y - 28.77
+    // body.bottom = sprite.y - 28.77 + offsetY*0.1144 + 20 = sprite.y + 27.51
+    // offsetY*0.1144 = 36.28 → offsetY = 317
+    // Add +3 to offsetY to lower feet onto platform (was floating ~3px)
     // Center body horizontally: visual center at sprite.x (frame center fills width)
-    // displayWidth = 332 * 0.104 = 34.5. displayOriginX = 17.25.
+    // displayWidth = 332 * 0.1144 = 38.0. displayOriginX = 19.0.
     // body.x + 8 = sprite.x → body.x = sprite.x - 8
-    // body.x = sprite.x - 17.25 + offsetX*0.104
-    // offsetX*0.104 = 9.25 → offsetX = 89
-    this.body.setSize(16 / 0.104, 20 / 0.104);
-    this.body.setOffset(89, 300);
+    // body.x = sprite.x - 19.0 + offsetX*0.1144
+    // offsetX*0.1144 = 11.0 → offsetX = 96
+    this.body.setSize(16 / 0.1144, 20 / 0.1144);
+    this.body.setOffset(96, 317);
     this.setDepth(1);
     this.setCollideWorldBounds(true);
-    this.setScale(0.104);
+    this.setScale(0.1144);
 
     this.direction = -1; // start walking left
     this.isSquashed = false;

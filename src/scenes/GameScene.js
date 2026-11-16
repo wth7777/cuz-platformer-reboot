@@ -127,6 +127,7 @@ export default class GameScene extends Phaser.Scene {
     // --- Physics wiring
     this.physics.add.collider(this.player, this.solids);
     this.physics.add.collider(this.player, this.blocks, this.onPlayerBlockCollide, null, this);
+    this.physics.add.collider(this.player, this.enemies); // physical separation: player bumps into enemies
     this.physics.add.collider(this.enemies, this.solids);
     this.physics.add.collider(this.enemies, this.blocks);
     this.physics.add.collider(this.enemies, this.enemies);
@@ -693,9 +694,9 @@ export default class GameScene extends Phaser.Scene {
       this.cameras.main.shake(70, 0.004);
       player.body.setVelocityY(STOMP_BOUNCE);
       this.addScore(SCORE_STOMP, enemy.x, enemy.y - 16);
+    } else {
+      this.hurtPlayer(); // contact damage enabled
     }
-    // TEMPORARILY DISABLED: contact damage to protect player during testing
-    // else { this.hurtPlayer(); }
   }
 
   /** Little burst of glittery squares (coin and item pick-ups). */
