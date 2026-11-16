@@ -967,61 +967,55 @@ export default class GameScene extends Phaser.Scene {
     // === DIAGNOSTIC DEBUG RENDERING ===
     if (this._diagGfx) {
       this._diagGfx.clear();
-      const cam = this.cameras.main;
-      const screenX = (obj) => obj.x - cam.scrollX;
 
-      // Ground surface (green) - top of first solid tile
+      // Ground surface (green) - top of first solid tile (world coordinates)
       const groundY = this.solids.length > 0 ? this.solids[0].body.top : null;
       if (groundY !== null) {
         this._diagGfx.lineStyle(2, 0x00ff00, 1);
-        this._diagGfx.lineBetween(0, groundY - cam.scrollY, GAME_WIDTH, groundY - cam.scrollY);
+        this._diagGfx.lineBetween(0, groundY, GAME_WIDTH, groundY);
       }
 
       // Player
       if (this.player && this.player.body) {
         const p = this.player;
-        const px = screenX(p);
-        const py = p.y - cam.scrollY;
         const ph = p.displayHeight;
         const pw = p.displayWidth;
         const pb = p.body;
 
-        // Sprite bounds (yellow)
-        this._diagGfx.lineStyle(2, 0xffff00, 1);
-        this._diagGfx.strokeRect(px - pw / 2, py - ph / 2, pw, ph);
+        // Sprite bounds (yellow) - world coordinates
+        this._diagGfx.lineStyle(2, 0xffff00, 2);
+        this._diagGfx.strokeRect(p.x - pw / 2, p.y - ph / 2, pw, ph);
 
-        // Physics body (cyan)
-        this._diagGfx.lineStyle(2, 0x00ffff, 1);
-        this._diagGfx.strokeRect(px - pb.halfWidth, pb.top - cam.scrollY, pb.width, pb.height);
+        // Physics body (cyan) - world coordinates
+        this._diagGfx.lineStyle(2, 0x00ffff, 2);
+        this._diagGfx.strokeRect(pb.left, pb.top, pb.width, pb.height);
 
-        // Visual feet line (red)
-        this._diagGfx.lineStyle(2, 0xff0000, 1);
-        const visualFeetY = py + ph / 2;
-        this._diagGfx.lineBetween(px - 20, visualFeetY, px + 20, visualFeetY);
+        // Visual feet line (red) - bottom of sprite
+        this._diagGfx.lineStyle(2, 0xff0000, 2);
+        const visualFeetY = p.y + ph / 2;
+        this._diagGfx.lineBetween(p.x - 20, visualFeetY, p.x + 20, visualFeetY);
       }
 
       // Zombie (first enemy)
       const zombie = this.enemies.getChildren()[0];
       if (zombie && zombie.body) {
         const z = zombie;
-        const zx = screenX(z);
-        const zy = z.y - cam.scrollY;
         const zh = z.displayHeight;
         const zw = z.displayWidth;
         const zb = z.body;
 
         // Sprite bounds (magenta)
-        this._diagGfx.lineStyle(2, 0xff00ff, 1);
-        this._diagGfx.strokeRect(zx - zw / 2, zy - zh / 2, zw, zh);
+        this._diagGfx.lineStyle(2, 0xff00ff, 2);
+        this._diagGfx.strokeRect(z.x - zw / 2, z.y - zh / 2, zw, zh);
 
         // Physics body (orange)
-        this._diagGfx.lineStyle(2, 0xffa500, 1);
-        this._diagGfx.strokeRect(zx - zb.halfWidth, zb.top - cam.scrollY, zb.width, zb.height);
+        this._diagGfx.lineStyle(2, 0xffa500, 2);
+        this._diagGfx.strokeRect(zb.left, zb.top, zb.width, zb.height);
 
         // Visual feet line (red)
-        this._diagGfx.lineStyle(2, 0xff0000, 1);
-        const zVisualFeetY = zy + zh / 2;
-        this._diagGfx.lineBetween(zx - 20, zVisualFeetY, zx + 20, zVisualFeetY);
+        this._diagGfx.lineStyle(2, 0xff0000, 2);
+        const zVisualFeetY = z.y + zh / 2;
+        this._diagGfx.lineBetween(z.x - 20, zVisualFeetY, z.x + 20, zVisualFeetY);
       }
     }
     // === END DIAGNOSTIC DEBUG RENDERING ===
