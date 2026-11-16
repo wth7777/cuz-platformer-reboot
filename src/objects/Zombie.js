@@ -41,8 +41,8 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     this.setOrigin(0.5, 0.5); // lock origin to center so visual/body math is consistent
 
     // Visual feet alignment: body is correct at offsetY=317, but sprite renders slightly high.
-    // Apply a small constant visual offset so feet sit on the tile.
-    this._visualOffsetY = 2.5; // push sprite down so feet touch tile (player reference)
+    // Apply ONCE in constructor as a render-only adjustment.
+    this.y += 2.5; // push sprite down so feet touch tile (player reference)
 
     this.direction = -1; // start walking left
     this.isSquashed = false;
@@ -76,14 +76,17 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
       this.direction = -1;
     }
 
-    // Turn at platform edges
+    // Turn at platform edges — ALWAYS check edges, even when pursuing.
+    // Don't chase the player off a ledge.
     if (this.body.onFloor()) {
       const aheadX = this.direction > 0 ? this.body.right + 2 : this.body.left - 3;
       const ground = this.scene.physics.overlapRect(
         aheadX, this.body.bottom + 2, 2, 4,
         false, true
       );
-      if (ground.length === 0) this.direction *= -1;
+      if (ground.length === 0) {
+        this.direction *= -1;
+      }
     }
 
     // Pursuit: detect player and move toward them
@@ -91,8 +94,21 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     if (pursuing) {
       const distX = player.x - this.x;
       const distY = Math.abs(player.y - this.y);
+      // Only pursue if player is on same general level (not far above/below)
+      // AND if there's ground ahead in that direction
       if (Math.abs(distX) < PURSUE_RANGE && distY < 80) {
-        targetDir = distX > 0 ? 1 : -1;
+        const towardPlayer = distX > 0 ? 1 : -1;
+        // Only pursue toward player if there's ground in that direction
+        if (this.body.onFloor()) {
+          const checkX = towardPlayer > 0 ? this.body.right + 2 : this.body.left - 3;
+          const ground = this.scene.physics.overlapRect(
+            checkX, this.body.bottom + 2, 2, 4,
+            false, true
+          );
+          if (ground.length > 0) {
+            targetDir = towardPlayer;
+          }
+        }
       }
     }
 
@@ -106,10 +122,6 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     // Artwork faces RIGHT. When moving LEFT (direction < 0), flip to face left.
     // When moving RIGHT (direction > 0), no flip (faces right).
     this.setFlipX(this.direction < 0);
-
-    // Apply constant visual offset so feet touch tile surface.
-    // Simple render adjustment, no physics fighting.
-    this.y += this._visualOffsetY;
   }
 
   /** Killed by blue fireball: flip and fall away, then destroy. */
