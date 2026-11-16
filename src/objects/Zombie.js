@@ -40,6 +40,10 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     this.setScale(0.1144);
     this.setOrigin(0.5, 0.5); // lock origin to center so visual/body math is consistent
 
+    // Debug visualization: shows sprite bottom, body bottom, ground level
+    this._debugGfx = this.scene.add.graphics({ lineStyle: { width: 1, color: 0xffff00, alpha: 0.8 } });
+    this._debugGfx.setDepth(100);
+
     this.direction = -1; // start walking left
     this.isSquashed = false;
     this.isDead = false;
@@ -115,6 +119,25 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
       const displayHeight = frame.height * this.scale;
       // Align sprite so visual feet = body bottom
       this.y = this.body.y + this.body.height + displayHeight / 2 - visualFeetOffset;
+    }
+
+    // Debug visualization: draw lines showing sprite bottom, body bottom, ground
+    if (this._debugGfx) {
+      this._debugGfx.clear();
+      const cam = this.scene.cameras.main;
+      const screenX = this.x - cam.scrollX;
+      const spriteBottom = this.y + this.displayHeight / 2;
+      const bodyBottom = this.body.bottom;
+      const groundY = this.body.bottom; // body rests on ground
+      // Sprite bottom (yellow)
+      this._debugGfx.lineStyle(2, 0xffff00, 1);
+      this._debugGfx.lineBetween(screenX - 20, spriteBottom, screenX + 20, spriteBottom);
+      // Body bottom (cyan)
+      this._debugGfx.lineStyle(2, 0x00ffff, 1);
+      this._debugGfx.lineBetween(screenX - 20, bodyBottom, screenX + 20, bodyBottom);
+      // Ground (green)
+      this._debugGfx.lineStyle(2, 0x00ff00, 1);
+      this._debugGfx.lineBetween(screenX - 20, groundY, screenX + 20, groundY);
     }
   }
 
