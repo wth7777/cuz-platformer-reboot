@@ -684,8 +684,11 @@ export default class GameScene extends Phaser.Scene {
   onPlayerEnemyContact(player, enemy) {
     if (player.isDead || enemy.isSquashed || enemy.isDead || this.autoPhase) return;
 
+    // Stomp detection: player must be clearly falling with significant velocity
+    // and be positioned above the enemy's center.
+    // This prevents false stomps when walking horizontally into the enemy.
     const stomping =
-      player.body.velocity.y > 0 &&
+      player.body.velocity.y > 100 &&  // must be falling with meaningful speed
       player.body.bottom < enemy.body.center.y + 4;
 
     if (stomping) {

@@ -35,7 +35,7 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     // body.x = sprite.x - 19.0 + offsetX*0.1144
     // offsetX*0.1144 = 11.0 → offsetX = 96
     this.body.setSize(16 / 0.1144, 20 / 0.1144);
-    this.body.setOffset(96, 317);
+    this.body.setOffset(96, 320);
     this.setDepth(1);
     this.setCollideWorldBounds(true);
     this.setScale(0.1144);
