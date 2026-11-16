@@ -2,10 +2,6 @@ import Phaser from 'phaser';
 
 const TILEMAP_DIR = 'assets/kenney_pixel-platformer/Tilemap';
 
-// The pale sky colour baked into Kenney's background tiles — we turn it
-// transparent at load time so the hills can sit on our own blue sky.
-const BG_SKY_COLOR = { r: 223, g: 246, b: 245 };
-
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
     super('PreloadScene');
@@ -39,6 +35,9 @@ export default class PreloadScene extends Phaser.Scene {
     });
     this.load.atlas('player', 'assets/player/cousin-atlas.png', 'assets/player/cousin-atlas.json');
     this.load.atlas('zombie', 'assets/zombie/zombie-atlas.png', 'assets/zombie/zombie-atlas.json');
+
+    // --- Graveyard parallax background (single cohesive 1168x784 painting)
+    this.load.image('graveyard-bg', 'assets/parallax-bg.jpg');
   }
 
   create() {
@@ -51,7 +50,7 @@ export default class PreloadScene extends Phaser.Scene {
     // so we copy the frames we want to repeat into small standalone textures.
     this.makeTilingTexture('tex-grass-top', 'tiles', [2]);
     this.makeTilingTexture('tex-dirt', 'tiles', [122]);
-    this.makeTilingTexture('tex-hills', 'bg', [8, 9, 10, 11], BG_SKY_COLOR);
+    this.makeTilingTexture('tex-hills', 'bg', [8, 9, 10, 11], { r: 223, g: 246, b: 245 });
     this.makeFireballTexture();
 
     this.makeRecoloredTexture('gem-fire', 'tiles', 67, (r, g, b) => [b, g, r]);
@@ -83,86 +82,86 @@ export default class PreloadScene extends Phaser.Scene {
      * If colorKey is given, every pixel of exactly that colour becomes
      * transparent (classic "color key" transparency).
      */
-    makeTilingTexture(destKey, srcKey, frames, colorKey = null) {
-      const first = this.textures.getFrame(srcKey, frames[0]);
-      const w = first.width;
-      const h = first.height;
+  makeTilingTexture(destKey, srcKey, frames, colorKey = null) {
+    const first = this.textures.getFrame(srcKey, frames[0]);
+    const w = first.width;
+    const h = first.height;
 
-      const canvas = this.textures.createCanvas(destKey, w * frames.length, h);
-      const ctx = canvas.context;
+    const canvas = this.textures.createCanvas(destKey, w * frames.length, h);
+    const ctx = canvas.context;
 
-      frames.forEach((frameIndex, i) => {
-        const f = this.textures.getFrame(srcKey, frameIndex);
-        // cutX/cutY = where this frame lives inside the packed source image
-        ctx.drawImage(f.source.image, f.cutX, f.cutY, w, h, i * w, 0, w, h);
-      });
-
-      if (colorKey) {
-        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const d = img.data; // flat array: r,g,b,a, r,g,b,a, ...
-        for (let i = 0; i < d.length; i += 4) {
-          if (d[i] === colorKey.r && d[i + 1] === colorKey.g && d[i + 2] === colorKey.b) {
-            d[i + 3] = 0; // alpha 0 = fully transparent
-          }
-        }
-        ctx.putImageData(img, 0, 0);
-      }
-
-      canvas.refresh(); // push the canvas pixels to the GPU texture
-    }
-
-    /** Copies a frame into a new texture, rewriting every pixel's colour. */
-    makeRecoloredTexture(destKey, srcKey, frameIndex, transform) {
+    frames.forEach((frameIndex, i) => {
       const f = this.textures.getFrame(srcKey, frameIndex);
-      const canvas = this.textures.createCanvas(destKey, f.width, f.height);
-      const ctx = canvas.context;
-      ctx.drawImage(f.source.image, f.cutX, f.cutY, f.width, f.height, 0, 0, f.width, f.height);
+      // cutX/cutY = where this frame lives inside the packed source image
+      ctx.drawImage(f.source.image, f.cutX, f.cutY, w, h, i * w, 0, w, h);
+    });
 
-      const img = ctx.getImageData(0, 0, f.width, f.height);
-      const d = img.data;
+    if (colorKey) {
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = img.data; // flat array: r,g,b,a, r,g,b,a, ...
       for (let i = 0; i < d.length; i += 4) {
-        if (d[i + 3] === 0) continue; // skip transparent pixels
-        const [r, g, b] = transform(d[i], d[i + 1], d[i + 2]);
-        d[i] = r;
-        d[i + 1] = g;
-        d[i + 2] = b;
+        if (d[i] === colorKey.r && d[i + 1] === colorKey.g && d[i + 2] === colorKey.b) {
+          d[i + 3] = 0; // alpha 0 = fully transparent
+        }
       }
       ctx.putImageData(img, 0, 0);
-      canvas.refresh();
     }
 
-    /** Classic green pipe: a wider rimmed mouth + a tileable shaft piece. */
-    makePipeTextures() {
-      const OUTLINE = '#14541c';
-      const DARK = '#2e8a36';
-      const MID = '#48b552';
-      const LIGHT = '#a0e25c';
+    canvas.refresh(); // push the canvas pixels to the GPU texture
+  }
 
-      const mouth = this.textures.createCanvas('pipe-mouth', 44, 18);
-      const m = mouth.context;
-      m.fillStyle = OUTLINE;
-      m.fillRect(0, 0, 44, 18);
-      m.fillStyle = MID;
-      m.fillRect(2, 2, 40, 14);
-      m.fillStyle = LIGHT;
-      m.fillRect(7, 2, 7, 14);
-      m.fillStyle = DARK;
-      m.fillRect(33, 2, 6, 14);
-      mouth.refresh();
+  /** Copies a frame into a new texture, rewriting every pixel's colour. */
+  makeRecoloredTexture(destKey, srcKey, frameIndex, transform) {
+    const f = this.textures.getFrame(srcKey, frameIndex);
+    const canvas = this.textures.createCanvas(destKey, f.width, f.height);
+    const ctx = canvas.context;
+    ctx.drawImage(f.source.image, f.cutX, f.cutY, f.width, f.height, 0, 0, f.width, f.height);
 
-      const shaft = this.textures.createCanvas('pipe-shaft', 36, 18);
-      const s = shaft.context;
-      s.fillStyle = MID;
-      s.fillRect(0, 0, 36, 18);
-      s.fillStyle = OUTLINE;
-      s.fillRect(0, 0, 2, 18);
-      s.fillRect(34, 0, 2, 18);
-      s.fillStyle = LIGHT;
-      s.fillRect(6, 0, 6, 18);
-      s.fillStyle = DARK;
-      s.fillRect(28, 0, 5, 18);
-      shaft.refresh();
+    const img = ctx.getImageData(0, 0, f.width, f.height);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] === 0) continue; // skip transparent pixels
+      const [r, g, b] = transform(d[i], d[i + 1], d[i + 2]);
+      d[i] = r;
+      d[i + 1] = g;
+      d[i + 2] = b;
     }
+    ctx.putImageData(img, 0, 0);
+    canvas.refresh();
+  }
+
+  /** Classic green pipe: a wider rimmed mouth + a tileable shaft piece. */
+  makePipeTextures() {
+    const OUTLINE = '#14541c';
+    const DARK = '#2e8a36';
+    const MID = '#48b552';
+    const LIGHT = '#a0e25c';
+
+    const mouth = this.textures.createCanvas('pipe-mouth', 44, 18);
+    const m = mouth.context;
+    m.fillStyle = OUTLINE;
+    m.fillRect(0, 0, 44, 18);
+    m.fillStyle = MID;
+    m.fillRect(2, 2, 40, 14);
+    m.fillStyle = LIGHT;
+    m.fillRect(7, 2, 7, 14);
+    m.fillStyle = DARK;
+    m.fillRect(33, 2, 6, 14);
+    mouth.refresh();
+
+    const shaft = this.textures.createCanvas('pipe-shaft', 36, 18);
+    const s = shaft.context;
+    s.fillStyle = MID;
+    s.fillRect(0, 0, 36, 18);
+    s.fillStyle = OUTLINE;
+    s.fillRect(0, 0, 2, 18);
+    s.fillRect(34, 0, 2, 18);
+    s.fillStyle = LIGHT;
+    s.fillRect(6, 0, 6, 18);
+    s.fillStyle = DARK;
+    s.fillRect(28, 0, 5, 18);
+    shaft.refresh();
+  }
 
   /** A tiny hand-drawn texture: orange ball with a yellow core. */
   makeFireballTexture() {

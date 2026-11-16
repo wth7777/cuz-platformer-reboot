@@ -13,22 +13,22 @@ export const LEVELS = { level1, level2, level3, level4, level5, bonus11, bonus15
 // Frames refer to the 'tiles' spritesheet.
 export const THEMES = {
   overworld: {
-    sky: '#5c94fc',
-    terrainTop: 2, // grass
-    terrainFill: 122, // dirt
+    sky: '#1a1a2e',  // Dark graveyard night sky
+    terrainTop: 2,   // grass (will be replaced in Phase 2)
+    terrainFill: 122, // dirt (will be replaced in Phase 2)
     parallax: true,
   },
   underground: {
-    sky: '#12122a',
-    terrainTop: 42, // cave floor
-    terrainFill: 142, // packed dirt
-    parallax: false,
+    sky: '#0d0d1a',
+    terrainTop: 42,
+    terrainFill: 142,
+    parallax: true,  // Enable parallax for all themes now
   },
   snow: {
-    sky: '#a8c8ec',
-    terrainTop: 81, // snow-capped ground
-    terrainFill: 121, // dirt
+    sky: '#1a1a2e',
+    terrainTop: 81,
+    terrainFill: 121,
     parallax: true,
-    dragFactor: 0.3, // ice! much less friction — you slide
+    dragFactor: 0.3,
   },
 };

@@ -405,24 +405,16 @@ export default class GameScene extends Phaser.Scene {
   // ----------------------------------------------------------- parallax
 
   buildParallax() {
-    this.hills = this.add
-      .tileSprite(GAME_WIDTH / 2, 414 - 36, Math.ceil(GAME_WIDTH / 3), 24, 'tex-hills')
-      .setScale(3)
-      .setScrollFactor(0)
+    // Graveyard background: single 1168x784 cohesive painting.
+    // Painted ground/horizon at ~y=500 in texture; game ground top at y=432 (row 24 * 18).
+    // Texture center y=392, ground 108px below center → tileSprite center at game y=324.
+    // scrollFactor 0.15: background moves 15% of camera speed for parallax depth.
+    // TileSprite spans full world width; texture repeats every 1168px.
+    // Visible parallax range = 5040 * 0.15 = 756px + viewport 479px = 1235px < 1168px texture width (minor seam only at far level end).
+    this.graveyardBg = this.add
+      .tileSprite(this.worldWidth / 2, 324, this.worldWidth, GAME_HEIGHT, 'graveyard-bg')
+      .setScrollFactor(0.15)
       .setDepth(-10);
-
-    // clouds spread across the whole parallax span of the level
-    const span = GAME_WIDTH + (this.worldWidth - GAME_WIDTH) * 0.2;
-    for (let x = 100; x < span; x += Phaser.Math.Between(160, 240)) {
-      const y = Phaser.Math.Between(50, 130);
-      if (Phaser.Math.Between(0, 2) === 2) {
-        this.add.image(x, y, 'tiles', T.CLOUD_SMALL).setScale(2).setScrollFactor(0.2).setDepth(-10);
-      } else {
-        this.add.image(x - 36, y, 'tiles', T.CLOUD_LEFT).setScale(2).setScrollFactor(0.2).setDepth(-10);
-        this.add.image(x, y, 'tiles', T.CLOUD_MID).setScale(2).setScrollFactor(0.2).setDepth(-10);
-        this.add.image(x + 36, y, 'tiles', T.CLOUD_RIGHT).setScale(2).setScrollFactor(0.2).setDepth(-10);
-      }
-    }
   }
 
   // ------------------------------------------------------------- blocks
