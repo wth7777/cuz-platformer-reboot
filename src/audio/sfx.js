@@ -13,6 +13,7 @@ class Sfx {
     this.musicBuffer = null;
     this.musicLoop = false;
     this.muted = false;
+    this.currentMusicKind = null; // Track what's actually playing
 
     try {
       this.muted = localStorage.getItem(MUTE_KEY) === '1';
@@ -31,11 +32,6 @@ class Sfx {
       if (this.pendingPreloads) {
         this.pendingPreloads.forEach(({ key, url }) => this.loadAudioBuffer(key, url));
         this.pendingPreloads = null;
-      }
-      if (this.pendingMusic) {
-        const kind = this.pendingMusic;
-        this.pendingMusic = null;
-        this.startMusic(kind);
       }
     };
     window.addEventListener('pointerdown', unlock, { once: true });
@@ -167,61 +163,71 @@ class Sfx {
   //
   // If files are not found, falls back to synthesized retro loops.
 
+  /** Map music kinds to audio file keys. */
+  getAudioKey(kind) {
+    const musicMap = {
+      overworld: 'graveyard-music',
+      underground: 'graveyard-music',
+      title: 'graveyard-title-music',
+    };
+    return musicMap[kind] || 'graveyard-music';
+  }
+
+  /** Start playing music for the given kind. Stops any existing music first. */
   async startMusic(kind) {
     // Ensure audio context exists
     if (!this.ctx) {
-      this.pendingMusic = kind;
-      return;
+      this.ensure();
+      if (!this.ctx) return; // No Web Audio support
     }
     this.ensure();
+
+    // If same music is already playing, do nothing
+    if (this.currentMusicKind === kind && this.musicSource) {
+      return;
+    }
 
     // Stop any currently playing music
     this.stopMusic();
 
-    // Map music kinds to audio file keys
-    const musicMap = {
-      overworld: 'graveyard-music',
-      underground: 'graveyard-music', // same for now, can be different
-      title: 'graveyard-title-music',
-    };
-
-    const audioKey = musicMap[kind] || 'graveyard-music';
+    const audioKey = this.getAudioKey(kind);
 
     // Try to load from preloaded audio cache
     const audioCache = this.ctx.audioCache || {};
 
-    // If audio is already cached, play it immediately
-    if (audioCache[audioKey]) {
-      this.playMusicBuffer(audioCache[audioKey], true);
-      return;
-    }
+    let audioBuffer = null;
 
-    // If audio is currently loading, wait for it
-    if (this.musicLoadingPromises[audioKey]) {
+    // 1. Check cache first
+    if (audioCache[audioKey]) {
+      audioBuffer = audioCache[audioKey];
+    }
+    // 2. If not cached, check if already loading
+    else if (this.musicLoadingPromises[audioKey]) {
       try {
-        const audioBuffer = await this.musicLoadingPromises[audioKey];
-        if (audioBuffer) {
-          this.playMusicBuffer(audioBuffer, true);
-          return;
-        }
+        audioBuffer = await this.musicLoadingPromises[audioKey];
+      } catch (err) {
+        console.warn(`[SFX] Failed to load music ${audioKey}:`, err);
+      }
+    }
+    // 3. Not cached, not loading - start loading it now and wait
+    else {
+      try {
+        audioBuffer = await this.loadAudioBuffer(audioKey, `assets/audio/${audioKey}.ogg`);
       } catch (err) {
         console.warn(`[SFX] Failed to load music ${audioKey}:`, err);
       }
     }
 
-    // Not cached, not loading - start loading it now and wait
-    try {
-      const audioBuffer = await this.loadAudioBuffer(audioKey, `assets/audio/${audioKey}.ogg`);
-      if (audioBuffer) {
-        this.playMusicBuffer(audioBuffer, true);
-        return;
-      }
-    } catch (err) {
-      console.warn(`[SFX] Failed to load music ${audioKey}:`, err);
+    // If we got a buffer, play it and track what's playing
+    if (audioBuffer) {
+      this.playMusicBuffer(audioBuffer, true);
+      this.currentMusicKind = kind;
+      return;
     }
 
     // Fallback to synthesized retro loops if external music fails
     this.startSynthesizedMusic(kind);
+    this.currentMusicKind = kind;
   }
 
   /** Load and play an external audio buffer as looping music. */
@@ -335,7 +341,6 @@ class Sfx {
   }
 
   stopMusic() {
-    this.pendingMusic = null;
     if (this.musicTimer) {
       clearInterval(this.musicTimer);
       this.musicTimer = null;
@@ -345,6 +350,7 @@ class Sfx {
       this.musicSource.disconnect();
       this.musicSource = null;
     }
+    this.currentMusicKind = null;
   }
 
   /** Call this to preload an external music file.
