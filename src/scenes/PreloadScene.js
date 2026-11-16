@@ -34,11 +34,14 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.atlas('player', 'assets/player/cousin-atlas.png', 'assets/player/cousin-atlas.json');
     this.load.atlas('zombie', 'assets/zombie/zombie-atlas.png', 'assets/zombie/zombie-atlas.json');
 
-    // --- Graveyard corrected atlas (proper transparency, 35 sprites)
-    this.load.atlas('graveyard-new', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.png', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.json');
+    // --- Graveyard terrain atlas (ground_dirt + platform_stone pieces)
+    this.load.atlas('graveyard-tiles', 'assets/graveyard/tiles.png', 'assets/graveyard/tiles.json');
 
     // --- Graveyard parallax background (single cohesive 1168x784 painting)
     this.load.image('graveyard-bg', 'assets/parallax-bg.jpg');
+
+    // --- Decorative graveyard spritesheet (35 sprites - for background/scenery)
+    this.load.atlas('graveyard-decor', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.png', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.json');
   }
 
   create() {
@@ -64,34 +67,22 @@ export default class PreloadScene extends Phaser.Scene {
     spark.refresh();
     this.makeRecoloredTexture('mushroom-1up', 'tiles', 128, (r, g, b) => [g, r, b]);
 
-    // --- Graveyard terrain: tile sprites scaled to 18x18 logical grid
-    // Tiles are ~124x129 source → scale 18/129 ≈ 0.1395 for 18px height
-    const TILE_SCALE = 18 / 129;
-    this.makeScaledTilingTexture('tex-graveyard-ground', 'graveyard-new', 'tile_01', TILE_SCALE);
-    this.makeScaledTexture('graveyard-ground-single', 'graveyard-new', 'tile_01', TILE_SCALE);
-    // Additional ground variants for visual variety
-    this.makeScaledTexture('graveyard-ground-02', 'graveyard-new', 'tile_02', TILE_SCALE);
-    this.makeScaledTexture('graveyard-ground-03', 'graveyard-new', 'tile_03', TILE_SCALE);
-    this.makeScaledTexture('graveyard-ground-04', 'graveyard-new', 'tile_04', TILE_SCALE);
-    this.makeScaledTexture('graveyard-ground-05', 'graveyard-new', 'tile_05', TILE_SCALE);
-    this.makeScaledTexture('graveyard-ground-06', 'graveyard-new', 'tile_06', TILE_SCALE);
+    // --- Graveyard terrain: from graveyard-tiles atlas
+    // Ground: ground_dirt (128x128) → scale 18/128 = 0.140625 for 18px logical tile
+    const GROUND_SCALE = 18 / 128;
+    this.makeScaledTilingTexture('tex-graveyard-ground', 'graveyard-tiles', 'ground_dirt', GROUND_SCALE);
+    this.makeScaledTexture('graveyard-ground-single', 'graveyard-tiles', 'ground_dirt', GROUND_SCALE);
 
-    // --- Graveyard platforms: scale to 18px HEIGHT, preserve aspect ratio
-    // Platform sprites are tall (~180-207px source height)
-    // Scale = 18 / source_height for each platform piece
-    // platform_01: 146x207 → scale 18/207 ≈ 0.0870 → ~12.7px wide
-    // platform_05: 126x184 → scale 18/184 ≈ 0.0978 → ~12.3px wide
-    // platform_09: 111x179 → scale 18/179 ≈ 0.1006 → ~11.2px wide
-    // We'll create left/mid/right pieces from these
-
-    // Left cap (from platform_01 left edge)
-    this.makeScaledTexture('graveyard-platform-left', 'graveyard-new', 'platform_01', 18 / 207);
-    // Middle tileable (from platform_05 middle)
-    this.makeScaledTilingTexture('tex-graveyard-platform-mid', 'graveyard-new', 'platform_05', 18 / 184);
-    // Right cap (from platform_09 right edge)
-    this.makeScaledTexture('graveyard-platform-right', 'graveyard-new', 'platform_09', 18 / 179);
-    // Single platform (complete short platform)
-    this.makeScaledTexture('graveyard-platform-single', 'graveyard-new', 'platform_09', 18 / 179);
+    // Platforms: platform_stone pieces (64x64) → scale 18/64 = 0.28125 for 18px height
+    const PLATFORM_SCALE = 18 / 64;
+    // Left cap = platform_stone_2_1
+    this.makeScaledTexture('graveyard-platform-left', 'graveyard-tiles', 'platform_stone_2_1', PLATFORM_SCALE);
+    // Middle tileable = platform_stone_2_2
+    this.makeScaledTilingTexture('tex-graveyard-platform-mid', 'graveyard-tiles', 'platform_stone_2_2', PLATFORM_SCALE);
+    // Right cap = platform_stone_2_3
+    this.makeScaledTexture('graveyard-platform-right', 'graveyard-tiles', 'platform_stone_2_3', PLATFORM_SCALE);
+    // Single platform = platform_stone_2_2_center (128x128)
+    this.makeScaledTexture('graveyard-platform-single', 'graveyard-tiles', 'platform_stone_2_2_center', PLATFORM_SCALE);
 
     this.createAnimations();
 
