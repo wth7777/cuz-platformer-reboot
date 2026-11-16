@@ -42,7 +42,7 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
 
     // Visual feet alignment: body is correct at offsetY=317, but sprite renders slightly high.
     // Apply ONCE in constructor as a render-only adjustment.
-    this.y += 2.5; // push sprite down so feet touch tile (player reference)
+    this.y += 3.0; // push sprite down so feet touch tile (player reference)
 
     this.direction = -1; // start walking left
     this.isSquashed = false;
