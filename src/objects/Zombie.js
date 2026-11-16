@@ -33,16 +33,19 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     // body.x + 8 = sprite.x → body.x = sprite.x - 8
     // body.x = sprite.x - 19.0 + offsetX*0.1144
     // offsetX*0.1144 = 11.0 → offsetX = 96
-    this.body.setSize(16 / 0.1144, 20 / 0.1144);
-    this.body.setOffset(96, 317);
+    this.body.setSize(16 / 0.1144, 22 / 0.1144);
+    // Recalculate offsetY for body height 22:
+    // displayHeight = 503 * 0.1144 = 57.54. Frame bottom = sprite.y + 28.77.
+    // Visual feet = frame bottom - 11*0.1144 = sprite.y + 28.77 - 1.26 = sprite.y + 27.51.
+    // Body height 22: body.bottom = sprite.topLeft.y + offsetY_eff + 22
+    // sprite.topLeft.y = sprite.y - 28.77
+    // body.bottom = sprite.y - 28.77 + offsetY*0.1144 + 22 = sprite.y + 27.51
+    // offsetY*0.1144 = 34.28 → offsetY = 300
+    this.body.setOffset(96, 300);
     this.setDepth(1);
     this.setCollideWorldBounds(true);
     this.setScale(0.1144);
     this.setOrigin(0.5, 0.5); // lock origin to center so visual/body math is consistent
-
-    // Visual feet alignment: body is correct at offsetY=317, but sprite renders slightly high.
-    // Apply ONCE in constructor as a render-only adjustment.
-    this.y += 4.0; // push sprite down so feet touch tile (player reference)
 
     this.direction = -1; // start walking left
     this.isSquashed = false;
