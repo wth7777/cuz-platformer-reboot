@@ -127,7 +127,7 @@ export default class GameScene extends Phaser.Scene {
     // --- Physics wiring
     this.physics.add.collider(this.player, this.solids);
     this.physics.add.collider(this.player, this.blocks, this.onPlayerBlockCollide, null, this);
-    this.physics.add.collider(this.player, this.enemies); // physical separation: player bumps into enemies
+    this.physics.add.collider(this.player, this.enemies, this.onPlayerEnemyContact, null, this);
     this.physics.add.collider(this.enemies, this.solids);
     this.physics.add.collider(this.enemies, this.blocks);
     this.physics.add.collider(this.enemies, this.enemies);
@@ -137,7 +137,6 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.fireballs, this.blocks, this.onFireballBounce, null, this);
     this.physics.add.overlap(this.player, this.coins, this.onCollectCoin, null, this);
     this.physics.add.overlap(this.player, this.items, this.onCollectItem, null, this);
-    this.physics.add.overlap(this.player, this.enemies, this.onPlayerEnemyContact, null, this);
     this.physics.add.overlap(this.player, this.pipeSensors, (p, s) => (this.pipeUnder = s));
     this.physics.add.overlap(this.player, this.hiddenSensors, this.onHiddenSensor, null, this);
     this.physics.add.overlap(this.fireballs, this.enemies, this.onFireballHitsEnemy, null, this);

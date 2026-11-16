@@ -27,15 +27,14 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     // Body height 20: body.bottom = sprite.topLeft.y + offsetY_eff + 20
     // sprite.topLeft.y = sprite.y - 28.77
     // body.bottom = sprite.y - 28.77 + offsetY*0.1144 + 20 = sprite.y + 27.51
-    // offsetY*0.1144 = 36.28 → offsetY = 317
-    // Add +3 to offsetY to lower feet onto platform (was floating ~3px)
+    // offsetY*0.1144 = 36.28 → offsetY = 317 (exact match: body.bottom = visual feet)
     // Center body horizontally: visual center at sprite.x (frame center fills width)
     // displayWidth = 332 * 0.1144 = 38.0. displayOriginX = 19.0.
     // body.x + 8 = sprite.x → body.x = sprite.x - 8
     // body.x = sprite.x - 19.0 + offsetX*0.1144
     // offsetX*0.1144 = 11.0 → offsetX = 96
     this.body.setSize(16 / 0.1144, 20 / 0.1144);
-    this.body.setOffset(96, 320);
+    this.body.setOffset(96, 317);
     this.setDepth(1);
     this.setCollideWorldBounds(true);
     this.setScale(0.1144);
