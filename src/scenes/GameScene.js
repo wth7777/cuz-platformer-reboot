@@ -11,10 +11,10 @@ import { GAME_ZOOM, TILE, ROWS, GAME_WIDTH, GAME_HEIGHT } from '../config.js';
 
 // ---- Graveyard tile texture keys (created in PreloadScene) ----
 const T = {
-  // Platform pieces (18x18 scaled from 64x64 stone tiles)
+  // Platform pieces (scaled to 18px height, preserve aspect ratio)
   PLATFORM_SINGLE: 'graveyard-platform-single',
   PLATFORM_LEFT: 'graveyard-platform-left',
-  PLATFORM_MID: 'graveyard-platform-mid',
+  PLATFORM_MID: 'tex-graveyard-platform-mid',  // tileSprite texture for middle
   PLATFORM_RIGHT: 'graveyard-platform-right',
   // Kenney spritesheet frames still used for: coins, blocks, decor, pipes, flag, door
   CLOUD_LEFT: 153,
@@ -277,14 +277,40 @@ export default class GameScene extends Phaser.Scene {
 
   buildPlatform(startCol, run, row) {
     const y = row * TILE + TILE / 2;
-    for (let i = 0; i < run; i++) {
-      let texKey = T.PLATFORM_MID;
-      if (run === 1) texKey = T.PLATFORM_SINGLE;
-      else if (i === 0) texKey = T.PLATFORM_LEFT;
-      else if (i === run - 1) texKey = T.PLATFORM_RIGHT;
-      this.add.image((startCol + i) * TILE + TILE / 2, y, texKey);
+    const platformWidth = run * TILE;
+    const startX = startCol * TILE;
+    const endX = startX + platformWidth;
+
+    // Collision body (unchanged - 18px tall, full platform width)
+    this.addSolid(startX + platformWidth / 2, y, platformWidth, TILE);
+
+    if (run === 1) {
+      // Single tile platform: use single platform texture centered
+      this.add.image(startX + TILE / 2, y, T.PLATFORM_SINGLE);
+      return;
     }
-    this.addSolid(startCol * TILE + (run * TILE) / 2, y, run * TILE, TILE);
+
+    // Multi-tile platform: left cap + tileSprite middle + right cap
+    // Texture dimensions (approximate, at 18px height):
+    // left cap: ~12.7px wide, right cap: ~11.2px wide, middle tiles at ~12.3px/repeat
+    const leftCapWidth = 13;   // graveyard-platform-left scaled width
+    const rightCapWidth = 11;  // graveyard-platform-right scaled width
+
+    // Left cap at start
+    this.add.image(startX + leftCapWidth / 2, y, T.PLATFORM_LEFT);
+
+    // Right cap at end
+    this.add.image(endX - rightCapWidth / 2, y, T.PLATFORM_RIGHT);
+
+    // Middle tileSprite spanning between caps
+    const midStartX = startX + leftCapWidth;
+    const midEndX = endX - rightCapWidth;
+    const midWidth = midEndX - midStartX;
+    if (midWidth > 0) {
+      this.add
+        .tileSprite(midStartX + midWidth / 2, y, midWidth, TILE, T.PLATFORM_MID)
+        .setTileScale(1, 1); // 18px height matches TILE
+    }
   }
 
   buildPipe(col, topRow, enterable) {

@@ -19,8 +19,6 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.on('progress', (value) => bar.setScale(value, 1));
 
     // --- Spritesheets: one image, many fixed-size frames.
-    // Phaser slices them by frameWidth/frameHeight and numbers the
-    // frames left-to-right, top-to-bottom (0, 1, 2, ...).
     this.load.spritesheet('tiles', `${TILEMAP_DIR}/tilemap_packed.png`, {
       frameWidth: 18,
       frameHeight: 18,
@@ -36,21 +34,18 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.atlas('player', 'assets/player/cousin-atlas.png', 'assets/player/cousin-atlas.json');
     this.load.atlas('zombie', 'assets/zombie/zombie-atlas.png', 'assets/zombie/zombie-atlas.json');
 
-    // --- Graveyard tileset (128x128 ground_dirt + 25x 64x64 platform_stone tiles)
-    this.load.atlas('graveyard-tiles', 'assets/graveyard/tiles.png', 'assets/graveyard/tiles.json');
+    // --- Graveyard corrected atlas (proper transparency, 35 sprites)
+    this.load.atlas('graveyard-new', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.png', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.json');
 
     // --- Graveyard parallax background (single cohesive 1168x784 painting)
     this.load.image('graveyard-bg', 'assets/parallax-bg.jpg');
   }
 
   create() {
-    // Force canvas pool initialization — createCanvas returns null during
-    // loader 'complete' callback because CanvasPool isn't ready yet.
-    // A dummy call wakes it up; subsequent calls succeed synchronously.
+    // Force canvas pool initialization
     this.textures.createCanvas('__warmup', 1, 1)?.destroy();
 
-    // TileSprites repeat a whole texture, not a single frame of a sheet —
-    // so we copy the frames we want to repeat into small standalone textures.
+    // --- Kenney textures still needed for: coins, blocks, pipes, flag, door, decor
     this.makeTilingTexture('tex-grass-top', 'tiles', [2]);
     this.makeTilingTexture('tex-dirt', 'tiles', [122]);
     this.makeTilingTexture('tex-hills', 'bg', [8, 9, 10, 11], { r: 223, g: 246, b: 245 });
@@ -69,16 +64,34 @@ export default class PreloadScene extends Phaser.Scene {
     spark.refresh();
     this.makeRecoloredTexture('mushroom-1up', 'tiles', 128, (r, g, b) => [g, r, b]);
 
-    // --- Graveyard tile textures for terrain rendering
-    // Ground: 128x128 seamless dirt → scale 0.140625 (18/128) for 18px logical tile
-    this.makeScaledTilingTexture('tex-graveyard-ground', 'graveyard-tiles', 'ground_dirt', 18 / 128);
+    // --- Graveyard terrain: tile sprites scaled to 18x18 logical grid
+    // Tiles are ~124x129 source → scale 18/129 ≈ 0.1395 for 18px height
+    const TILE_SCALE = 18 / 129;
+    this.makeScaledTilingTexture('tex-graveyard-ground', 'graveyard-new', 'tile_01', TILE_SCALE);
+    this.makeScaledTexture('graveyard-ground-single', 'graveyard-new', 'tile_01', TILE_SCALE);
+    // Additional ground variants for visual variety
+    this.makeScaledTexture('graveyard-ground-02', 'graveyard-new', 'tile_02', TILE_SCALE);
+    this.makeScaledTexture('graveyard-ground-03', 'graveyard-new', 'tile_03', TILE_SCALE);
+    this.makeScaledTexture('graveyard-ground-04', 'graveyard-new', 'tile_04', TILE_SCALE);
+    this.makeScaledTexture('graveyard-ground-05', 'graveyard-new', 'tile_05', TILE_SCALE);
+    this.makeScaledTexture('graveyard-ground-06', 'graveyard-new', 'tile_06', TILE_SCALE);
 
-    // Platforms: 64x64 stone tiles → scale 0.28125 (18/64) for 18px logical tile
-    // Create individual scaled textures for each platform piece we need
-    this.makeScaledTexture('graveyard-platform-single', 'graveyard-tiles', 'platform_stone_2_2', 18 / 64);
-    this.makeScaledTexture('graveyard-platform-left', 'graveyard-tiles', 'platform_stone_2_1', 18 / 64);
-    this.makeScaledTexture('graveyard-platform-mid', 'graveyard-tiles', 'platform_stone_2_2', 18 / 64);
-    this.makeScaledTexture('graveyard-platform-right', 'graveyard-tiles', 'platform_stone_2_3', 18 / 64);
+    // --- Graveyard platforms: scale to 18px HEIGHT, preserve aspect ratio
+    // Platform sprites are tall (~180-207px source height)
+    // Scale = 18 / source_height for each platform piece
+    // platform_01: 146x207 → scale 18/207 ≈ 0.0870 → ~12.7px wide
+    // platform_05: 126x184 → scale 18/184 ≈ 0.0978 → ~12.3px wide
+    // platform_09: 111x179 → scale 18/179 ≈ 0.1006 → ~11.2px wide
+    // We'll create left/mid/right pieces from these
+
+    // Left cap (from platform_01 left edge)
+    this.makeScaledTexture('graveyard-platform-left', 'graveyard-new', 'platform_01', 18 / 207);
+    // Middle tileable (from platform_05 middle)
+    this.makeScaledTilingTexture('tex-graveyard-platform-mid', 'graveyard-new', 'platform_05', 18 / 184);
+    // Right cap (from platform_09 right edge)
+    this.makeScaledTexture('graveyard-platform-right', 'graveyard-new', 'platform_09', 18 / 179);
+    // Single platform (complete short platform)
+    this.makeScaledTexture('graveyard-platform-single', 'graveyard-new', 'platform_09', 18 / 179);
 
     this.createAnimations();
 
@@ -91,11 +104,6 @@ export default class PreloadScene extends Phaser.Scene {
     this.scene.start('TitleScene');
   }
 
-  /**
-     * Copies one or more frames side by side into a new canvas texture.
-     * If colorKey is given, every pixel of exactly that colour becomes
-     * transparent (classic "color key" transparency).
-     */
   makeTilingTexture(destKey, srcKey, frames, colorKey = null) {
     const first = this.textures.getFrame(srcKey, frames[0]);
     const w = first.width;
@@ -106,25 +114,23 @@ export default class PreloadScene extends Phaser.Scene {
 
     frames.forEach((frameIndex, i) => {
       const f = this.textures.getFrame(srcKey, frameIndex);
-      // cutX/cutY = where this frame lives inside the packed source image
       ctx.drawImage(f.source.image, f.cutX, f.cutY, w, h, i * w, 0, w, h);
     });
 
     if (colorKey) {
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const d = img.data; // flat array: r,g,b,a, r,g,b,a, ...
+      const d = img.data;
       for (let i = 0; i < d.length; i += 4) {
         if (d[i] === colorKey.r && d[i + 1] === colorKey.g && d[i + 2] === colorKey.b) {
-          d[i + 3] = 0; // alpha 0 = fully transparent
+          d[i + 3] = 0;
         }
       }
       ctx.putImageData(img, 0, 0);
     }
 
-    canvas.refresh(); // push the canvas pixels to the GPU texture
+    canvas.refresh();
   }
 
-  /** Creates a scaled tiling texture from an atlas frame for tileSprite use. */
   makeScaledTilingTexture(destKey, srcKey, frameName, scale) {
     const f = this.textures.getFrame(srcKey, frameName);
     const canvas = this.textures.createCanvas(destKey, f.width * scale, f.height * scale);
@@ -133,7 +139,6 @@ export default class PreloadScene extends Phaser.Scene {
     canvas.refresh();
   }
 
-  /** Creates a scaled standalone texture from an atlas frame. */
   makeScaledTexture(destKey, srcKey, frameName, scale) {
     const f = this.textures.getFrame(srcKey, frameName);
     const canvas = this.textures.createCanvas(destKey, f.width * scale, f.height * scale);
@@ -142,7 +147,6 @@ export default class PreloadScene extends Phaser.Scene {
     canvas.refresh();
   }
 
-  /** Copies a frame into a new texture, rewriting every pixel's colour. */
   makeRecoloredTexture(destKey, srcKey, frameIndex, transform) {
     const f = this.textures.getFrame(srcKey, frameIndex);
     const canvas = this.textures.createCanvas(destKey, f.width, f.height);
@@ -152,7 +156,7 @@ export default class PreloadScene extends Phaser.Scene {
     const img = ctx.getImageData(0, 0, f.width, f.height);
     const d = img.data;
     for (let i = 0; i < d.length; i += 4) {
-      if (d[i + 3] === 0) continue; // skip transparent pixels
+      if (d[i + 3] === 0) continue;
       const [r, g, b] = transform(d[i], d[i + 1], d[i + 2]);
       d[i] = r;
       d[i + 1] = g;
@@ -162,7 +166,6 @@ export default class PreloadScene extends Phaser.Scene {
     canvas.refresh();
   }
 
-  /** Classic green pipe: a wider rimmed mouth + a tileable shaft piece. */
   makePipeTextures() {
     const OUTLINE = '#14541c';
     const DARK = '#2e8a36';
@@ -195,7 +198,6 @@ export default class PreloadScene extends Phaser.Scene {
     shaft.refresh();
   }
 
-  /** A tiny hand-drawn texture: orange ball with a yellow core. */
   makeFireballTexture() {
     const size = 10;
     const canvas = this.textures.createCanvas('fireball', size, size);
@@ -216,8 +218,6 @@ export default class PreloadScene extends Phaser.Scene {
   }
 
   createAnimations() {
-    // Cousin 16-frame atlas (428x256 per frame). Frame names: frame_0..frame_15
-    // Mapping verified from atlas: idle=0, walk=1-4, jump=5-7, attack=8-10, crouch=11, hurt=12-14, die=15
     this.anims.create({ key: 'player-idle', frames: [{ key: 'player', frame: 'frame_0' }] });
     this.anims.create({ key: 'player-run', frames: ['frame_1','frame_2','frame_3','frame_4'].map(f => ({ key: 'player', frame: f })), frameRate: 10, repeat: -1 });
     this.anims.create({ key: 'player-jump', frames: ['frame_5','frame_6','frame_7'].map(f => ({ key: 'player', frame: f })), frameRate: 8, repeat: 0 });
@@ -226,7 +226,6 @@ export default class PreloadScene extends Phaser.Scene {
     this.anims.create({ key: 'player-hurt', frames: ['frame_12','frame_13','frame_14'].map(f => ({ key: 'player', frame: f })), frameRate: 8, repeat: 0 });
     this.anims.create({ key: 'player-die', frames: [{ key: 'player', frame: 'frame_15' }] });
 
-    // Coin: face/edge-on frames alternating reads as a spin
     this.anims.create({
       key: 'coin-spin',
       frames: this.anims.generateFrameNumbers('tiles', { frames: [151, 152] }),
@@ -234,7 +233,6 @@ export default class PreloadScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    // Walker enemy (blue slime): two-frame shuffle
     this.anims.create({
       key: 'walker-walk',
       frames: this.anims.generateFrameNumbers('chars', { frames: [18, 19] }),
@@ -242,7 +240,6 @@ export default class PreloadScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    // Zombie enemy: 8-frame walk cycle (custom artwork)
     this.anims.create({
       key: 'zombie-walk',
       frames: this.anims.generateFrameNames('zombie', { start: 0, end: 7, prefix: 'frame_', zeroPad: 0 }),
@@ -250,7 +247,6 @@ export default class PreloadScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    // End-of-level flag waving on its pole
     this.anims.create({
       key: 'flag-wave',
       frames: this.anims.generateFrameNumbers('tiles', { frames: [111, 112] }),
