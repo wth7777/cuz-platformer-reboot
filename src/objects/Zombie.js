@@ -38,6 +38,7 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(1);
     this.setCollideWorldBounds(true);
     this.setScale(0.1144);
+    this.setOrigin(0.5, 0.5); // lock origin to center so visual/body math is consistent
 
     this.direction = -1; // start walking left
     this.isSquashed = false;
@@ -101,6 +102,20 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     // Artwork faces RIGHT. When moving LEFT (direction < 0), flip to face left.
     // When moving RIGHT (direction > 0), no flip (faces right).
     this.setFlipX(this.direction < 0);
+
+    // Align visual feet with physics body bottom when on ground.
+    // This corrects for per-frame vertical variation in the animation frames.
+    if (this.body.onFloor()) {
+      const frame = this.frame;
+      // Frame bottom in texture coordinates (cutY + height)
+      const frameBottomPx = frame.cutY + frame.height;
+      // Visual feet offset from sprite top in world pixels
+      const visualFeetOffset = frameBottomPx * this.scale;
+      // Display height in world pixels
+      const displayHeight = frame.height * this.scale;
+      // Align sprite so visual feet = body bottom
+      this.y = this.body.y + this.body.height + displayHeight / 2 - visualFeetOffset;
+    }
   }
 
   /** Killed by blue fireball: flip and fall away, then destroy. */
