@@ -173,11 +173,11 @@ class Sfx {
   /** Map music kinds to audio file keys. */
   getAudioKey(kind) {
     const musicMap = {
-      overworld: 'graveyard-music',
-      underground: 'graveyard-music',
-      title: 'graveyard-title-music',
+      overworld: 'graveyard-title-music',
+      underground: 'graveyard-title-music',
+      title: 'graveyard-music',
     };
-    return musicMap[kind] || 'graveyard-music';
+    return musicMap[kind] || 'graveyard-title-music';
   }
 
   /** Start playing music for the given kind. Stops any existing music first. */
