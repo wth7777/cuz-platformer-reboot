@@ -6,6 +6,8 @@ const PURSUE_RANGE = 220; // horizontal detection distance
 
 // Zombie enemy using supplied custom artwork (8 frames, 332x503 each).
 // walk = frames 0-7 (8-frame cycle).
+// Scale 0.104 matches player height (~50px visible).
+// Artwork faces RIGHT by default.
 export default class Zombie extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, gridKey = null) {
     // Custom zombie atlas: 8 frames @ 332x503 (4x2 grid), facing right.
@@ -16,25 +18,26 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     this.gridKey = gridKey;
 
     // Collision body sized to the scaled sprite.
-    // Sprite scale 0.25 scales body AND offset.
-    // Size is pre-scale (divided by 0.25 so effective = 16x20).
+    // Sprite scale 0.104 scales body AND offset.
+    // Size is pre-scale (divided by 0.104 so effective = 16x20).
     // Offset is pre-scale too (NOT divided by scale — Phaser multiplies by scale).
-    // Visual feet: frame bottom=492px of 503px → 11px padding → sprite.y + 22.3
-    // Body height 20: body.bottom = (sprite.y - 25.15) + offsetY_eff + 20 = sprite.y + 22.3
-    // displayHeight = 503 * 0.25 = 125.75. Frame bottom = sprite.y + 62.875.
-    // Visual feet = 62.875 - (11 * 0.25) = 62.875 - 2.75 = 60.125
+    // Visual feet: frame bottom=492px of 503px → 11px padding → sprite.y + 25.0
+    // displayHeight = 503 * 0.104 = 52.3. Frame bottom = sprite.y + 26.15.
+    // Visual feet = frame bottom - 11*0.104 = sprite.y + 26.15 - 1.14 = sprite.y + 25.01.
     // Body height 20: body.bottom = sprite.topLeft.y + offsetY_eff + 20
-    // sprite.topLeft.y = sprite.y - 62.875
-    // body.bottom = sprite.y - 62.875 + offsetY*0.25 + 20 = sprite.y + 60.125
-    // offsetY*0.25 = 103 → offsetY = 412
+    // sprite.topLeft.y = sprite.y - 26.15
+    // body.bottom = sprite.y - 26.15 + offsetY*0.104 + 20 = sprite.y + 25.0
+    // offsetY*0.104 = 31.15 → offsetY = 300
     // Center body horizontally: visual center at sprite.x (frame center fills width)
+    // displayWidth = 332 * 0.104 = 34.5. displayOriginX = 17.25.
     // body.x + 8 = sprite.x → body.x = sprite.x - 8
-    // body.x = (sprite.x - 41.5) + offsetX_eff → offsetX_eff = 33.5 → offsetX = 134
-    this.body.setSize(16 / 0.25, 20 / 0.25);
-    this.body.setOffset(134, 412);
+    // body.x = sprite.x - 17.25 + offsetX*0.104
+    // offsetX*0.104 = 9.25 → offsetX = 89
+    this.body.setSize(16 / 0.104, 20 / 0.104);
+    this.body.setOffset(89, 300);
     this.setDepth(1);
     this.setCollideWorldBounds(true);
-    this.setScale(0.25);
+    this.setScale(0.104);
 
     this.direction = -1; // start walking left
     this.isSquashed = false;
@@ -94,7 +97,10 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
 
     const speed = pursuing ? PURSUE_SPEED : WALK_SPEED;
     this.setVelocityX(speed * this.direction);
-    this.setFlipX(this.direction > 0);
+
+    // Artwork faces RIGHT. When moving LEFT (direction < 0), flip to face left.
+    // When moving RIGHT (direction > 0), no flip (faces right).
+    this.setFlipX(this.direction < 0);
   }
 
   /** Killed by blue fireball: flip and fall away, then destroy. */
