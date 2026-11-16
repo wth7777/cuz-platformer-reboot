@@ -965,59 +965,75 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // === DIAGNOSTIC DEBUG RENDERING ===
-    if (this._diagGfx) {
-      this._diagGfx.clear();
+        if (this._diagGfx) {
+          this._diagGfx.clear();
 
-      // Ground surface (green) - top of first solid tile (world coordinates)
-      const groundY = this.solids.length > 0 ? this.solids[0].body.top : null;
-      if (groundY !== null) {
-        this._diagGfx.lineStyle(2, 0x00ff00, 1);
-        this._diagGfx.lineBetween(0, groundY, GAME_WIDTH, groundY);
-      }
+          // Ground collision surface (green) - BOTTOM of first solid tile (collision surface)
+          const groundBody = this.solids.length > 0 ? this.solids[0].body : null;
+          const groundCollisionY = groundBody ? groundBody.bottom : null;
+          const groundVisualTop = groundBody ? groundBody.top : null;
+          if (groundCollisionY !== null) {
+            // Collision surface (green) - where bodies actually land
+            this._diagGfx.lineStyle(2, 0x00ff00, 2);
+            this._diagGfx.lineBetween(0, groundCollisionY, GAME_WIDTH, groundCollisionY);
+            // Tile visual top (dim green) - for reference
+            if (groundVisualTop !== null) {
+              this._diagGfx.lineStyle(1, 0x00ff00, 0.5);
+              this._diagGfx.lineBetween(0, groundVisualTop, GAME_WIDTH, groundVisualTop);
+            }
+          }
 
-      // Player
-      if (this.player && this.player.body) {
-        const p = this.player;
-        const ph = p.displayHeight;
-        const pw = p.displayWidth;
-        const pb = p.body;
+          // Player
+          if (this.player && this.player.body) {
+            const p = this.player;
+            const ph = p.displayHeight;
+            const pw = p.displayWidth;
+            const pb = p.body;
 
-        // Sprite bounds (yellow) - world coordinates
-        this._diagGfx.lineStyle(2, 0xffff00, 2);
-        this._diagGfx.strokeRect(p.x - pw / 2, p.y - ph / 2, pw, ph);
+            // Sprite bounds (yellow)
+            this._diagGfx.lineStyle(2, 0xffff00, 2);
+            this._diagGfx.strokeRect(p.x - pw / 2, p.y - ph / 2, pw, ph);
 
-        // Physics body (cyan) - world coordinates
-        this._diagGfx.lineStyle(2, 0x00ffff, 2);
-        this._diagGfx.strokeRect(pb.left, pb.top, pb.width, pb.height);
+            // Physics body (cyan)
+            this._diagGfx.lineStyle(2, 0x00ffff, 2);
+            this._diagGfx.strokeRect(pb.left, pb.top, pb.width, pb.height);
 
-        // Visual feet line (red) - bottom of sprite
-        this._diagGfx.lineStyle(2, 0xff0000, 2);
-        const visualFeetY = p.y + ph / 2;
-        this._diagGfx.lineBetween(p.x - 20, visualFeetY, p.x + 20, visualFeetY);
-      }
+            // Visual feet line (red) - bottom of sprite
+            this._diagGfx.lineStyle(2, 0xff0000, 2);
+            const visualFeetY = p.y + ph / 2;
+            this._diagGfx.lineBetween(p.x - 20, visualFeetY, p.x + 20, visualFeetY);
 
-      // Zombie (first enemy)
-      const zombie = this.enemies.getChildren()[0];
-      if (zombie && zombie.body) {
-        const z = zombie;
-        const zh = z.displayHeight;
-        const zw = z.displayWidth;
-        const zb = z.body;
+            // Body bottom line (cyan) - where physics body actually ends
+            this._diagGfx.lineStyle(1, 0x00ffff, 0.5);
+            this._diagGfx.lineBetween(p.x - 20, pb.bottom, p.x + 20, pb.bottom);
+          }
 
-        // Sprite bounds (magenta)
-        this._diagGfx.lineStyle(2, 0xff00ff, 2);
-        this._diagGfx.strokeRect(z.x - zw / 2, z.y - zh / 2, zw, zh);
+          // Zombie (first enemy)
+          const zombie = this.enemies.getChildren()[0];
+          if (zombie && zombie.body) {
+            const z = zombie;
+            const zh = z.displayHeight;
+            const zw = z.displayWidth;
+            const zb = z.body;
 
-        // Physics body (orange)
-        this._diagGfx.lineStyle(2, 0xffa500, 2);
-        this._diagGfx.strokeRect(zb.left, zb.top, zb.width, zb.height);
+            // Sprite bounds (magenta)
+            this._diagGfx.lineStyle(2, 0xff00ff, 2);
+            this._diagGfx.strokeRect(z.x - zw / 2, z.y - zh / 2, zw, zh);
 
-        // Visual feet line (red)
-        this._diagGfx.lineStyle(2, 0xff0000, 2);
-        const zVisualFeetY = z.y + zh / 2;
-        this._diagGfx.lineBetween(z.x - 20, zVisualFeetY, z.x + 20, zVisualFeetY);
-      }
-    }
-    // === END DIAGNOSTIC DEBUG RENDERING ===
+            // Physics body (orange)
+            this._diagGfx.lineStyle(2, 0xffa500, 2);
+            this._diagGfx.strokeRect(zb.left, zb.top, zb.width, zb.height);
+
+            // Visual feet line (red)
+            this._diagGfx.lineStyle(2, 0xff0000, 2);
+            const zVisualFeetY = z.y + zh / 2;
+            this._diagGfx.lineBetween(z.x - 20, zVisualFeetY, z.x + 20, zVisualFeetY);
+
+            // Body bottom line (orange)
+            this._diagGfx.lineStyle(1, 0xffa500, 0.5);
+            this._diagGfx.lineBetween(z.x - 20, zb.bottom, z.x + 20, zb.bottom);
+          }
+        }
+        // === END DIAGNOSTIC DEBUG RENDERING ===
   }
 }
