@@ -24,7 +24,8 @@ export default {
     walls([11, 'cccccc'], [25, 'cccccc']), // r16
     walls(), // r17
     walls([10, 'PPPPPPPP'], [24, 'PPPPPPPP']), // r18
-    walls([38, 't']), // r19 — exit pipe
+    // exit pipe removed — crypt entrance instead
+    walls([38, '>']), // r19 — crypt entrance marker
     walls(), // r20
     walls([8, 'cccccccccccccccccccccccccc']), // r21
     walls([4, 'p']), // r22

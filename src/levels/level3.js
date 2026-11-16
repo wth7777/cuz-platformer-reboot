@@ -11,8 +11,8 @@ export default {
   next: 'level4',
   width: W,
   rows: [
-    // r13 — star above the high route
-    sparse(W, [183, 'S']),
+    // r13 — star above the high route (removed)
+    sparse(W),
     // r14 — flag
     sparse(W, [248, 'F']),
     // r15 — coins above the high platforms
@@ -24,7 +24,7 @@ export default {
     // r18 — aid platform over the wide final gap; castle top
     sparse(W, [211, 'PPPP'], [253, 'xxx']),
     // r19 — blocks, gap platforms, stairs top, castle
-    sparse(W, [30, 'cccc'], [38, 'B?B'], [56, 'PPPPP'], [86, 'BMB'], [139, 'PPPPP'],
+    sparse(W, [30, 'cccc'], [38, 'BBB'], [56, 'PPPPP'], [86, 'BMB'], [139, 'PPPPP'],
       [152, '?'], [240, 'XX'], [252, 'xxxxxxx']),
     // r20 — coin arcs over pits; stairs; castle
     sparse(W, [79, 'cccc'], [111, 'cccccc'], [238, 'XXXX'], [252, 'xxxxxxx']),

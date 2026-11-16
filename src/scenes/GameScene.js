@@ -9,36 +9,34 @@ import { GAME_ZOOM, TILE, ROWS, GAME_WIDTH, GAME_HEIGHT } from '../config.js';
 
 // ---- World ----
 
-// ---- Graveyard tile texture keys (created in PreloadScene) ----
+// ---- Tile frame indices in the 'tiles' spritesheet ----
 const T = {
-  // Platform pieces (scaled to 18px height, preserve aspect ratio)
+  // Platform pieces (from graveyard-tiles atlas)
   PLATFORM_SINGLE: 'graveyard-platform-single',
   PLATFORM_LEFT: 'graveyard-platform-left',
   PLATFORM_MID: 'tex-graveyard-platform-mid',  // tileSprite texture for middle
   PLATFORM_RIGHT: 'graveyard-platform-right',
-  // Kenney spritesheet frames still used for: coins, blocks, decor, pipes, flag, door
+  // Kenney spritesheet frames still used for: coins, bricks, flag, door
   CLOUD_LEFT: 153,
   CLOUD_MID: 154,
   CLOUD_RIGHT: 155,
   CLOUD_SMALL: 156,
-  SIGN_RIGHT: 86,
-  SPROUT: 124,
-  BUSH: 125,
-  PINE: 126,
   COIN: 151,
-  BLOCK_QUESTION: 10,
-  BLOCK_USED: 31,
   BRICK: 6,
-  MUSHROOM: 128,
   POLE: 131,
   FLAG: 111,
   DOOR_TOP: 130,
   DOOR_BOTTOM: 150,
 };
 
-// Ground uses tileSprite with 'tex-graveyard-ground' (set in buildParallax for ground)
-
-const DECOR = { '>': T.SIGN_RIGHT, '*': T.BUSH, '^': T.PINE, '"': T.SPROUT, o: 145 /* snowman */ };
+// Graveyard decor from graveyard-decor atlas
+const DECOR = {
+  '>': { atlas: 'graveyard-decor', frame: 'struct_04b' }, // sign → gate/fence
+  '*': { atlas: 'graveyard-decor', frame: 'tile_18' },   // bush → tombstone
+  '^': { atlas: 'graveyard-decor', frame: 'struct_01' }, // pine → monument
+  '"': { atlas: 'graveyard-decor', frame: 'tile_14' },   // sprout → grave marker
+  o: { atlas: 'graveyard-decor', frame: 'tile_18' },     // snowman → tombstone
+};
 
 const STOMP_BOUNCE = -300;
 
@@ -98,8 +96,7 @@ export default class GameScene extends Phaser.Scene {
     this.enemies = this.add.group();
     this.items = this.physics.add.group();
     this.fireballs = this.physics.add.group();
-    this.pipeSensors = this.physics.add.staticGroup();
-    this.hiddenSensors = this.physics.add.staticGroup();
+    // pipeSensors and hiddenSensors removed - no pipes or hidden blocks
 
     this.cameras.main.setBackgroundColor(this.theme.sky);
     if (this.theme.parallax) this.buildParallax();
@@ -142,8 +139,6 @@ export default class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.fireballs, this.blocks, this.onFireballBounce, null, this);
     this.physics.add.overlap(this.player, this.coins, this.onCollectCoin, null, this);
     this.physics.add.overlap(this.player, this.items, this.onCollectItem, null, this);
-    this.physics.add.overlap(this.player, this.pipeSensors, (p, s) => (this.pipeUnder = s));
-    this.physics.add.overlap(this.player, this.hiddenSensors, this.onHiddenSensor, null, this);
     this.physics.add.overlap(this.fireballs, this.enemies, this.onFireballHitsEnemy, null, this);
     if (this.flagZone) {
       this.physics.add.overlap(this.player, this.flagZone, this.startFlagSequence, null, this);
@@ -213,22 +208,7 @@ export default class GameScene extends Phaser.Scene {
           case 'B':
             if (!gone) this.addBlock(x, y, T.BRICK, 'brick', null, key);
             break;
-          case '?':
-            if (gone) this.addBlock(x, y, T.BLOCK_USED, 'used', null, key);
-            else this.addBlock(x, y, T.BLOCK_QUESTION, 'question', 'coin', key);
-            break;
-          case 'M':
-            if (gone) this.addBlock(x, y, T.BLOCK_USED, 'used', null, key);
-            else this.addBlock(x, y, T.BLOCK_QUESTION, 'question', 'powerup', key);
-            break;
-          case 'S':
-            if (gone) this.addBlock(x, y, T.BLOCK_USED, 'used', null, key);
-            else this.addBlock(x, y, T.BLOCK_QUESTION, 'question', 'star', key);
-            break;
-          case 'H':
-            if (gone) this.addBlock(x, y, T.BLOCK_USED, 'used', null, key);
-            else this.addHiddenBlock(x, y, key);
-            break;
+          // Special blocks removed: ?, M, S, H
           case 'c': {
             if (gone) break;
             const coin = this.add.sprite(x, y, 'tiles', T.COIN).play('coin-spin');
@@ -245,12 +225,7 @@ export default class GameScene extends Phaser.Scene {
             this.spawnCol = col;
             this.spawnRow = row; // floor is searched from HERE down (rooms have ceilings!)
             break;
-          case 'T':
-            this.buildPipe(col, row, false);
-            break;
-          case 't':
-            this.buildPipe(col, row, true);
-            break;
+          // Pipes removed: T, t
           case 'F':
             this.buildFlag(col, row);
             break;
@@ -259,7 +234,8 @@ export default class GameScene extends Phaser.Scene {
             break;
           default:
             if (DECOR[ch]) {
-              this.add.image(x, (row + 1) * TILE, 'tiles', DECOR[ch]).setOrigin(0.5, 1);
+              const decor = DECOR[ch];
+              this.add.image(x, (row + 1) * TILE, decor.atlas, decor.frame).setOrigin(0.5, 1);
             }
         }
         col++;
@@ -313,31 +289,7 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  buildPipe(col, topRow, enterable) {
-    const bottomRow = this.findFloorRow(col, topRow);
-    const cx = (col + 1) * TILE; // centre of the 2-tile-wide pipe
-
-    // depth 3: pipes render in FRONT of the player, so emerging from
-    // (or sinking into) a pipe clips the sprite like in classic Mario
-    this.add.image(cx, topRow * TILE + TILE / 2, 'pipe-mouth').setDepth(3);
-    const shaftH = (bottomRow - topRow - 1) * TILE;
-    if (shaftH > 0) {
-      this.add
-        .tileSprite(cx, (topRow + 1) * TILE + shaftH / 2, 36, shaftH, 'pipe-shaft')
-        .setDepth(3);
-    }
-    this.pipes.push({ colLeft: col, colRight: col + 1, topRow, cx });
-
-    const height = (bottomRow - topRow) * TILE;
-    this.addSolid(cx, topRow * TILE + height / 2, 40, height);
-
-    if (enterable) {
-      // thin sensor lying on the pipe mouth — standing here + Down = enter
-      const sensor = this.add.zone(cx, topRow * TILE - 4, TILE * 2 - 6, 8);
-      this.physics.add.existing(sensor, true);
-      this.pipeSensors.add(sensor);
-    }
-  }
+  // buildPipe removed - no pipes in graveyard
 
   buildFlag(col, topRow) {
     const bottomRow = this.findFloorRow(col, topRow);
@@ -369,17 +321,7 @@ export default class GameScene extends Phaser.Scene {
     return block;
   }
 
-  /** Invisible block: no body until hit from below (via its sensor). */
-  addHiddenBlock(x, y, key) {
-    const block = this.addBlock(x, y, T.BLOCK_USED, 'hidden', null, key);
-    block.setVisible(false);
-    block.body.enable = false;
-
-    const sensor = this.add.zone(x, y, TILE, TILE);
-    this.physics.add.existing(sensor, true);
-    sensor.setData('block', block);
-    this.hiddenSensors.add(sensor);
-  }
+  // addHiddenBlock removed - no hidden blocks
 
   addSolid(x, y, width, height) {
     const zone = this.add.zone(x, y, width, height);
@@ -456,39 +398,14 @@ export default class GameScene extends Phaser.Scene {
 
     const type = block.getData('type');
     if (type === 'question') {
-      this.openQuestionBlock(block);
+      // Question blocks removed - this shouldn't be reached
     } else if (type === 'brick') {
       // cousin can always break bricks
       this.breakBrick(block);
     }
   }
 
-  openQuestionBlock(block) {
-    const content = block.getData('content');
-    block.setData('type', 'used');
-    block.setFrame(T.BLOCK_USED);
-    this.consume(block.getData('key'));
-    this.bumpBlock(block);
-
-    if (content === 'coin') {
-      const coin = this.add.sprite(block.x, block.y - TILE, 'tiles', T.COIN).play('coin-spin');
-      sfx.play('coin');
-      this.sparkle(block.x, block.y - TILE);
-      this.addScore(SCORE_COIN, block.x, block.y - TILE * 2);
-      this.registry.values.coins += 1;
-      this.tweens.add({
-        targets: coin,
-        y: coin.y - 30,
-        duration: 200,
-        ease: 'Quad.easeOut',
-        yoyo: true,
-        onComplete: () => coin.destroy(),
-      });
-    } else if (content === 'powerup' || content === 'star') {
-      // generic pickup — just gives points
-      this.spawnWalkingItem(block, 'pickup', 'tiles', T.MUSHROOM);
-    }
-  }
+  // openQuestionBlock removed - no question blocks
 
   breakBrick(block) {
     sfx.play('break');
@@ -529,22 +446,7 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  onHiddenSensor(player, sensor) {
-    if (player.body.velocity.y >= -40) return; // must be rising into it
-
-    const block = sensor.getData('block');
-    const blockBottom = block.y + TILE / 2;
-    if (player.body.top > blockBottom + 2 || player.body.top < blockBottom - 14) return;
-
-    sensor.destroy();
-    block.setVisible(true);
-    block.body.enable = true;
-    block.setData('type', 'used');
-    this.consume(block.getData('key'));
-    this.bumpBlock(block);
-    player.body.setVelocityY(50); // head bonk
-    this.spawnWalkingItem(block, 'oneup', 'mushroom-1up');
-  }
+  // onHiddenSensor removed - no hidden blocks
 
   // -------------------------------------------------------------- items
 
@@ -845,21 +747,7 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  enterPipe(target) {
-    this.autoPhase = 'pipe';
-    sfx.play('pipe');
-    const p = this.player;
-    p.body.enable = false;
-    p.body.setVelocity(0, 0);
-    this.tweens.add({
-      targets: p,
-      y: p.y + 26,
-      duration: 450,
-      ease: 'Sine.easeIn',
-    });
-    this.cameras.main.fadeOut(450);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.restart(target));
-  }
+  // enterPipe removed - no pipes
 
   // ------------------------------------------------------- timer & pause
 
@@ -939,29 +827,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.player.handleInput({ left, right, jumpHeld, jumpPressed, attackPressed });
 
-    // standing on a secret pipe + Down = travel
-    if (down && this.pipeUnder && this.player.body.onFloor()) {
-      // level state travels with us, so the world is as we left it
-      const consumed = { ...this.consumedAll, [this.levelId]: [...this.consumed] };
-      const target = this.level.secret
-        ? {
-            levelId: this.level.secret.room,
-            returnTo: { levelId: this.levelId, spawnCol: this.level.secret.exitCol },
-            keepTime: true,
-            consumed,
-          }
-        : {
-            // exit pipe of a bonus room — back to the caller (with a
-            // safe fallback if the return info was somehow lost)
-            levelId: this.returnTo?.levelId ?? 'level1',
-            spawnCol: this.returnTo?.spawnCol ?? null,
-            exitViaPipe: true,
-            keepTime: true,
-            consumed,
-          };
-      this.enterPipe(target);
-    }
-    this.pipeUnder = null; // refreshed by the overlap every frame
+    // standing on a secret pipe + Down = travel (removed - no pipes)
 
     // tidy up items and enemies that fell into pits
     this.items.getChildren().forEach((item) => {

@@ -42,13 +42,17 @@ export default class PreloadScene extends Phaser.Scene {
 
     // --- Decorative graveyard spritesheet (35 sprites - for background/scenery)
     this.load.atlas('graveyard-decor', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.png', 'assets/graveyard-sprites/graveyard-new-atlas-corrected.json');
+
+    // --- Graveyard music (to be provided by user)
+    // this.load.audio('graveyard-music', 'assets/audio/graveyard-music.ogg');
+    // this.load.audio('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
   }
 
   create() {
     // Force canvas pool initialization
     this.textures.createCanvas('__warmup', 1, 1)?.destroy();
 
-    // --- Kenney textures still needed for: coins, blocks, pipes, flag, door, decor
+    // --- Kenney textures still needed for: coins, bricks, flag, door
     this.makeTilingTexture('tex-grass-top', 'tiles', [2]);
     this.makeTilingTexture('tex-dirt', 'tiles', [122]);
     this.makeTilingTexture('tex-hills', 'bg', [8, 9, 10, 11], { r: 223, g: 246, b: 245 });
@@ -59,7 +63,6 @@ export default class PreloadScene extends Phaser.Scene {
       const l = Math.min(255, Math.round(Math.max(r, g, b) * 1.15));
       return [l, l, l];
     });
-    this.makePipeTextures();
 
     const spark = this.textures.createCanvas('spark', 4, 4);
     spark.context.fillStyle = '#ffffff';
@@ -91,6 +94,11 @@ export default class PreloadScene extends Phaser.Scene {
     this.registry.set('lives', 3);
     this.registry.set('time', 300);
     this.registry.set('world', '1-1');
+
+    // Preload external graveyard music (user provides files in assets/audio/)
+    // Uncomment when music files are available:
+    // sfx.preloadMusic('graveyard-music', 'assets/audio/graveyard-music.ogg');
+    // sfx.preloadMusic('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
 
     this.scene.start('TitleScene');
   }
@@ -155,38 +163,6 @@ export default class PreloadScene extends Phaser.Scene {
     }
     ctx.putImageData(img, 0, 0);
     canvas.refresh();
-  }
-
-  makePipeTextures() {
-    const OUTLINE = '#14541c';
-    const DARK = '#2e8a36';
-    const MID = '#48b552';
-    const LIGHT = '#a0e25c';
-
-    const mouth = this.textures.createCanvas('pipe-mouth', 44, 18);
-    const m = mouth.context;
-    m.fillStyle = OUTLINE;
-    m.fillRect(0, 0, 44, 18);
-    m.fillStyle = MID;
-    m.fillRect(2, 2, 40, 14);
-    m.fillStyle = LIGHT;
-    m.fillRect(7, 2, 7, 14);
-    m.fillStyle = DARK;
-    m.fillRect(33, 2, 6, 14);
-    mouth.refresh();
-
-    const shaft = this.textures.createCanvas('pipe-shaft', 36, 18);
-    const s = shaft.context;
-    s.fillStyle = MID;
-    s.fillRect(0, 0, 36, 18);
-    s.fillStyle = OUTLINE;
-    s.fillRect(0, 0, 2, 18);
-    s.fillRect(34, 0, 2, 18);
-    s.fillStyle = LIGHT;
-    s.fillRect(6, 0, 6, 18);
-    s.fillStyle = DARK;
-    s.fillRect(28, 0, 5, 18);
-    shaft.refresh();
   }
 
   makeFireballTexture() {

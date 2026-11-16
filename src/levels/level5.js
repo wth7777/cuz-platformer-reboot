@@ -10,10 +10,10 @@ export default {
   theme: 'overworld',
   next: 'end',
   time: 400,
-  secret: { room: 'bonus15', exitCol: 230 },
+  // secret removed - no pipes
   width: W,
   rows: [
-    // r13 — star above the upper deck; high coins
+    // r13 — star above the upper deck; high coins (removed)
     sparse(W, [88, 'S'], [194, 'cccc']),
     // r14 — coins; flag
     sparse(W, [38, 'ccc'], [262, 'F']),

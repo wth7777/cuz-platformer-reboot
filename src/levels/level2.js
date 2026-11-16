@@ -20,7 +20,9 @@ export default {
     sparse(W), // r4
     sparse(W), // r5
     sparse(W), // r6
+    sparse(W), // r6
     sparse(W), // r7
+    sparse(W), // r8
     sparse(W), // r8
     sparse(W), // r9
     // r10 — coins over the upper gallery
@@ -37,8 +39,8 @@ export default {
     sparse(W, [21, 'ccc']),
     // r16 — entry climb mid; wall-top platform; final climb mid
     sparse(W, [20, 'PPPPP'], [68, 'PPPPPP'], [138, 'PPPPP']),
-    // r17 — powerup block
-    sparse(W, [78, 'M']),
+    // r17 — powerup block removed
+    sparse(W),
     // r18 — coin arc over pit 1; castle top
     sparse(W, [58, 'cccc'], [193, 'xxx']),
     // r19 — bricks; final climb base; stairs; castle
@@ -46,12 +48,12 @@ export default {
       [182, 'XX'], [192, 'xxxxx']),
     // r20 — entry platform; wall; pit island; stairs
     sparse(W, [12, 'PPPPP'], [70, 'XX'], [115, 'PPP'], [180, 'XXXX']),
-    // r21 — starting coins; wall; stairs; castle (door gap at 194)
-    sparse(W, [8, 'ccc'], [70, 'XX'], [178, 'XXXXXX'], [192, 'xx'], [195, 'xx']),
-    // r22 — spawn; enemies; wall; stairs; castle + door
+    // r21 — entry coins; wall; stairs; castle (door gap at 194)
+    sparse(W, [8, 'cccc'], [70, 'XX'], [178, 'XXXXXX'], [192, 'xx'], [195, 'xx']),
+    // r21 — spawn; enemies; wall; stairs; castle + door
     sparse(W, [3, 'p'], [44, 'e'], [70, 'XX'], [92, 'e'], [100, 'e'], [108, 'e'],
       [158, 'e'], [164, 'e'], [176, ground(8)], [192, 'xx'], [194, 'd'], [195, 'xx']),
-    // r23/r24 — ground with two pits (58-61 and 114-118)
+    // r22/r23 — ground with two pits (58-61 and 114-118)
     ground(58) + gap(4) + ground(52) + gap(5) + ground(81),
     ground(58) + gap(4) + ground(52) + gap(5) + ground(81),
   ],

@@ -1,7 +1,6 @@
-// Retro sound engine — everything is synthesized with the Web Audio API
-// (oscillators + gain envelopes), no audio files needed. This is how the
-// sounds of the 80s were made: square and triangle waves with quick
-// pitch sweeps.
+// Retro sound engine — sound effects are synthesized with the Web Audio API
+// (oscillators + gain envelopes), no audio files needed for SFX.
+// Background music can be loaded from external audio files (ogg/mp3).
 
 const MUTE_KEY = 'retro-platformer-muted';
 
@@ -10,8 +9,11 @@ class Sfx {
     this.ctx = null;
     this.master = null;
     this.musicGain = null;
-    this.musicTimer = null;
-    this.pendingMusic = null;
+    this.musicSource = null;
+    this.musicBuffer = null;
+    this.musicLoop = false;
+    this.muted = false;
+
     try {
       this.muted = localStorage.getItem(MUTE_KEY) === '1';
     } catch {
@@ -148,8 +150,14 @@ class Sfx {
   }
 
   // ------------------------------------------------------------- music
-  // Two tiny original loops, scheduled bar by bar slightly ahead of time.
-  // Each entry: [lead-note, bass-note] per eighth-note step (0 = rest).
+  // Music can now be loaded from external audio files (ogg/mp3).
+  // Place your music files in assets/audio/ and reference them here.
+  //
+  // Expected files (to be provided by user):
+  // - assets/audio/graveyard-music.ogg (gameplay music, loops)
+  // - assets/audio/graveyard-title-music.ogg (title screen music, loops)
+  //
+  // If files are not found, falls back to synthesized retro loops.
 
   startMusic(kind) {
     if (!this.ctx) {
@@ -158,6 +166,42 @@ class Sfx {
     }
     this.stopMusic();
 
+    // Map music kinds to audio file keys
+    const musicMap = {
+      overworld: 'graveyard-music',
+      underground: 'graveyard-music', // same for now, can be different
+      title: 'graveyard-title-music',
+    };
+
+    const audioKey = musicMap[kind] || 'graveyard-music';
+
+    // Try to load from preloaded audio cache
+    const audioCache = this.ctx.audioCache || {};
+    if (audioCache[audioKey]) {
+      this.playMusicBuffer(audioCache[audioKey], true);
+      return;
+    }
+
+    // Fallback to synthesized retro loops if no external music loaded
+    this.startSynthesizedMusic(kind);
+  }
+
+  /** Load and play an external audio buffer as looping music. */
+  playMusicBuffer(audioBuffer, loop = true) {
+    if (this.musicSource) {
+      this.musicSource.stop();
+      this.musicSource.disconnect();
+    }
+
+    this.musicSource = this.ctx.createBufferSource();
+    this.musicSource.buffer = audioBuffer;
+    this.musicSource.loop = loop;
+    this.musicSource.connect(this.musicGain);
+    this.musicSource.start(0);
+  }
+
+  /** Synthesized fallback music (original retro loops). */
+  startSynthesizedMusic(kind) {
     const C3 = 130.8, E3 = 164.8, F3 = 174.6, G3 = 196, A3 = 220, B2 = 123.5;
     const C5 = 523, D5 = 587, E5 = 659, F5 = 698, G5 = 784, A5 = 880, E4 = 330, A4 = 440, B4 = 494, C4 = 262, D4 = 294, G4 = 392;
 
@@ -165,19 +209,28 @@ class Sfx {
       overworld: {
         bpm: 138,
         steps: [
-          [E5, C3], [0, 0], [G5, G3], [0, 0], [E5, C3], [C5, 0], [D5, G3], [E5, 0],
-          [F5, F3], [0, 0], [A5, C3], [0, 0], [G5, F3], [E5, 0], [D5, G3], [C5, 0],
-          [E5, A3], [0, 0], [G5, E3], [0, 0], [A5, A3], [G5, 0], [E5, E3], [C5, 0],
-          [D5, G3], [E5, 0], [D5, B2], [C5, 0], [C5, C3], [0, 0], [0, G3], [0, 0],
+          [523, 130.8], [0, 0], [784, 196], [0, 0], [523, 130.8], [523, 0], [587, 196], [523, 0],
+          [698, 174.6], [0, 0], [880, 130.8], [0, 0], [784, 174.6], [523, 0], [587, 196], [523, 0],
+          [523, 220], [0, 0], [784, 164.8], [0, 0], [880, 220], [784, 0], [523, 164.8], [523, 0],
+          [587, 196], [523, 0], [587, 123.5], [523, 0], [523, 130.8], [0, 0], [0, 196], [0, 0],
         ],
       },
       underground: {
         bpm: 112,
         steps: [
-          [A4, A3], [0, 0], [0, 0], [C5, 0], [0, A3], [0, 0], [B4, E3], [0, 0],
-          [A4, A3], [0, 0], [0, 0], [E4, 0], [0, A3], [0, 0], [G4, E3], [0, 0],
-          [F3 * 2, F3], [0, 0], [0, 0], [A4, 0], [0, F3], [0, 0], [G4, C3], [0, 0],
-          [E4, A3], [0, 0], [0, 0], [0, 0], [B4, E3], [0, 0], [A4, A3], [0, 0],
+          [440, 220], [0, 0], [0, 0], [523, 0], [0, 220], [0, 0], [494, 164.8], [0, 0],
+          [440, 220], [0, 0], [0, 0], [330, 0], [0, 220], [0, 0], [392, 164.8], [0, 0],
+          [174.6 * 2, 174.6], [0, 0], [0, 0], [440, 0], [0, 174.6], [0, 0], [392, 130.8], [0, 0],
+          [330, 220], [0, 0], [0, 0], [0, 0], [494, 164.8], [0, 0], [440, 220], [0, 0],
+        ],
+      },
+      title: {
+        bpm: 100,
+        steps: [
+          [262, 130.8], [0, 0], [330, 164.8], [0, 0], [392, 196], [0, 0], [523, 0],
+          [0, 0], [0, 0], [440, 220], [0, 0], [392, 196], [0, 0], [330, 164.8], [0, 0],
+          [262, 130.8], [0, 0], [330, 164.8], [0, 0], [392, 196], [0, 0], [523, 0],
+          [0, 0], [0, 0], [440, 220], [0, 0], [392, 196], [0, 0], [330, 164.8], [0, 0],
         ],
       },
     };
@@ -218,6 +271,38 @@ class Sfx {
       clearInterval(this.musicTimer);
       this.musicTimer = null;
     }
+    if (this.musicSource) {
+      this.musicSource.stop();
+      this.musicSource.disconnect();
+      this.musicSource = null;
+    }
+  }
+
+  /** Call this to preload an external music file.
+   * Usage: sfx.preloadMusic('graveyard-music', 'assets/audio/graveyard-music.ogg');
+   * Should be called during PreloadScene.preload() */
+  preloadMusic(key, url) {
+    if (!this.ctx) {
+      // Queue for later if context not ready
+      if (!this.pendingPreloads) this.pendingPreloads = [];
+      this.pendingPreloads.push({ key, url });
+      return;
+    }
+    this.loadAudioBuffer(key, url);
+  }
+
+  loadAudioBuffer(key, url) {
+    fetch(url)
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => this.ctx.decodeAudioData(arrayBuffer))
+      .then(audioBuffer => {
+        if (!this.ctx.audioCache) this.ctx.audioCache = {};
+        this.ctx.audioCache[key] = audioBuffer;
+        console.log(`[SFX] Loaded music: ${key}`);
+      })
+      .catch(err => {
+        console.warn(`[SFX] Failed to load music ${key}:`, err);
+      });
   }
 }
 

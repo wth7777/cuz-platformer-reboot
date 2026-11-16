@@ -1,6 +1,6 @@
 import { sparse, ground } from './builder.js';
 
-// Secret room for World 1-5 — coins AND a power-up block.
+// Secret room for World 1-5 — coins.
 
 const W = 40;
 const walls = (...stamps) => sparse(W, [0, 'XX'], [38, 'XX'], ...stamps);
@@ -21,9 +21,10 @@ export default {
     walls(), // r14
     walls(), // r15
     walls([9, 'cccccc'], [21, 'ccccc']), // r16
-    walls([12, 'M'], [18, 'BB']), // r17
+    // powerup block and bricks removed
     walls([8, 'PPPPPPPP'], [20, 'PPPPPP']), // r18
-    walls([33, 't']), // r19 — exit pipe
+    // exit pipe removed — crypt entrance instead
+    walls([33, '>']), // r19 — crypt entrance marker
     walls(), // r20
     walls([6, 'cccccccccccccccccccccc']), // r21
     walls([4, 'p']), // r22

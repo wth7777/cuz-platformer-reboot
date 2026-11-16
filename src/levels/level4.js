@@ -11,8 +11,8 @@ export default {
   next: 'level5',
   width: W,
   rows: [
-    // r13 — star above the upper brick deck
-    sparse(W, [113, 'S']),
+    // r13 — star above the upper brick deck (removed)
+    sparse(W),
     // r14 — coins; flag
     sparse(W, [70, 'cccc'], [221, 'F']),
     // r15 — upper brick deck
