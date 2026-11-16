@@ -9,12 +9,14 @@ import { GAME_ZOOM, TILE, ROWS, GAME_WIDTH, GAME_HEIGHT } from '../config.js';
 
 // ---- World ----
 
-// ---- Tile frame indices in the 'tiles' spritesheet ----
+// ---- Graveyard tile texture keys (created in PreloadScene) ----
 const T = {
-  PLATFORM_SINGLE: 76,
-  PLATFORM_LEFT: 77,
-  PLATFORM_MID: 78,
-  PLATFORM_RIGHT: 79,
+  // Platform pieces (18x18 scaled from 64x64 stone tiles)
+  PLATFORM_SINGLE: 'graveyard-platform-single',
+  PLATFORM_LEFT: 'graveyard-platform-left',
+  PLATFORM_MID: 'graveyard-platform-mid',
+  PLATFORM_RIGHT: 'graveyard-platform-right',
+  // Kenney spritesheet frames still used for: coins, blocks, decor, pipes, flag, door
   CLOUD_LEFT: 153,
   CLOUD_MID: 154,
   CLOUD_RIGHT: 155,
@@ -33,6 +35,8 @@ const T = {
   DOOR_TOP: 130,
   DOOR_BOTTOM: 150,
 };
+
+// Ground uses tileSprite with 'tex-graveyard-ground' (set in buildParallax for ground)
 
 const DECOR = { '>': T.SIGN_RIGHT, '*': T.BUSH, '^': T.PINE, '"': T.SPROUT, o: 145 /* snowman */ };
 
@@ -177,8 +181,8 @@ export default class GameScene extends Phaser.Scene {
           // merge the whole horizontal run into ONE body (no seams)
           const start = col;
           while (col < width && grid[row][col] === 'X') {
-            const frame = isFilled(row - 1, col) ? this.theme.terrainFill : this.theme.terrainTop;
-            this.add.image(col * TILE + TILE / 2, y, 'tiles', frame);
+            // Use graveyard ground texture for all solid ground tiles
+            this.add.image(col * TILE + TILE / 2, y, 'tex-graveyard-ground');
             col++;
           }
           const run = col - start;
@@ -187,9 +191,8 @@ export default class GameScene extends Phaser.Scene {
         }
 
         if (ch === 'x') {
-          // decorative terrain (castles etc.) — visual only, no body
-          const frame = isFilled(row - 1, col) ? this.theme.terrainFill : this.theme.terrainTop;
-          this.add.image(x, y, 'tiles', frame);
+          // decorative terrain — visual only, no body
+          this.add.image(x, y, 'tex-graveyard-ground');
           col++;
           continue;
         }
@@ -275,11 +278,11 @@ export default class GameScene extends Phaser.Scene {
   buildPlatform(startCol, run, row) {
     const y = row * TILE + TILE / 2;
     for (let i = 0; i < run; i++) {
-      let frame = T.PLATFORM_MID;
-      if (run === 1) frame = T.PLATFORM_SINGLE;
-      else if (i === 0) frame = T.PLATFORM_LEFT;
-      else if (i === run - 1) frame = T.PLATFORM_RIGHT;
-      this.add.image((startCol + i) * TILE + TILE / 2, y, 'tiles', frame);
+      let texKey = T.PLATFORM_MID;
+      if (run === 1) texKey = T.PLATFORM_SINGLE;
+      else if (i === 0) texKey = T.PLATFORM_LEFT;
+      else if (i === run - 1) texKey = T.PLATFORM_RIGHT;
+      this.add.image((startCol + i) * TILE + TILE / 2, y, texKey);
     }
     this.addSolid(startCol * TILE + (run * TILE) / 2, y, run * TILE, TILE);
   }

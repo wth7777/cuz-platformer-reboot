@@ -36,6 +36,9 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.atlas('player', 'assets/player/cousin-atlas.png', 'assets/player/cousin-atlas.json');
     this.load.atlas('zombie', 'assets/zombie/zombie-atlas.png', 'assets/zombie/zombie-atlas.json');
 
+    // --- Graveyard tileset (128x128 ground_dirt + 25x 64x64 platform_stone tiles)
+    this.load.atlas('graveyard-tiles', 'assets/graveyard/tiles.png', 'assets/graveyard/tiles.json');
+
     // --- Graveyard parallax background (single cohesive 1168x784 painting)
     this.load.image('graveyard-bg', 'assets/parallax-bg.jpg');
   }
@@ -65,6 +68,17 @@ export default class PreloadScene extends Phaser.Scene {
     spark.context.fillRect(0, 0, 4, 4);
     spark.refresh();
     this.makeRecoloredTexture('mushroom-1up', 'tiles', 128, (r, g, b) => [g, r, b]);
+
+    // --- Graveyard tile textures for terrain rendering
+    // Ground: 128x128 seamless dirt → scale 0.140625 (18/128) for 18px logical tile
+    this.makeScaledTilingTexture('tex-graveyard-ground', 'graveyard-tiles', 'ground_dirt', 18 / 128);
+
+    // Platforms: 64x64 stone tiles → scale 0.28125 (18/64) for 18px logical tile
+    // Create individual scaled textures for each platform piece we need
+    this.makeScaledTexture('graveyard-platform-single', 'graveyard-tiles', 'platform_stone_2_2', 18 / 64);
+    this.makeScaledTexture('graveyard-platform-left', 'graveyard-tiles', 'platform_stone_2_1', 18 / 64);
+    this.makeScaledTexture('graveyard-platform-mid', 'graveyard-tiles', 'platform_stone_2_2', 18 / 64);
+    this.makeScaledTexture('graveyard-platform-right', 'graveyard-tiles', 'platform_stone_2_3', 18 / 64);
 
     this.createAnimations();
 
@@ -108,6 +122,24 @@ export default class PreloadScene extends Phaser.Scene {
     }
 
     canvas.refresh(); // push the canvas pixels to the GPU texture
+  }
+
+  /** Creates a scaled tiling texture from an atlas frame for tileSprite use. */
+  makeScaledTilingTexture(destKey, srcKey, frameName, scale) {
+    const f = this.textures.getFrame(srcKey, frameName);
+    const canvas = this.textures.createCanvas(destKey, f.width * scale, f.height * scale);
+    const ctx = canvas.context;
+    ctx.drawImage(f.source.image, f.cutX, f.cutY, f.width, f.height, 0, 0, f.width * scale, f.height * scale);
+    canvas.refresh();
+  }
+
+  /** Creates a scaled standalone texture from an atlas frame. */
+  makeScaledTexture(destKey, srcKey, frameName, scale) {
+    const f = this.textures.getFrame(srcKey, frameName);
+    const canvas = this.textures.createCanvas(destKey, f.width * scale, f.height * scale);
+    const ctx = canvas.context;
+    ctx.drawImage(f.source.image, f.cutX, f.cutY, f.width, f.height, 0, 0, f.width * scale, f.height * scale);
+    canvas.refresh();
   }
 
   /** Copies a frame into a new texture, rewriting every pixel's colour. */
