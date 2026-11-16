@@ -42,8 +42,11 @@ const DECOR = {
 const STOMP_BOUNCE = -300;
 
 // Tattoo shop scale: frame is 384x256, target ~11 tiles (198px) tall
-// 256 * scale = 198 → scale ≈ 0.77, then reduced by 15% → 0.6545
-const TATTOO_SHOP_SCALE = 0.6545;
+// 256 * scale = 198 → scale ≈ 0.77, then reduced by 15% → 0.6545, then another 5% → 0.6218
+const TATTOO_SHOP_SCALE = 0.6218;
+
+// Vertical adjustment to align artwork bottom with ground (compensate for transparent padding in frame)
+const TATTOO_SHOP_Y_OFFSET = 3;
 
 // ---- Fireballs ----
 const FIREBALL_SPEED = 300;
@@ -303,7 +306,7 @@ export default class GameScene extends Phaser.Scene {
     const x = col * TILE + TILE / 2;
 
     // Tattoo shop sprite (animated) - origin at bottom center so feet sit on ground
-    this.tattooShopSprite = this.add.sprite(x, bottomRow * TILE, 'tattooshop', 'frame_0')
+    this.tattooShopSprite = this.add.sprite(x, bottomRow * TILE + TATTOO_SHOP_Y_OFFSET, 'tattooshop', 'frame_0')
       .setOrigin(0.5, 1)
       .setScale(TATTOO_SHOP_SCALE)
       .setDepth(5);
