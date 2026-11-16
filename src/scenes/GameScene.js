@@ -104,16 +104,30 @@ export default class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, this.worldWidth, GAME_HEIGHT, true, true, true, false);
 
     this.parseGrid();
-    this.spawnPlayer();
+        this.spawnPlayer();
 
-    // === TEMPORARY TEST SPAWN — Zombie only (Phase 3) ===
-    // Spawn one zombie near the player for isolated testing.
-    // Ground is at row 24 (feetY = 432). Spawn in air, gravity drops it.
-    const TEST_ENEMY_Y = 100;
-    this.enemies.add(new Zombie(this, 150, TEST_ENEMY_Y, 'test_zombie_1'));
-    // === END TEMPORARY TEST SPAWN ===
+        // === DIAGNOSTIC TEST: Player and Zombie side by side on same tile ===
+        // Spawn zombie at a fixed position next to player on the same ground tile
+        const DIAG_SPAWN_X = 200; // same ground as player (spawnCol=3 -> x≈63)
+        const DIAG_SPAWN_Y = 100; // drop from air onto ground
+        const diagZombie = new Zombie(this, DIAG_SPAWN_X, DIAG_SPAWN_Y, 'diag_zombie');
+                this.enemies.add(diagZombie);
 
-    this.setupInput();
+                // Freeze zombie after it lands
+                this.time.delayedCall(1500, () => {
+                  if (diagZombie && diagZombie.body) {
+                    diagZombie.body.moves = false;
+                    diagZombie.body.setVelocity(0, 0);
+                  }
+                });
+                // === END DIAGNOSTIC TEST ===
+
+                this.setupInput();
+        this._diagGfx = this.add.graphics({ lineStyle: { width: 2, color: 0xffff00, alpha: 1 } });
+        this._diagGfx.setDepth(1000);
+        // === END DIAGNOSTIC DEBUG GRAPHICS ===
+
+        this.setupInput();
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, this.worldWidth, GAME_HEIGHT);
@@ -949,5 +963,67 @@ export default class GameScene extends Phaser.Scene {
         enemy.destroy();
       }
     });
+
+    // === DIAGNOSTIC DEBUG RENDERING ===
+    if (this._diagGfx) {
+      this._diagGfx.clear();
+      const cam = this.cameras.main;
+      const screenX = (obj) => obj.x - cam.scrollX;
+
+      // Ground surface (green) - top of first solid tile
+      const groundY = this.solids.length > 0 ? this.solids[0].body.top : null;
+      if (groundY !== null) {
+        this._diagGfx.lineStyle(2, 0x00ff00, 1);
+        this._diagGfx.lineBetween(0, groundY - cam.scrollY, GAME_WIDTH, groundY - cam.scrollY);
+      }
+
+      // Player
+      if (this.player && this.player.body) {
+        const p = this.player;
+        const px = screenX(p);
+        const py = p.y - cam.scrollY;
+        const ph = p.displayHeight;
+        const pw = p.displayWidth;
+        const pb = p.body;
+
+        // Sprite bounds (yellow)
+        this._diagGfx.lineStyle(2, 0xffff00, 1);
+        this._diagGfx.strokeRect(px - pw / 2, py - ph / 2, pw, ph);
+
+        // Physics body (cyan)
+        this._diagGfx.lineStyle(2, 0x00ffff, 1);
+        this._diagGfx.strokeRect(px - pb.halfWidth, pb.top - cam.scrollY, pb.width, pb.height);
+
+        // Visual feet line (red)
+        this._diagGfx.lineStyle(2, 0xff0000, 1);
+        const visualFeetY = py + ph / 2;
+        this._diagGfx.lineBetween(px - 20, visualFeetY, px + 20, visualFeetY);
+      }
+
+      // Zombie (first enemy)
+      const zombie = this.enemies.getChildren()[0];
+      if (zombie && zombie.body) {
+        const z = zombie;
+        const zx = screenX(z);
+        const zy = z.y - cam.scrollY;
+        const zh = z.displayHeight;
+        const zw = z.displayWidth;
+        const zb = z.body;
+
+        // Sprite bounds (magenta)
+        this._diagGfx.lineStyle(2, 0xff00ff, 1);
+        this._diagGfx.strokeRect(zx - zw / 2, zy - zh / 2, zw, zh);
+
+        // Physics body (orange)
+        this._diagGfx.lineStyle(2, 0xffa500, 1);
+        this._diagGfx.strokeRect(zx - zb.halfWidth, zb.top - cam.scrollY, zb.width, zb.height);
+
+        // Visual feet line (red)
+        this._diagGfx.lineStyle(2, 0xff0000, 1);
+        const zVisualFeetY = zy + zh / 2;
+        this._diagGfx.lineBetween(zx - 20, zVisualFeetY, zx + 20, zVisualFeetY);
+      }
+    }
+    // === END DIAGNOSTIC DEBUG RENDERING ===
   }
 }
