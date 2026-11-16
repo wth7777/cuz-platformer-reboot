@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sfx } from '../audio/sfx.js';
 
 const TILEMAP_DIR = 'assets/kenney_pixel-platformer/Tilemap';
 
