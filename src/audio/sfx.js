@@ -14,6 +14,7 @@ class Sfx {
     this.musicLoop = false;
     this.muted = false;
     this.currentMusicKind = null; // Track what's actually playing
+    this.musicRequestId = 0; // Incremented on each startMusic call
 
     try {
       this.muted = localStorage.getItem(MUTE_KEY) === '1';
@@ -32,6 +33,12 @@ class Sfx {
       if (this.pendingPreloads) {
         this.pendingPreloads.forEach(({ key, url }) => this.loadAudioBuffer(key, url));
         this.pendingPreloads = null;
+      }
+      // Process pending music request
+      if (this.pendingMusic) {
+        const kind = this.pendingMusic;
+        this.pendingMusic = null;
+        this.startMusic(kind);
       }
     };
     window.addEventListener('pointerdown', unlock, { once: true });
@@ -178,9 +185,15 @@ class Sfx {
     // Ensure audio context exists
     if (!this.ctx) {
       this.ensure();
-      if (!this.ctx) return; // No Web Audio support
+      if (!this.ctx) {
+        this.pendingMusic = kind; // Will start on first user gesture
+        return;
+      }
     }
     this.ensure();
+
+    // Increment request ID - this marks a new authoritative request
+    const requestId = ++this.musicRequestId;
 
     // If same music is already playing, do nothing
     if (this.currentMusicKind === kind && this.musicSource) {
@@ -216,6 +229,13 @@ class Sfx {
       } catch (err) {
         console.warn(`[SFX] Failed to load music ${audioKey}:`, err);
       }
+    }
+
+    // CRITICAL: Check if this request is still the most recent one
+    // If a newer startMusic call happened, abort and don't play
+    if (requestId !== this.musicRequestId) {
+      console.log(`[SFX] Ignoring stale music load for ${kind} (request ${requestId}, current ${this.musicRequestId})`);
+      return;
     }
 
     // If we got a buffer, play it and track what's playing
