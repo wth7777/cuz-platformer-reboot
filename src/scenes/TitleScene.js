@@ -110,9 +110,6 @@ export default class TitleScene extends Phaser.Scene {
     this.input.keyboard.once('keydown-SPACE', start);
     this.input.keyboard.once('keydown-ENTER', start);
     this.input.once('pointerdown', start);
-
-    // Start title music immediately (will play on first user gesture via unlock)
-    sfx.startMusic('title');
   }
 
   update() {
