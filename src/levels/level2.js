@@ -34,7 +34,7 @@ export default {
     // r13 — final climb top platform
     sparse(W, [146, 'PPPPP']),
     // r14 — entry climb top; coins; upper bricks; tattoo shop
-    sparse(W, [28, 'PPPPP'], [69, 'cccc'], [84, 'BBBB'], [188, 'T']),
+    sparse(W, [28, 'PPPPP'], [69, 'cccc'], [84, 'BBBB'], [188, 'K']),
     // r15 — coins over entry climb
     sparse(W, [21, 'ccc']),
     // r16 — entry climb mid; wall-top platform; final climb mid

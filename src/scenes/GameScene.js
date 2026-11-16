@@ -42,8 +42,8 @@ const DECOR = {
 const STOMP_BOUNCE = -300;
 
 // Tattoo shop scale: frame is 384x256, target ~11 tiles (198px) tall
-// 256 * scale = 198 → scale ≈ 0.77
-const TATTOO_SHOP_SCALE = 0.77;
+// 256 * scale = 198 → scale ≈ 0.77, then reduced by 15% → 0.6545
+const TATTOO_SHOP_SCALE = 0.6545;
 
 // ---- Fireballs ----
 const FIREBALL_SPEED = 300;
@@ -224,14 +224,14 @@ export default class GameScene extends Phaser.Scene {
           }
           case 'e':
             // TEMPORARILY DISABLED for Phase 3 isolated zombie test
-            // if (!gone) this.enemies.add(new Walker(this, x, y, key));
+            // if (!gone) this.enemies.add(new Walker(this, x, y, key))
             break;
           case 'p':
             this.spawnCol = col;
             this.spawnRow = row; // floor is searched from HERE down (rooms have ceilings!)
             break;
           // Pipes removed: T, t
-          case 'T':
+          case 'K':
             this.buildTattooShop(col, row);
             break;
           case 'd':

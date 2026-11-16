@@ -14,7 +14,7 @@ export default {
     // r13 — star above the upper brick deck (removed)
     sparse(W),
     // r14 — coins; tattoo shop
-    sparse(W, [70, 'cccc'], [221, 'T']),
+    sparse(W, [70, 'cccc'], [221, 'K']),
     // r15 — upper brick deck
     sparse(W, [112, 'BBBB']),
     // r16 — coins above the platforms

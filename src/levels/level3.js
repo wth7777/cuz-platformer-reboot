@@ -14,7 +14,7 @@ export default {
     // r13 — star above the high route (removed)
     sparse(W),
     // r14 — tattoo shop
-    sparse(W, [248, 'T']),
+    sparse(W, [248, 'K']),
     // r15 — coins above the high platforms
     sparse(W, [63, 'ccc'], [97, 'ccc'], [181, 'cccc']),
     // r16
