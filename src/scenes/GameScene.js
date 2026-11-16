@@ -104,30 +104,9 @@ export default class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, this.worldWidth, GAME_HEIGHT, true, true, true, false);
 
     this.parseGrid();
-        this.spawnPlayer();
+    this.spawnPlayer();
 
-        // === DIAGNOSTIC TEST: Player and Zombie side by side on same tile ===
-        // Spawn zombie at a fixed position next to player on the same ground tile
-        const DIAG_SPAWN_X = 200; // same ground as player (spawnCol=3 -> x≈63)
-        const DIAG_SPAWN_Y = 100; // drop from air onto ground
-        const diagZombie = new Zombie(this, DIAG_SPAWN_X, DIAG_SPAWN_Y, 'diag_zombie');
-                this.enemies.add(diagZombie);
-
-                // Freeze zombie after it lands
-                this.time.delayedCall(1500, () => {
-                  if (diagZombie && diagZombie.body) {
-                    diagZombie.body.moves = false;
-                    diagZombie.body.setVelocity(0, 0);
-                  }
-                });
-                // === END DIAGNOSTIC TEST ===
-
-                this.setupInput();
-        this._diagGfx = this.add.graphics({ lineStyle: { width: 2, color: 0xffff00, alpha: 1 } });
-        this._diagGfx.setDepth(1000);
-        // === END DIAGNOSTIC DEBUG GRAPHICS ===
-
-        this.setupInput();
+    this.setupInput();
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, this.worldWidth, GAME_HEIGHT);
@@ -388,7 +367,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Cousin has center origin (0.5, 0.5). Visual feet at sprite.y + 25.0.
     // Spawn with sprite.y = feetY - 25.0 so visual feet rest on ground top.
-        this.player = new Player(this, col * TILE + TILE / 2, feetY - 25.0);
+    this.player = new Player(this, col * TILE + TILE / 2, feetY - 25.0);
     // icy themes have less friction — the classic slide
     if (this.theme.dragFactor) this.player.setDragFactor(this.theme.dragFactor);
 
@@ -963,77 +942,5 @@ export default class GameScene extends Phaser.Scene {
         enemy.destroy();
       }
     });
-
-    // === DIAGNOSTIC DEBUG RENDERING ===
-        if (this._diagGfx) {
-          this._diagGfx.clear();
-
-          // Ground collision surface (green) - BOTTOM of first solid tile (collision surface)
-          const groundBody = this.solids.length > 0 ? this.solids[0].body : null;
-          const groundCollisionY = groundBody ? groundBody.bottom : null;
-          const groundVisualTop = groundBody ? groundBody.top : null;
-          if (groundCollisionY !== null) {
-            // Collision surface (green) - where bodies actually land
-            this._diagGfx.lineStyle(2, 0x00ff00, 2);
-            this._diagGfx.lineBetween(0, groundCollisionY, GAME_WIDTH, groundCollisionY);
-            // Tile visual top (dim green) - for reference
-            if (groundVisualTop !== null) {
-              this._diagGfx.lineStyle(1, 0x00ff00, 0.5);
-              this._diagGfx.lineBetween(0, groundVisualTop, GAME_WIDTH, groundVisualTop);
-            }
-          }
-
-          // Player
-          if (this.player && this.player.body) {
-            const p = this.player;
-            const ph = p.displayHeight;
-            const pw = p.displayWidth;
-            const pb = p.body;
-
-            // Sprite bounds (yellow)
-            this._diagGfx.lineStyle(2, 0xffff00, 2);
-            this._diagGfx.strokeRect(p.x - pw / 2, p.y - ph / 2, pw, ph);
-
-            // Physics body (cyan)
-            this._diagGfx.lineStyle(2, 0x00ffff, 2);
-            this._diagGfx.strokeRect(pb.left, pb.top, pb.width, pb.height);
-
-            // Visual feet line (red) - bottom of sprite
-            this._diagGfx.lineStyle(2, 0xff0000, 2);
-            const visualFeetY = p.y + ph / 2;
-            this._diagGfx.lineBetween(p.x - 20, visualFeetY, p.x + 20, visualFeetY);
-
-            // Body bottom line (cyan) - where physics body actually ends
-            this._diagGfx.lineStyle(1, 0x00ffff, 0.5);
-            this._diagGfx.lineBetween(p.x - 20, pb.bottom, p.x + 20, pb.bottom);
-          }
-
-          // Zombie (first enemy)
-          const zombie = this.enemies.getChildren()[0];
-          if (zombie && zombie.body) {
-            const z = zombie;
-            const zh = z.displayHeight;
-            const zw = z.displayWidth;
-            const zb = z.body;
-
-            // Sprite bounds (magenta)
-            this._diagGfx.lineStyle(2, 0xff00ff, 2);
-            this._diagGfx.strokeRect(z.x - zw / 2, z.y - zh / 2, zw, zh);
-
-            // Physics body (orange)
-            this._diagGfx.lineStyle(2, 0xffa500, 2);
-            this._diagGfx.strokeRect(zb.left, zb.top, zb.width, zb.height);
-
-            // Visual feet line (red)
-            this._diagGfx.lineStyle(2, 0xff0000, 2);
-            const zVisualFeetY = z.y + zh / 2;
-            this._diagGfx.lineBetween(z.x - 20, zVisualFeetY, z.x + 20, zVisualFeetY);
-
-            // Body bottom line (orange)
-            this._diagGfx.lineStyle(1, 0xffa500, 0.5);
-            this._diagGfx.lineBetween(z.x - 20, zb.bottom, z.x + 20, zb.bottom);
-          }
-        }
-        // === END DIAGNOSTIC DEBUG RENDERING ===
   }
 }
