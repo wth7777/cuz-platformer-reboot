@@ -146,9 +146,9 @@ export default class GameScene extends Phaser.Scene {
       const playerFeetY = this.player.y + 25.0; // player visual feet Y
       const groundRow = this.findFloorRow(Math.floor((this.player.x + 600) / TILE));
       const groundY = groundRow * TILE;
-      // Goblin displayHeight = 268 * 0.25 = 67, feet ~22 below center (similar to lava)
+      // Goblin displayHeight = 268 * 0.25 = 67, idle frame_0 feet at y=244 (23px padding), 110px from center * 0.25 = 27.5px
       const testGoblinX = this.player.x + 600;
-      const testGoblinY = groundY - 22.0;
+      const testGoblinY = groundY - 27.5;
       console.log('[GameScene] TEST: Spawning test goblin at', { x: testGoblinX, y: testGoblinY, groundRow, groundY, playerX: this.player.x, playerFeetY });
       window.__gameSceneTestGoblinSpawned = true;
       this.enemies.add(new GoblinBoss(this, testGoblinX, testGoblinY, 'test_goblin_direct'));
@@ -728,6 +728,69 @@ export default class GameScene extends Phaser.Scene {
     p.makeInvulnerable();
     // For now, cousin has no power states - one hit = death
     // But with invulnerability frames to prevent instant re-death
+    this.killPlayer();
+  }
+
+  /**
+   * Hurt player with knockback from long-range attacks.
+   * Shows hit flash, applies knockback, shows damage number.
+   * @param {number} attackerX - X position of attacker for knockback direction
+   * @param {boolean} isSuper - whether this is a super attack (stronger knockback)
+   */
+  hurtPlayerWithKnockback(attackerX, isSuper = false) {
+    const p = this.player;
+    if (p.isDead || p.invulnerable || this.autoPhase) return;
+    p.makeInvulnerable();
+    
+    // Direction: away from attacker
+    const dir = p.x < attackerX ? -1 : 1;
+    
+    // Stronger knockback for super attacks
+    const knockbackX = isSuper ? dir * 400 : dir * 300;
+    const knockbackY = isSuper ? -350 : -250;
+    
+    // Apply knockback
+    p.body.setVelocity(knockbackX, knockbackY);
+    
+    // Visual feedback: hit flash
+    const flash = this.add.sprite(p.x, p.y, 'hit-flash')
+      .setScale(p.displayWidth / 32, p.displayHeight / 32)
+      .setDepth(10)
+      .setAlpha(0.8);
+    this.scene.tweens.add({
+      targets: flash,
+      alpha: 0,
+      scale: 1.5,
+      duration: 200,
+      ease: 'Power2',
+      onComplete: () => flash.destroy(),
+    });
+    
+    // Screen shake
+    this.cameras.main.shake(150, 0.008);
+    
+    // Sound
+    sfx.play('hurt');
+    
+    // Damage number (optional - shows "HIT")
+    const dmgText = this.add.text(p.x, p.y - 30, 'HIT!', {
+      fontFamily: 'monospace',
+      fontSize: '16px',
+      fontStyle: 'bold',
+      color: '#ff4444',
+      stroke: '#000000',
+      strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(10);
+    this.tweens.add({
+      targets: dmgText,
+      y: p.y - 60,
+      alpha: 0,
+      duration: 800,
+      ease: 'Power2',
+      onComplete: () => dmgText.destroy(),
+    });
+    
+    // Kill player (one hit = death for now)
     this.killPlayer();
   }
 

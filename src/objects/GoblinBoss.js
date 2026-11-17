@@ -27,7 +27,10 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     // Body: effective 28x24, centered horizontally, feet aligned with visual feet
     // Visual feet alignment: match wolf/lava feet offset
     this.body.setSize(28 / 0.25, 24 / 0.25); // effective 28x24
-    this.body.setOffset(110, 110); // center horizontally, align feet
+    // Body offset Y: visual feet at 27.5px below center (110px from texture center * 0.25)
+    // Body height 24px -> body bottom = center_y + 12. Want body bottom = 27.5.
+    // offset_y * 0.25 + 12 = 27.5 => offset_y = 15.5 / 0.25 = 62
+    this.body.setOffset(110, 62); // center horizontally, align feet to visual feet
     this.setDepth(1);
     this.setCollideWorldBounds(true);
     this.setScale(0.25);
@@ -57,6 +60,11 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     this.ATTACK_COOLDOWN = 3000; // ms between attacks
     this.SUPER_ATTACK_COOLDOWN = 6000; // ms between super attacks
     this.HEALTH = 6; // contact damage health
+
+    // Super attack timing
+    this.SUPER_ATTACK_WARN_TIME = 800; // ms warning before projectile fires
+    this.SUPER_ATTACK_PROJECTILE_SPEED = 350;
+    this.SUPER_ATTACK_PROJECTILE_RANGE = this.SUPER_ATTACK_RANGE + 50;
 
     // Play idle animation if available
     if (this.scene.anims.exists('goblin-idle')) {
@@ -220,7 +228,7 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
         const distX = Math.abs(player.x - this.x);
         const distY = Math.abs(player.y - this.y);
         if (distX < this.ATTACK_RANGE + 15 && distY < 45) {
-          this.scene.hurtPlayer();
+          this.scene.hurtPlayerWithKnockback(this.x);
         }
       }
       // Return to walk after attack animation
@@ -239,24 +247,173 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     this.isSuperAttacking = true;
     this.superAttackCooldown = this.SUPER_ATTACK_COOLDOWN;
     this.setVelocityX(0);
+    
     if (this.scene.anims.exists('goblin-super-attack')) {
       this.play('goblin-super-attack');
     }
-    // Super attack creates a larger hazard zone
-    this.scene.time.delayedCall(400, () => {
+
+    // Play warning sound
+    sfx.play('hurt');
+
+    const player = this.scene.player;
+    const towardPlayer = player.x > this.x ? 1 : -1;
+
+    // 1. Show warning ring at goblin's position (charge-up)
+    const warningRing = this.scene.add.sprite(this.x, this.y - 20, 'goblin-warning-ring')
+      .setScale(0.5)
+      .setDepth(5);
+    this.scene.tweens.add({
+      targets: warningRing,
+      scale: 2.5,
+      alpha: 0,
+      duration: this.SUPER_ATTACK_WARN_TIME,
+      ease: 'Power2',
+      onComplete: () => warningRing.destroy(),
+    });
+
+    // 2. Show warning crack at player's position (target indicator)
+    const targetX = player.x;
+    const targetCrack = this.scene.add.sprite(targetX, player.y + 10, 'goblin-warning-ring')
+      .setScale(0.3)
+      .setDepth(5)
+      .setTint(0xff8800);
+    this.scene.tweens.add({
+      targets: targetCrack,
+      scale: 1.5,
+      alpha: { from: 1, to: 0 },
+      duration: this.SUPER_ATTACK_WARN_TIME,
+      ease: 'Power2',
+      onComplete: () => targetCrack.destroy(),
+    });
+
+    // 3. After warning, fire projectile
+    this.scene.time.delayedCall(this.SUPER_ATTACK_WARN_TIME, () => {
+      if (this.isDead || this.isSquashed) return;
+      
+      // Fire projectile toward player
+      const projX = this.x + towardPlayer * 30;
+      const projY = this.y - 10;
+      const projectile = this.scene.add.sprite(projX, projY, 'goblin-projectile')
+        .setScale(1.2)
+        .setDepth(5);
+      
+      this.scene.physics.add.existing(projectile);
+      projectile.body.setCircle(12);
+      projectile.body.setAllowGravity(false);
+      projectile.body.setVelocity(towardPlayer * this.SUPER_ATTACK_PROJECTILE_SPEED, 0);
+      
+      // Add rotation for visual effect
+      this.scene.tweens.add({
+        targets: projectile,
+        angle: towardPlayer * 720,
+        duration: 1000,
+        repeat: -1,
+        ease: 'Linear',
+      });
+
+      // Trail particles
+      const trailEmitter = this.scene.add.particles(projX, projY, 'spark', {
+        speed: 20,
+        lifespan: 300,
+        scale: { start: 0.8, end: 0 },
+        tint: 0xff8800,
+        emitting: false,
+      });
+      this.scene.time.addEvent({
+        delay: 30,
+        repeat: 20,
+        callback: () => {
+          if (projectile.active) {
+            trailEmitter.emitParticleAt(projectile.x, projectile.y);
+          } else {
+            trailEmitter.destroy();
+          }
+        },
+      });
+
+      // Check collision with player
+      const checkHit = () => {
+        if (!projectile.active || this.isDead || this.isSquashed) {
+          if (trailEmitter) trailEmitter.destroy();
+          return;
+        }
+        const player = this.scene.player;
+        if (player && !player.isDead) {
+          const distX = Math.abs(player.x - projectile.x);
+          const distY = Math.abs(player.y - projectile.y);
+          if (distX < 30 && distY < 40) {
+            this.onSuperAttackHit(player, projectile);
+            return;
+          }
+        }
+        // Check range
+        if (Math.abs(projectile.x - this.x) > this.SUPER_ATTACK_PROJECTILE_RANGE) {
+          projectile.destroy();
+          if (trailEmitter) trailEmitter.destroy();
+          return;
+        }
+        this.scene.time.delayedCall(50, checkHit);
+      };
+      checkHit();
+    });
+  }
+
+  onSuperAttackHit(player, projectile) {
+    // Destroy projectile
+    projectile.destroy();
+    
+    // Impact effect at player position
+    const impact = this.scene.add.sprite(player.x, player.y - 20, 'goblin-projectile')
+      .setScale(2)
+      .setDepth(10);
+    this.scene.tweens.add({
+      targets: impact,
+      scale: 3,
+      alpha: 0,
+      duration: 300,
+      ease: 'Power2',
+      onComplete: () => impact.destroy(),
+    });
+
+    // Screen shake
+    this.scene.cameras.main.shake(200, 0.01);
+
+    // Damage player with knockback
+    this.scene.hurtPlayerWithKnockback(this.x, true); // true = super attack
+
+    // Return to walk after super attack animation
+    this.scene.time.delayedCall(900, () => {
+      if (!this.isDead && !this.isSquashed) {
+        this.isSuperAttacking = false;
+        if (this.scene.anims.exists('goblin-walk')) {
+          this.play('goblin-walk');
+        }
+      }
+    });
+  }
+
+  startAttack() {
+    this.isAttacking = true;
+    this.attackCooldown = this.ATTACK_COOLDOWN;
+    this.setVelocityX(0);
+    if (this.scene.anims.exists('goblin-attack')) {
+      this.play('goblin-attack');
+    }
+    // Attack hitbox check after a short delay
+    this.scene.time.delayedCall(300, () => {
       if (this.isDead || this.isSquashed) return;
       const player = this.scene.player;
       if (player && !player.isDead) {
         const distX = Math.abs(player.x - this.x);
         const distY = Math.abs(player.y - this.y);
-        if (distX < this.SUPER_ATTACK_RANGE + 25 && distY < 60) {
-          this.scene.hurtPlayer();
+        if (distX < this.ATTACK_RANGE + 15 && distY < 45) {
+          this.scene.hurtPlayerWithKnockback(this.x);
         }
       }
-      // Return to walk after super attack animation
-      this.scene.time.delayedCall(900, () => {
+      // Return to walk after attack animation
+      this.scene.time.delayedCall(700, () => {
         if (!this.isDead && !this.isSquashed) {
-          this.isSuperAttacking = false;
+          this.isAttacking = false;
           if (this.scene.anims.exists('goblin-walk')) {
             this.play('goblin-walk');
           }

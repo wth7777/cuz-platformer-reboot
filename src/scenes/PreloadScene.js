@@ -93,6 +93,16 @@ export default class PreloadScene extends Phaser.Scene {
     spark.refresh();
     this.makeRecoloredTexture('mushroom-1up', 'tiles', 128, (r, g, b) => [g, r, b]);
 
+    // --- Attack effect textures ---
+    // Goblin super attack: warning ring + projectile
+    this.makeWarningRingTexture();
+    this.makeGoblinProjectileTexture();
+    // Lava eruption: warning crack + lava splash
+    this.makeLavaWarningTexture();
+    this.makeLavaSplashTexture();
+    // Player hit effects
+    this.makeHitFlashTexture();
+
     // --- Graveyard terrain: from graveyard-tiles atlas
     // Ground: ground_dirt (128x128) → scale 18/128 = 0.140625 for 18px logical tile
     const GROUND_SCALE = 18 / 128;
@@ -145,6 +155,168 @@ export default class PreloadScene extends Phaser.Scene {
       ctx.putImageData(img, 0, 0);
     }
 
+    canvas.refresh();
+  }
+
+  makeScaledTilingTexture(destKey, srcKey, frameName, scale) {
+    const f = this.textures.getFrame(srcKey, frameName);
+    const canvas = this.textures.createCanvas(destKey, f.width * scale, f.height * scale);
+    const ctx = canvas.context;
+    ctx.drawImage(f.source.image, f.cutX, f.cutY, f.width, f.height, 0, 0, f.width * scale, f.height * scale);
+    canvas.refresh();
+  }
+
+  makeScaledTexture(destKey, srcKey, frameName, scale) {
+    const f = this.textures.getFrame(srcKey, frameName);
+    const canvas = this.textures.createCanvas(destKey, f.width * scale, f.height * scale);
+    const ctx = canvas.context;
+    ctx.drawImage(f.source.image, f.cutX, f.cutY, f.width, f.height, 0, 0, f.width * scale, f.height * scale);
+    canvas.refresh();
+  }
+
+  makeRecoloredTexture(destKey, srcKey, frameIndex, transform) {
+    const f = this.textures.getFrame(srcKey, frameIndex);
+    const canvas = this.textures.createCanvas(destKey, f.width, f.height);
+    const ctx = canvas.context;
+    ctx.drawImage(f.source.image, f.cutX, f.cutY, f.width, f.height, 0, 0, f.width, f.height);
+
+    const img = ctx.getImageData(0, 0, f.width, f.height);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] === 0) continue;
+      const [r, g, b] = transform(d[i], d[i + 1], d[i + 2]);
+      d[i] = r;
+      d[i + 1] = g;
+      d[i + 2] = b;
+    }
+    ctx.putImageData(img, 0, 0);
+    canvas.refresh();
+  }
+
+  makeFireballTexture() {
+    const size = 10;
+    const canvas = this.textures.createCanvas('fireball', size, size);
+    const ctx = canvas.context;
+    ctx.fillStyle = '#d83b0c';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ff9b1c';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, 3.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffe45c';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    canvas.refresh();
+  }
+
+  // --- Attack effect textures ---
+
+  makeWarningRingTexture() {
+    // Warning ring for Goblin super attack - expanding ring
+    const size = 64;
+    const canvas = this.textures.createCanvas('goblin-warning-ring', size, size);
+    const ctx = canvas.context;
+    // Outer ring (warning yellow/orange)
+    ctx.strokeStyle = '#ffaa00';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.stroke();
+    // Inner ring (danger red)
+    ctx.strokeStyle = '#ff3300';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 8, 0, Math.PI * 2);
+    ctx.stroke();
+    canvas.refresh();
+  }
+
+  makeGoblinProjectileTexture() {
+    // Goblin super attack projectile - skull-like energy ball
+    const size = 32;
+    const canvas = this.textures.createCanvas('goblin-projectile', size, size);
+    const ctx = canvas.context;
+    // Outer glow
+    const gradient = ctx.createRadialGradient(size / 2, size / 2, 2, size / 2, size / 2, size / 2);
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(0.3, '#ff8800');
+    gradient.addColorStop(0.6, '#ff4400');
+    gradient.addColorStop(1, '#aa0000');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+    ctx.fill();
+    // Core
+    ctx.fillStyle = '#ffff88';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+    canvas.refresh();
+  }
+
+  makeLavaWarningTexture() {
+    // Warning crack for Lava eruption - ground cracks
+    const size = 64;
+    const canvas = this.textures.createCanvas('lava-warning-crack', size, size);
+    const ctx = canvas.context;
+    ctx.strokeStyle = '#ff6600';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    // Main crack
+    ctx.beginPath();
+    ctx.moveTo(size / 2, 4);
+    ctx.lineTo(size / 2 + 8, size / 2 - 10);
+    ctx.lineTo(size / 2 - 4, size - 4);
+    ctx.stroke();
+    // Branch
+    ctx.beginPath();
+    ctx.moveTo(size / 2, size / 3);
+    ctx.lineTo(size / 2 + 12, size / 3 + 8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(size / 2, size / 3);
+    ctx.lineTo(size / 2 - 10, size / 3 + 12);
+    ctx.stroke();
+    canvas.refresh();
+  }
+
+  makeLavaSplashTexture() {
+    // Lava eruption splash - upward lava burst
+    const size = 64;
+    const canvas = this.textures.createCanvas('lava-splash', size, size);
+    const ctx = canvas.context;
+    // Main lava burst (orange/red gradient)
+    const gradient = ctx.createRadialGradient(size / 2, size - 10, 5, size / 2, size / 2, size / 2);
+    gradient.addColorStop(0, '#ffff66');
+    gradient.addColorStop(0.3, '#ffaa00');
+    gradient.addColorStop(0.6, '#ff4400');
+    gradient.addColorStop(1, '#880000');
+    ctx.fillStyle = gradient;
+    // Splash shape
+    ctx.beginPath();
+    ctx.moveTo(size / 2, size - 4);
+    ctx.bezierCurveTo(size / 2 - 20, size / 2, size / 2 - 25, 10, size / 2, 4);
+    ctx.bezierCurveTo(size / 2 + 25, 10, size / 2 + 20, size / 2, size / 2, size - 4);
+    ctx.closePath();
+    ctx.fill();
+    // Inner glow
+    ctx.fillStyle = '#ffff88';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 3, 8, 0, Math.PI * 2);
+    ctx.fill();
+    canvas.refresh();
+  }
+
+  makeHitFlashTexture() {
+    // Player hit flash - white flash overlay
+    const size = 32;
+    const canvas = this.textures.createCanvas('hit-flash', size, size);
+    const ctx = canvas.context;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
     canvas.refresh();
   }
 
