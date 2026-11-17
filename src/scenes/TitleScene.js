@@ -117,14 +117,9 @@ export default class TitleScene extends Phaser.Scene {
     this.input.keyboard.once('keydown-SPACE', start);
     this.input.keyboard.once('keydown-ENTER', start);
     this.input.keyboard.once('keydown-L', startLevel3);  // TEMP: L key jumps to level 3
-    // TEMP: Right-click or double-click starts level 3
-    this.input.on('pointerdown', (pointer) => {
-      if (pointer.rightButtonDown() || (pointer.getDuration() < 200 && pointer.getDistance() < 10)) {
-        startLevel3();
-      } else {
-        start();
-      }
-    });
+    // TEMP: Auto-start level 3 after 3 seconds for debugging
+    this.time.delayedCall(3000, startLevel3);
+    this.input.once('pointerdown', start);
 
     // Start title music on first user gesture (handled by sfx unlock)
     sfx.startMusic('title');
