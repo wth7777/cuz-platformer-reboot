@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sfx } from '../audio/sfx.js';
 
 // Goblin Boss enemy using supplied custom artwork (20 frames, 308x268 each).
 // Idle: frames 0-3 (4-frame subtle idle)
@@ -66,6 +67,10 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     this.SUPER_ATTACK_PROJECTILE_SPEED = 350;
     this.SUPER_ATTACK_PROJECTILE_RANGE = this.SUPER_ATTACK_RANGE + 50;
 
+    // Track active attack timers/tweens for cleanup
+    this._attackTimers = [];
+    this._attackTweens = [];
+
     // Play idle animation if available
     if (this.scene.anims.exists('goblin-idle')) {
       this.play('goblin-idle');
@@ -75,6 +80,30 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
       if (!window.__goblinDebug) window.__goblinDebug = [];
       window.__goblinDebug.push({ error: 'goblin-idle animation NOT found', time: Date.now() });
     }
+  }
+
+  /** Add a timer that will be cleaned up on death/attack end */
+  _addTimer(timer) {
+    this._attackTimers.push(timer);
+    return timer;
+  }
+
+  /** Add a tween that will be cleaned up on death/attack end */
+  _addTween(tween) {
+    this._attackTweens.push(tween);
+    return tween;
+  }
+
+  /** Clear all attack timers and tweens */
+  _clearAttackTimers() {
+    this._attackTimers.forEach(t => {
+      if (t && t.remove) t.remove();
+    });
+    this._attackTimers = [];
+    this._attackTweens.forEach(tw => {
+      if (tw && tw.stop) tw.stop();
+    });
+    this._attackTweens = [];
   }
 
   preUpdate(time, delta) {
@@ -186,7 +215,7 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
       this.direction = targetDir;
     }
 
-    // Attack logic
+    // Attack logic - guard against re-entrancy
     if (pursuing && !this.isAttacking && !this.isSuperAttacking) {
       const distX = Math.abs(player.x - this.x);
       const distY = Math.abs(player.y - this.y);
@@ -221,7 +250,7 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
       this.play('goblin-attack');
     }
     // Attack hitbox check after a short delay
-    this.scene.time.delayedCall(300, () => {
+    this._addTimer(this.scene.time.delayedCall(300, () => {
       if (this.isDead || this.isSquashed) return;
       const player = this.scene.player;
       if (player && !player.isDead) {
@@ -232,18 +261,20 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
         }
       }
       // Return to walk after attack animation
-      this.scene.time.delayedCall(700, () => {
+      this._addTimer(this.scene.time.delayedCall(700, () => {
         if (!this.isDead && !this.isSquashed) {
           this.isAttacking = false;
           if (this.scene.anims.exists('goblin-walk')) {
             this.play('goblin-walk');
           }
         }
-      });
-    });
+      }));
+    }));
   }
 
   startSuperAttack() {
+    // Guard against re-entrancy
+    if (this.isSuperAttacking) return;
     this.isSuperAttacking = true;
     this.superAttackCooldown = this.SUPER_ATTACK_COOLDOWN;
     this.setVelocityX(0);
@@ -256,13 +287,18 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     sfx.play('hurt');
 
     const player = this.scene.player;
+    if (!player || player.isDead) {
+      this._endSuperAttack();
+      return;
+    }
+
     const towardPlayer = player.x > this.x ? 1 : -1;
 
     // 1. Show warning ring at goblin's position (charge-up)
     const warningRing = this.scene.add.sprite(this.x, this.y - 20, 'goblin-warning-ring')
       .setScale(0.5)
       .setDepth(5);
-    this.scene.tweens.add({
+    const ringTw = this.scene.tweens.add({
       targets: warningRing,
       scale: 2.5,
       alpha: 0,
@@ -270,6 +306,7 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
       ease: 'Power2',
       onComplete: () => warningRing.destroy(),
     });
+    this._addTween(ringTw);
 
     // 2. Show warning crack at player's position (target indicator)
     const targetX = player.x;
@@ -277,7 +314,7 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
       .setScale(0.3)
       .setDepth(5)
       .setTint(0xff8800);
-    this.scene.tweens.add({
+    const crackTw = this.scene.tweens.add({
       targets: targetCrack,
       scale: 1.5,
       alpha: { from: 1, to: 0 },
@@ -285,9 +322,10 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
       ease: 'Power2',
       onComplete: () => targetCrack.destroy(),
     });
+    this._addTween(crackTw);
 
     // 3. After warning, fire projectile
-    this.scene.time.delayedCall(this.SUPER_ATTACK_WARN_TIME, () => {
+    this._addTimer(this.scene.time.delayedCall(this.SUPER_ATTACK_WARN_TIME, () => {
       if (this.isDead || this.isSquashed) return;
       
       // Fire projectile toward player
@@ -302,16 +340,17 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
       projectile.body.setAllowGravity(false);
       projectile.body.setVelocity(towardPlayer * this.SUPER_ATTACK_PROJECTILE_SPEED, 0);
       
-      // Add rotation for visual effect
-      this.scene.tweens.add({
+      // Add rotation for visual effect - track for cleanup
+      const rotTw = this.scene.tweens.add({
         targets: projectile,
         angle: towardPlayer * 720,
         duration: 1000,
         repeat: -1,
         ease: 'Linear',
       });
+      this._addTween(rotTw);
 
-      // Trail particles
+      // Trail particles - use a single repeating timer instead of many delayedCalls
       const trailEmitter = this.scene.add.particles(projX, projY, 'spark', {
         speed: 20,
         lifespan: 300,
@@ -319,54 +358,79 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
         tint: 0xff8800,
         emitting: false,
       });
-      this.scene.time.addEvent({
+      
+      // Track the emitter timer for cleanup
+      const emitterTimer = this.scene.time.addEvent({
         delay: 30,
         repeat: 20,
         callback: () => {
-          if (projectile.active) {
+          if (projectile.active && !this.isDead && !this.isSquashed) {
             trailEmitter.emitParticleAt(projectile.x, projectile.y);
           } else {
             trailEmitter.destroy();
+            emitterTimer.remove();
           }
         },
       });
+      this._addTimer(emitterTimer);
 
-      // Check collision with player
-      const checkHit = () => {
-        if (!projectile.active || this.isDead || this.isSquashed) {
-          if (trailEmitter) trailEmitter.destroy();
-          return;
-        }
-        const player = this.scene.player;
-        if (player && !player.isDead) {
-          const distX = Math.abs(player.x - projectile.x);
-          const distY = Math.abs(player.y - projectile.y);
-          if (distX < 30 && distY < 40) {
-            this.onSuperAttackHit(player, projectile);
+      // Check collision with player - use a single looping timer instead of recursion
+      let hitCheckCount = 0;
+      const maxHitChecks = Math.ceil(this.SUPER_ATTACK_PROJECTILE_RANGE / (this.SUPER_ATTACK_PROJECTILE_SPEED * 0.05)) + 10;
+      
+      const hitCheckTimer = this.scene.time.addEvent({
+        delay: 50,
+        repeat: maxHitChecks,
+        callback: () => {
+          hitCheckCount++;
+          
+          if (!projectile.active || this.isDead || this.isSquashed) {
+            trailEmitter.destroy();
+            hitCheckTimer.remove();
             return;
           }
-        }
-        // Check range
-        if (Math.abs(projectile.x - this.x) > this.SUPER_ATTACK_PROJECTILE_RANGE) {
-          projectile.destroy();
-          if (trailEmitter) trailEmitter.destroy();
-          return;
-        }
-        this.scene.time.delayedCall(50, checkHit);
-      };
-      checkHit();
-    });
+          
+          const player = this.scene.player;
+          if (player && !player.isDead) {
+            const distX = Math.abs(player.x - projectile.x);
+            const distY = Math.abs(player.y - projectile.y);
+            if (distX < 30 && distY < 40) {
+              this.onSuperAttackHit(player, projectile);
+              trailEmitter.destroy();
+              hitCheckTimer.remove();
+              return;
+            }
+          }
+          
+          // Check range
+          if (Math.abs(projectile.x - this.x) > this.SUPER_ATTACK_PROJECTILE_RANGE) {
+            projectile.destroy();
+            trailEmitter.destroy();
+            hitCheckTimer.remove();
+            return;
+          }
+          
+          // Safety: stop after max checks
+          if (hitCheckCount >= maxHitChecks) {
+            projectile.destroy();
+            trailEmitter.destroy();
+            hitCheckTimer.remove();
+          }
+        },
+      });
+      this._addTimer(hitCheckTimer);
+    }));
   }
 
   onSuperAttackHit(player, projectile) {
-    // Destroy projectile
+    // Destroy projectile and stop its rotation tween
     projectile.destroy();
     
     // Impact effect at player position
     const impact = this.scene.add.sprite(player.x, player.y - 20, 'goblin-projectile')
       .setScale(2)
       .setDepth(10);
-    this.scene.tweens.add({
+    const impactTw = this.scene.tweens.add({
       targets: impact,
       scale: 3,
       alpha: 0,
@@ -374,6 +438,7 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
       ease: 'Power2',
       onComplete: () => impact.destroy(),
     });
+    this._addTween(impactTw);
 
     // Screen shake
     this.scene.cameras.main.shake(200, 0.01);
@@ -382,44 +447,20 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     this.scene.hurtPlayerWithKnockback(this.x, true); // true = super attack
 
     // Return to walk after super attack animation
-    this.scene.time.delayedCall(900, () => {
-      if (!this.isDead && !this.isSquashed) {
-        this.isSuperAttacking = false;
-        if (this.scene.anims.exists('goblin-walk')) {
-          this.play('goblin-walk');
-        }
-      }
-    });
+    this._addTimer(this.scene.time.delayedCall(900, () => {
+      this._endSuperAttack();
+    }));
   }
 
-  startAttack() {
-    this.isAttacking = true;
-    this.attackCooldown = this.ATTACK_COOLDOWN;
-    this.setVelocityX(0);
-    if (this.scene.anims.exists('goblin-attack')) {
-      this.play('goblin-attack');
-    }
-    // Attack hitbox check after a short delay
-    this.scene.time.delayedCall(300, () => {
-      if (this.isDead || this.isSquashed) return;
-      const player = this.scene.player;
-      if (player && !player.isDead) {
-        const distX = Math.abs(player.x - this.x);
-        const distY = Math.abs(player.y - this.y);
-        if (distX < this.ATTACK_RANGE + 15 && distY < 45) {
-          this.scene.hurtPlayerWithKnockback(this.x);
-        }
+  _endSuperAttack() {
+    if (!this.isDead && !this.isSquashed) {
+      this.isSuperAttacking = false;
+      if (this.scene.anims.exists('goblin-walk')) {
+        this.play('goblin-walk');
       }
-      // Return to walk after attack animation
-      this.scene.time.delayedCall(700, () => {
-        if (!this.isDead && !this.isSquashed) {
-          this.isAttacking = false;
-          if (this.scene.anims.exists('goblin-walk')) {
-            this.play('goblin-walk');
-          }
-        }
-      });
-    });
+    }
+    // Clear any remaining attack timers/tweens
+    this._clearAttackTimers();
   }
 
   /** Hit by blue fireball: first 3 hits damage, 4th hit kills. */
@@ -457,18 +498,18 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
   showHurt() {
     // Flash red
     this.setTint(0xff0000);
-    this.scene.time.delayedCall(150, () => {
+    this._addTimer(this.scene.time.delayedCall(150, () => {
       if (!this.isDead && !this.isSquashed) {
         this.clearTint();
       }
-    });
+    }));
     // Brief pause
     this.setVelocityX(0);
-    this.scene.time.delayedCall(400, () => {
+    this._addTimer(this.scene.time.delayedCall(400, () => {
       if (!this.isDead && !this.isSquashed && !this.isAttacking && !this.isSuperAttacking) {
         // Resume movement
       }
-    });
+    }));
   }
 
   /** Stomped from above: instant kill (one stomp). */
@@ -481,6 +522,8 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     this.body.checkCollision.none = true;
     this.body.setVelocity(0, 0);
     this.body.allowGravity = false;
+    // Clean up any pending attack timers
+    this._clearAttackTimers();
     // Play death animation
     if (this.scene.anims.exists('goblin-death')) {
       this.play('goblin-death');

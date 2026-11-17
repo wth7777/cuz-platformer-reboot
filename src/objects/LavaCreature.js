@@ -67,6 +67,10 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     this.ERUPTION_WARN_TIME = 1000; // ms warning before eruption
     this.ERUPTION_DURATION = 1500; // ms eruption active
 
+    // Track active attack timers/tweens for cleanup
+    this._attackTimers = [];
+    this._attackTweens = [];
+
     // Play idle animation if available
     if (this.scene.anims.exists('lava-idle')) {
       this.play('lava-idle');
@@ -76,6 +80,30 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
       if (!window.__lavaDebug) window.__lavaDebug = [];
       window.__lavaDebug.push({ error: 'lava-idle animation NOT found', time: Date.now() });
     }
+  }
+
+  /** Add a timer that will be cleaned up on death/attack end */
+  _addTimer(timer) {
+    this._attackTimers.push(timer);
+    return timer;
+  }
+
+  /** Add a tween that will be cleaned up on death/attack end */
+  _addTween(tween) {
+    this._attackTweens.push(tween);
+    return tween;
+  }
+
+  /** Clear all attack timers and tweens */
+  _clearAttackTimers() {
+    this._attackTimers.forEach(t => {
+      if (t && t.remove) t.remove();
+    });
+    this._attackTimers = [];
+    this._attackTweens.forEach(tw => {
+      if (tw && tw.stop) tw.stop();
+    });
+    this._attackTweens = [];
   }
 
   preUpdate(time, delta) {
@@ -222,7 +250,7 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
       this.play('lava-claw-attack');
     }
     // Attack hitbox check after a short delay
-    this.scene.time.delayedCall(250, () => {
+    this._addTimer(this.scene.time.delayedCall(250, () => {
       if (this.isDead || this.isSquashed) return;
       const player = this.scene.player;
       if (player && !player.isDead) {
@@ -233,18 +261,20 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
         }
       }
       // Return to walk after attack animation
-      this.scene.time.delayedCall(600, () => {
+      this._addTimer(this.scene.time.delayedCall(600, () => {
         if (!this.isDead && !this.isSquashed) {
           this.isAttacking = false;
           if (this.scene.anims.exists('lava-walk')) {
             this.play('lava-walk');
           }
         }
-      });
-    });
+      }));
+    }));
   }
 
   startEruption() {
+    // Guard against re-entrancy
+    if (this.isAttacking) return;
     this.isAttacking = true;
     this.eruptionCooldown = this.ERUPTION_COOLDOWN;
     this.setVelocityX(0);
@@ -256,12 +286,17 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     sfx.play('hurt');
 
     const player = this.scene.player;
+    if (!player || player.isDead) {
+      this._endEruption();
+      return;
+    }
 
     // 1. Show warning cracks on ground between lava and player (danger zone)
     const startX = this.x;
     const endX = player.x;
     const numCracks = Math.ceil(Math.abs(endX - startX) / 40) + 1;
     const cracks = [];
+    const crackTweens = [];
     
     for (let i = 0; i < numCracks; i++) {
       const t = i / (numCracks - 1);
@@ -274,8 +309,8 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
         .setTint(0xff6600);
       cracks.push(crack);
       
-      // Animate warning crack
-      this.scene.tweens.add({
+      // Animate warning crack - store tween for cleanup
+      const tw = this.scene.tweens.add({
         targets: crack,
         scale: 1.2,
         alpha: { from: 0.8, to: 0.3 },
@@ -284,23 +319,32 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
         repeat: -1,
         ease: 'Sine.easeInOut',
       });
+      crackTweens.push(tw);
+      this._addTween(tw);
     }
 
     // 2. Play eruption sound
     sfx.play('break');
 
     // 3. After warning, create eruption splash
-    this.scene.time.delayedCall(1000, () => {
-      if (this.isDead || this.isSquashed) return;
+    this._addTimer(this.scene.time.delayedCall(this.ERUPTION_WARN_TIME, () => {
+      if (this.isDead || this.isSquashed) {
+        // Cleanup cracks if we died during warning
+        cracks.forEach(crack => crack.destroy());
+        crackTweens.forEach(tw => tw.stop());
+        this._endEruption();
+        return;
+      }
       
-      // Destroy warning cracks
+      // Destroy warning cracks and stop their tweens
       cracks.forEach(crack => crack.destroy());
+      crackTweens.forEach(tw => tw.stop());
 
       // Create eruption splash at lava creature position (source)
       const sourceSplash = this.scene.add.sprite(this.x, this.y - 20, 'lava-splash')
         .setScale(1.5)
         .setDepth(5);
-      this.scene.tweens.add({
+      const sourceTw = this.scene.tweens.add({
         targets: sourceSplash,
         scale: 2.5,
         alpha: 0,
@@ -309,15 +353,14 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
         ease: 'Power2',
         onComplete: () => sourceSplash.destroy(),
       });
+      this._addTween(sourceTw);
 
       // 3. Create lava wave traveling toward player
       const towardPlayer = player.x > this.x ? 1 : -1;
       const waveDistance = Math.abs(player.x - this.x);
-      const waveDuration = 800;
-      
-      // Create ground lava trail
-      const trailSprites = [];
       const trailSegments = Math.ceil(waveDistance / 30);
+      
+      // Use a single timed sequence instead of many delayedCalls
       for (let i = 0; i <= trailSegments; i++) {
         const t = i / trailSegments;
         const trailX = Phaser.Math.Linear(this.x, player.x, t);
@@ -327,31 +370,30 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
           .setScale(0.8)
           .setDepth(4)
           .setAlpha(0);
-        trailSprites.push({ sprite: trail, x: trailX, groundY, delay: i * 50 });
-      }
-
-      // Animate lava trail spreading
-      trailSprites.forEach(({ sprite, delay }) => {
-        this.scene.time.delayedCall(delay, () => {
+        
+        // Stagger the trail animation using a single delayedCall per segment
+        // but track them for cleanup
+        this._addTimer(this.scene.time.delayedCall(i * 50, () => {
           if (this.isDead || this.isSquashed) {
-            sprite.destroy();
+            trail.destroy();
             return;
           }
-          this.scene.tweens.add({
-            targets: sprite,
+          const tw = this.scene.tweens.add({
+            targets: trail,
             alpha: 1,
             scale: 1.5,
-            y: sprite.groundY - 30,
+            y: groundY - 30,
             duration: 400,
             ease: 'Power2',
             yoyo: true,
-            onComplete: () => sprite.destroy(),
+            onComplete: () => trail.destroy(),
           });
-        });
-      });
+          this._addTween(tw);
+        }));
+      }
 
       // 4. Create impact splash at player position
-      this.scene.time.delayedCall(800, () => {
+      this._addTimer(this.scene.time.delayedCall(800, () => {
         if (this.isDead || this.isSquashed) return;
         
         const player = this.scene.player;
@@ -362,18 +404,24 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
             this.onEruptionHit(player);
           }
         }
-      });
+      }));
 
-      // Return to walk after eruption animation
-      this.scene.time.delayedCall(this.ERUPTION_DURATION, () => {
-        if (!this.isDead && !this.isSquashed) {
-          this.isAttacking = false;
-          if (this.scene.anims.exists('lava-walk')) {
-            this.play('lava-walk');
-          }
-        }
-      });
-    });
+      // Single return-to-walk timer
+      this._addTimer(this.scene.time.delayedCall(this.ERUPTION_DURATION, () => {
+        this._endEruption();
+      }));
+    }));
+  }
+
+  _endEruption() {
+    if (!this.isDead && !this.isSquashed) {
+      this.isAttacking = false;
+      if (this.scene.anims.exists('lava-walk')) {
+        this.play('lava-walk');
+      }
+    }
+    // Clear any remaining attack timers/tweens
+    this._clearAttackTimers();
   }
 
   onEruptionHit(player) {
@@ -382,7 +430,7 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
       .setScale(2)
       .setDepth(10)
       .setTint(0xff4400);
-    this.scene.tweens.add({
+    const impactTw = this.scene.tweens.add({
       targets: impact,
       scale: 3,
       alpha: 0,
@@ -390,6 +438,7 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
       ease: 'Power2',
       onComplete: () => impact.destroy(),
     });
+    this._addTween(impactTw);
 
     // Screen shake - stronger for eruption
     this.scene.cameras.main.shake(300, 0.015);
@@ -397,45 +446,8 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     // Damage player with knockback
     this.scene.hurtPlayerWithKnockback(this.x, true); // true = eruption
 
-    // Return to walk after eruption animation
-    this.scene.time.delayedCall(this.ERUPTION_DURATION, () => {
-      if (!this.isDead && !this.isSquashed) {
-        this.isAttacking = false;
-        if (this.scene.anims.exists('lava-walk')) {
-          this.play('lava-walk');
-        }
-      }
-    });
-  }
-
-  startClawAttack() {
-    this.isAttacking = true;
-    this.attackCooldown = this.ATTACK_COOLDOWN;
-    this.setVelocityX(0);
-    if (this.scene.anims.exists('lava-claw-attack')) {
-      this.play('lava-claw-attack');
-    }
-    // Attack hitbox check after a short delay
-    this.scene.time.delayedCall(250, () => {
-      if (this.isDead || this.isSquashed) return;
-      const player = this.scene.player;
-      if (player && !player.isDead) {
-        const distX = Math.abs(player.x - this.x);
-        const distY = Math.abs(player.y - this.y);
-        if (distX < this.CLAW_ATTACK_RANGE + 10 && distY < 35) {
-          this.scene.hurtPlayerWithKnockback(this.x);
-        }
-      }
-      // Return to walk after attack animation
-      this.scene.time.delayedCall(600, () => {
-        if (!this.isDead && !this.isSquashed) {
-          this.isAttacking = false;
-          if (this.scene.anims.exists('lava-walk')) {
-            this.play('lava-walk');
-          }
-        }
-      });
-    });
+    // Note: _endEruption will be called by the main eruption timer
+    // Don't create a second timer here to avoid race condition
   }
 
   /** Hit by blue fireball: first hit damages, second hit kills. */
@@ -469,18 +481,18 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
   showHurt() {
     // Flash red
     this.setTint(0xff0000);
-    this.scene.time.delayedCall(150, () => {
+    this._addTimer(this.scene.time.delayedCall(150, () => {
       if (!this.isDead && !this.isSquashed) {
         this.clearTint();
       }
-    });
+    }));
     // Brief pause
     this.setVelocityX(0);
-    this.scene.time.delayedCall(300, () => {
+    this._addTimer(this.scene.time.delayedCall(300, () => {
       if (!this.isDead && !this.isSquashed && !this.isAttacking) {
         // Resume movement
       }
-    });
+    }));
   }
 
   /** Stomped from above: instant kill (one stomp). */
@@ -493,6 +505,8 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     this.body.checkCollision.none = true;
     this.body.setVelocity(0, 0);
     this.body.allowGravity = false;
+    // Clean up any pending attack timers
+    this._clearAttackTimers();
     this.scene.tweens.add({
       targets: this,
       alpha: 0,
