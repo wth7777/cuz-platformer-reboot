@@ -25,8 +25,8 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     // Lava Creature scale: 0.22 (similar to wolf/zombie)
     // Frame: 307x256. At 0.22 → display ~67.5 x 56.3px
     // Body: effective 24x20, centered horizontally, feet aligned with visual feet
-    // Visual feet alignment: player feet at sprite.y + 25, lava feet at sprite.y + 22
-    // Raise by ~5px so feet align with player ground level
+    // Match wolf's visual feet alignment (wolf: scale 0.2125, frame 384x256, feet offset 22.2)
+    // Lava: scale 0.22, frame 307x256, same frame height, similar scale → use same feet offset
     this.body.setSize(24 / 0.22, 20 / 0.22); // effective 24x20
     this.body.setOffset(120, 120); // center horizontally, align feet
     this.setDepth(1);
@@ -34,8 +34,9 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     this.setScale(0.22);
     this.setOrigin(0.5, 0.5);
 
-    // Raise visual position by 5px so feet align with player ground level
-    this.y -= 5;
+    // Visual feet alignment handled by spawn Y calculation in GameScene:
+    // groundY - 22.2 (matches wolf: same frame height 256, similar scale 0.2125 vs 0.22)
+    // No constructor y-offset — avoids drift and keeps physics body in sync.
 
     this.direction = -1; // start walking left
     this.isSquashed = false;
