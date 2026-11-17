@@ -869,23 +869,18 @@ export default class GameScene extends Phaser.Scene {
       this.ladyTimer = null;
     }
 
-    // Random interval: 10-20 seconds (10000-20000ms), or 3-6 seconds for testing
-    const minInterval = useQuickInterval ? 3000 : 10000;
+    // Random interval: 1-6 seconds for first appearance, 10-20 seconds thereafter
+    // Subsequent appearances are disabled, so this only matters for first appearance
+    const minInterval = useQuickInterval ? 1000 : 10000;
     const maxInterval = useQuickInterval ? 6000 : 20000;
     const delay = Phaser.Math.Between(minInterval, maxInterval);
-
-    console.log('[LadyInGrey] Timer scheduled, delay:', delay, 'ms');
 
     this.ladyTimer = this.time.addEvent({
       delay: delay,
       callback: () => {
-        console.log('[LadyInGrey] Timer fired! Player:', !!this.player, 'isDead:', this.player?.isDead, 'autoPhase:', this.autoPhase);
         if (!this.player || this.player.isDead || this.autoPhase) {
-          console.log('[LadyInGrey] Not ready to spawn, rescheduling...');
-          this.scheduleLadyAppearance(); // retry if game state is not ready
           return;
         }
-        console.log('[LadyInGrey] Spawning now!');
         this.spawnLadyInGrey();
       },
       loop: false,
@@ -894,16 +889,11 @@ export default class GameScene extends Phaser.Scene {
 
   /** Spawn Lady in Grey at a random position within camera view */
   spawnLadyInGrey() {
-    if (this.ladyInGrey) {
-      console.log('[LadyInGrey] Already spawned, skipping');
-      return; // Only one at a time
-    }
+    if (this.ladyInGrey) return; // Only one at a time
 
     const cam = this.cameras.main;
     const camWidth = cam.width;
     const camHeight = cam.height;
-
-    console.log('[LadyInGrey] Creating sprite, camera:', camWidth, 'x', camHeight);
 
     // Create Lady in Grey sprite at center (will be positioned/tweened in her class)
     this.ladyInGrey = new LadyInGrey(this, camWidth / 2, camHeight / 2);
@@ -911,13 +901,12 @@ export default class GameScene extends Phaser.Scene {
     // Set her to render above gameplay
     this.ladyInGrey.setDepth(5);
 
-    // Set callback to schedule next appearance after this one completes
+    // Set callback - no reschedule after completion (subsequent appearances disabled)
     this.ladyInGrey.onCompleteCallback = () => {
-      console.log('[LadyInGrey] Animation complete, scheduling next...');
-      this.scheduleLadyAppearance();
+      this.ladyInGrey = null;
+      // Subsequent appearances disabled per user request
     };
 
-    console.log('[LadyInGrey] Starting animation sequence');
     // Start the animation sequence
     this.ladyInGrey.start();
   }
@@ -958,23 +947,6 @@ export default class GameScene extends Phaser.Scene {
     this.keys = this.input.keyboard.addKeys('W,A,S,D,SHIFT,X');
     this.jumpWasHeld = false;
     this.attackWasHeld = false;
-
-    // Debug keys for Lady in Grey testing
-    this.input.keyboard.on('keydown-F', () => {
-      console.log('[LadyInGrey] DEBUG: Force spawn triggered (F key)');
-      if (this.ladyInGrey) {
-        console.log('[LadyInGrey] Already spawned, stopping instead');
-        this.ladyInGrey.stopAndCleanup();
-        this.ladyInGrey = null;
-      } else {
-        console.log('[LadyInGrey] DEBUG: Forcing immediate spawn');
-        this.spawnLadyInGrey();
-      }
-    });
-    this.input.keyboard.on('keydown-R', () => {
-      console.log('[LadyInGrey] DEBUG: Reset timer to quick interval (3-6s)');
-      this.scheduleLadyAppearance(true);
-    });
   }
 
   // -------------------------------------------------------------- update
