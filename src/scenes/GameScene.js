@@ -116,17 +116,6 @@ export default class GameScene extends Phaser.Scene {
     this.parseGrid();
     this.spawnPlayer();
 
-    // === TEMPORARY TEST SPAWN — Zombie + Wolf ===
-    // Spawn on same ground row as player (col 20), dropped from above so it lands on ground.
-    // Player is at col 3 (~x=63). Zombie at col 20 (~x=369). Wolf at col 30 (~x=549) — far enough to see pursuit.
-    const TEST_ENEMY_X = 20 * TILE + TILE / 2; // col 20, center of tile
-    const TEST_ENEMY_Y = 100; // drop from above ground (ground feetY = 432)
-    this.enemies.add(new Zombie(this, TEST_ENEMY_X, TEST_ENEMY_Y, 'test_zombie'));
-    // Wolf test spawn
-    const TEST_WOLF_X = 30 * TILE + TILE / 2;
-    this.enemies.add(new Wolf(this, TEST_WOLF_X, TEST_ENEMY_Y, 'test_wolf'));
-    // === END TEMPORARY TEST SPAWN ===
-
     this.setupInput();
 
     const cam = this.cameras.main;

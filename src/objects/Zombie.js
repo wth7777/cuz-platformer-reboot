@@ -76,15 +76,30 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
       this.direction = -1;
     }
 
-    // Turn at platform edges — ALWAYS check edges, even when pursuing.
-    // Don't chase the player off a ledge.
+    // Platform edge detection and drop-down logic
     if (this.body.onFloor()) {
       const aheadX = this.direction > 0 ? this.body.right + 2 : this.body.left - 3;
       const ground = this.scene.physics.overlapRect(
         aheadX, this.body.bottom + 2, 2, 4,
         false, true
       );
-      if (ground.length === 0) {
+
+      // If pursuing and no ground ahead, check if there's ground further down
+      // (i.e., a lower platform or ground we can safely drop to)
+      if (pursuing && ground.length === 0) {
+        // Check if there's ground further below within a reasonable drop distance
+        const dropCheck = this.scene.physics.overlapRect(
+          aheadX, this.body.bottom + 2, 2, 120, // check up to 120px down
+          false, true
+        );
+        if (dropCheck.length > 0) {
+          // Safe to drop - walk off the edge
+        } else {
+          // No ground below either - turn around
+          this.direction *= -1;
+        }
+      } else if (ground.length === 0) {
+        // Not pursuing, just turn around at edges
         this.direction *= -1;
       }
     }
@@ -107,6 +122,15 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
           );
           if (ground.length > 0) {
             targetDir = towardPlayer;
+          } else {
+            // No ground directly ahead - check if we can drop down to reach player
+            const dropCheck = this.scene.physics.overlapRect(
+              checkX, this.body.bottom + 2, 2, 120,
+              false, true
+            );
+            if (dropCheck.length > 0) {
+              targetDir = towardPlayer;
+            }
           }
         }
       }

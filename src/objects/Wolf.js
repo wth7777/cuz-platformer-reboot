@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 // Wolf enemy using supplied custom artwork (16 frames, 384x256 each).
 // walk = frames 0-7 (8-frame cycle).
 // attack = frames 8-15 (8-frame sequence).
-// Scale ~0.12 — sized to be slightly larger than zombie.
+// Scale 0.2125 (reduced 15% from 0.25).
 // Artwork faces RIGHT by default.
 export default class Wolf extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, gridKey = null) {
@@ -14,16 +14,15 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
 
     this.gridKey = gridKey;
 
-    // Wolf is slightly larger than zombie.
-    // Frame: 384x256. Target display height ~70px (≈4 tiles).
-    // 256 * scale = 70 → scale ≈ 0.273
-    // Let's use 0.25 for a cleaner number (64px tall).
-    // Frame width 384 * 0.25 = 96px wide.
-    this.body.setSize(24 / 0.25, 18 / 0.25); // effective 24x18
-    this.body.setOffset(72, 200); // center horizontally, align feet
+    // Wolf scale: 0.2125 (reduced 15% from 0.25)
+    // Frame: 384x256. At 0.2125 → display ~81.6 x 54.4px
+    // Walk frames: feet ~31-43px from frame bottom → visual feet ~19-21px below sprite center
+    // Body: effective 20x18, centered horizontally, feet aligned with visual paws
+    this.body.setSize(20 / 0.2125, 18 / 0.2125); // effective 20x18
+    this.body.setOffset(135, 135); // center horizontally, align feet
     this.setDepth(1);
     this.setCollideWorldBounds(true);
-    this.setScale(0.25);
+    this.setScale(0.2125);
     this.setOrigin(0.5, 0.5);
 
     this.direction = -1; // start walking left
@@ -74,14 +73,30 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
       this.direction = -1;
     }
 
-    // Turn at platform edges
+    // Platform edge detection and drop-down logic
     if (this.body.onFloor()) {
       const aheadX = this.direction > 0 ? this.body.right + 2 : this.body.left - 3;
       const ground = this.scene.physics.overlapRect(
         aheadX, this.body.bottom + 2, 2, 4,
         false, true
       );
-      if (ground.length === 0) {
+
+      // If pursuing and no ground ahead, check if there's ground further down
+      // (i.e., a lower platform or ground we can safely drop to)
+      if (pursuing && ground.length === 0) {
+        // Check if there's ground further below within a reasonable drop distance
+        const dropCheck = this.scene.physics.overlapRect(
+          aheadX, this.body.bottom + 2, 2, 120, // check up to 120px down
+          false, true
+        );
+        if (dropCheck.length > 0) {
+          // Safe to drop - walk off the edge
+        } else {
+          // No ground below either - turn around
+          this.direction *= -1;
+        }
+      } else if (ground.length === 0) {
+        // Not pursuing, just turn around at edges
         this.direction *= -1;
       }
     }
@@ -103,6 +118,15 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
           );
           if (ground.length > 0) {
             targetDir = towardPlayer;
+          } else {
+            // No ground directly ahead - check if we can drop down to reach player
+            const dropCheck = this.scene.physics.overlapRect(
+              checkX, this.body.bottom + 2, 2, 120,
+              false, true
+            );
+            if (dropCheck.length > 0) {
+              targetDir = towardPlayer;
+            }
           }
         }
       }
