@@ -27,8 +27,8 @@ export default class IntroScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     // lives: Cuz's face next to the count (replaced Astrohop character)
-    // Reduced scale from 0.5 to 0.25, adjusted position
-    this.add.sprite(width / 2 - 40, height / 2 + 14, 'player', 'frame_0').setScale(0.25);
+    // Reduced scale from 0.25 to 0.2375 (5% smaller)
+    this.add.sprite(width / 2 - 40, height / 2 + 14, 'player', 'frame_0').setScale(0.2375);
     this.add
       .text(width / 2 - 12, height / 2 + 14, `× ${this.registry.get('lives') ?? 3}`, {
         fontFamily: 'monospace',
