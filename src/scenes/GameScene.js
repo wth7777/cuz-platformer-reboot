@@ -444,19 +444,10 @@ export default class GameScene extends Phaser.Scene {
     const centerY = 324;
     const scrollFactor = 0.15;
 
-    console.log('[GameScene] buildParallax:', { levelId: this.levelId, isLavaLevel, bgKey, textureExists: this.textures.exists(bgKey) });
-
     this.graveyardBg = this.add
       .tileSprite(this.worldWidth / 2, centerY, this.worldWidth, bgHeight, bgKey)
       .setScrollFactor(scrollFactor)
       .setDepth(-10);
-      
-    console.log('[GameScene] tileSprite created:', { 
-      texture: this.graveyardBg.texture.key,
-      visible: this.graveyardBg.visible,
-      alpha: this.graveyardBg.alpha,
-      depth: this.graveyardBg.depth
-    });
   }
 
   // ------------------------------------------------------------- blocks
@@ -863,13 +854,9 @@ export default class GameScene extends Phaser.Scene {
 
   setupInput() {
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.keys = this.input.keyboard.addKeys('W,A,S,D,SHIFT,X,L');
+    this.keys = this.input.keyboard.addKeys('W,A,S,D,SHIFT,X');
     this.jumpWasHeld = false;
     this.attackWasHeld = false;
-    // TEMP: Press L to jump to level 3 (lava level)
-    this.keys.L.on('down', () => {
-      this.scene.start('GameScene', { levelId: 'level3' });
-    });
   }
 
   // -------------------------------------------------------------- update
