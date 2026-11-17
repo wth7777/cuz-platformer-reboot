@@ -231,6 +231,7 @@ export default class GameScene extends Phaser.Scene {
             break;
           case 'w':
             // Wolf enemy spawn
+            console.log('[GameScene] Spawning wolf at:', { col, row, x, y, key });
             this.enemies.add(new Wolf(this, x, y, key));
             break;
           case 'd':

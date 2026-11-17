@@ -14,6 +14,9 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
 
     this.gridKey = gridKey;
 
+    // DEBUG: Log spawn
+    console.log('[Wolf] Constructor called:', { x, y, gridKey, texture: this.texture?.key, frame: this.frame?.name });
+
     // Wolf scale: 0.2125 (reduced 15% from 0.25)
     // Frame: 384x256. At 0.2125 → display ~81.6 x 54.4px
     // Walk frames: feet ~31-43px from frame bottom → visual feet ~19-21px below sprite center
@@ -43,6 +46,9 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
     // Play walk animation if available
     if (this.scene.anims.exists('wolf-walk')) {
       this.play('wolf-walk');
+      console.log('[Wolf] Playing wolf-walk animation');
+    } else {
+      console.warn('[Wolf] wolf-walk animation NOT found');
     }
   }
 
