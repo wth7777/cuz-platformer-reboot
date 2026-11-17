@@ -25,10 +25,11 @@ export default class TitleScene extends Phaser.Scene {
       .setAlpha(0.3);
 
     // --- Cuz character, prominently displayed (large upper-body showcase)
-    this.cuz = this.add.sprite(width / 2, height * 0.55, 'player', 'frame_0')
-      .setScale(0.7)
+    // Bigger, lower, farther left - prominent upper body feature
+    this.cuz = this.add.sprite(width * 0.3, height * 0.75, 'player', 'frame_0')
+      .setScale(1.1)
       .setDepth(10)
-      .setOrigin(0.5, 0.8); // origin lower to show upper body prominently
+      .setOrigin(0.5, 0.85); // origin lower to show upper body prominently
     this.cuz.anims.play('player-idle');
 
     // --- logo + texts

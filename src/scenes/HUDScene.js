@@ -35,8 +35,8 @@ export default class HUDScene extends Phaser.Scene {
       lives: mkText('', '#ffffff'),
     };
     this.coinIcon = this.add.sprite(0, 0, 'tiles', 151).play('coin-spin').setScale(0.9);
-    // lives icon: Cuz's face (replaced Astrohop character)
-    this.livesIcon = this.add.sprite(0, 0, 'player', 'frame_0').setScale(0.4);
+    // lives icon: Cuz's face (replaced Astrohop character) - reduced from 0.4 to 0.1
+    this.livesIcon = this.add.sprite(0, 0, 'player', 'frame_0').setScale(0.1);
 
     const corner = (txt, onTap) => {
       const btn = this.add
@@ -98,10 +98,11 @@ export default class HUDScene extends Phaser.Scene {
       this.values[key].setFontSize(valueSize).setPosition(cols[key], 26);
     }
     // coin / lives values make room for their icons
+    // Lives icon is now much smaller (0.1 scale), adjust position
     this.coinIcon.setPosition(cols.coins + 7, 34);
     this.values.coins.setX(cols.coins + 18);
-    this.livesIcon.setPosition(cols.lives + 9, 34);
-    this.values.lives.setX(cols.lives + 22);
+    this.livesIcon.setPosition(cols.lives + 5, 34);
+    this.values.lives.setX(cols.lives + 15);
 
     this.pauseBtn.setX(w - 4);
     this.fsBtn.setX(w - 48);
