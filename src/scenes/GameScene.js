@@ -161,6 +161,8 @@ export default class GameScene extends Phaser.Scene {
     const width = this.level.width;
     this.grid = grid;
 
+    console.log('[GameScene] parseGrid: ROWS=', ROWS, 'width=', width, 'grid rows=', grid.length, 'level rows=', this.level.rows.length);
+
     // 'X' = solid, 'x' = decorative (drawn the same, no collision)
     const isFilled = (row, col) =>
       row >= 0 && row < ROWS && col >= 0 && col < width &&
@@ -204,6 +206,11 @@ export default class GameScene extends Phaser.Scene {
         // consumed before a pipe trip and must not respawn.
         const key = `r${row}c${col}`;
         const gone = this.consumed.has(key);
+
+        // DEBUG: Log non-space characters
+        if (ch !== ' ' && ch !== 'B' && ch !== 'c' && ch !== 'p') {
+          console.log('[GameScene] parseGrid char:', { row, col, ch, x, y, key, gone });
+        }
 
         switch (ch) {
           case 'B':
