@@ -116,7 +116,7 @@ export default class GameScene extends Phaser.Scene {
 
     console.log('[GameScene] Before parseGrid');
     this.parseGrid();
-    console.log('[GameScene] After parseGrid, before spawnPlayer');
+    console.log('[GameScene] After parseGrid');
     this.spawnPlayer();
     console.log('[GameScene] After spawnPlayer');
 
@@ -231,7 +231,17 @@ export default class GameScene extends Phaser.Scene {
             break;
           }
           case 'e':
-            if (!gone) this.enemies.add(new Zombie(this, x, y, key));
+            if (!gone) {
+              // Zombie enemy spawn — find ground below and spawn with feet on ground
+              const zombieGroundRow = this.findFloorRow(col, row + 1);
+              const zombieGroundY = zombieGroundRow * TILE;
+              // Zombie visual feet at sprite.y + ~27.51 (displayHeight/2 - feet_padding)
+              // displayHeight = 503 * 0.1144 = 57.54, feet padding = 11px → 1.26 scaled
+              // Frame bottom = sprite.y + 28.77, visual feet = sprite.y + 27.51
+              const zombieSpawnY = zombieGroundY - 27.51;
+              console.log('[GameScene] Spawning zombie at:', { col, row, x, y: zombieSpawnY, groundRow: zombieGroundRow, groundY: zombieGroundY, key });
+              this.enemies.add(new Zombie(this, x, zombieSpawnY, key));
+            }
             break;
           case 'p':
             this.spawnCol = col;
