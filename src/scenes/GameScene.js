@@ -116,6 +116,13 @@ export default class GameScene extends Phaser.Scene {
     this.parseGrid();
     this.spawnPlayer();
 
+    // TEST: Spawn a wolf directly to verify Wolf class works
+    // Spawn near player start (col 10, row 27 - same row as level wolf)
+    const testWolfX = 10 * TILE + TILE / 2;
+    const testWolfY = 27 * TILE + TILE / 2;
+    console.log('[GameScene] TEST: Spawning test wolf at', { x: testWolfX, y: testWolfY });
+    this.enemies.add(new Wolf(this, testWolfX, testWolfY, 'test_wolf_direct'));
+
     this.setupInput();
 
     const cam = this.cameras.main;
