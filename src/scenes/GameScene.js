@@ -161,6 +161,7 @@ export default class GameScene extends Phaser.Scene {
     const width = this.level.width;
     this.grid = grid;
 
+    console.log('=== PARSE GRID START ===');
     console.log('[GameScene] parseGrid: ROWS=', ROWS, 'width=', width, 'grid rows=', grid.length, 'level rows=', this.level.rows.length);
 
     // 'X' = solid, 'x' = decorative (drawn the same, no collision)
