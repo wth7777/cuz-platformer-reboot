@@ -184,7 +184,7 @@ export default class GameScene extends Phaser.Scene {
     // --- Lady in Grey ghost appearance system ---
     this.ladyInGrey = null;
     this.ladyTimer = null;
-    // First appearance: 3-6 seconds for testing, then normal 10-20 second randomized intervals
+    // First appearance: randomly between 1-6 seconds after level start
     this.scheduleLadyAppearance(true);
 
     // --- Physics wiring
