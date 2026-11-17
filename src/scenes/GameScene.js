@@ -861,7 +861,7 @@ export default class GameScene extends Phaser.Scene {
 
   // ------------------------------------------------------- Lady in Grey appearance system
 
-  /** Schedule next appearance with random timing (10-20 seconds between appearances) */
+  /** Schedule next appearance - fixed 2-second delay for testing */
   scheduleLadyAppearance(useQuickInterval = false) {
     // Stop any existing timer
     if (this.ladyTimer) {
@@ -869,11 +869,8 @@ export default class GameScene extends Phaser.Scene {
       this.ladyTimer = null;
     }
 
-    // Random interval: 1-6 seconds for first appearance, 10-20 seconds thereafter
-    // Subsequent appearances are disabled, so this only matters for first appearance
-    const minInterval = useQuickInterval ? 1000 : 10000;
-    const maxInterval = useQuickInterval ? 6000 : 20000;
-    const delay = Phaser.Math.Between(minInterval, maxInterval);
+    // Fixed 2-second delay for testing Lady in Grey visibility
+    const delay = 2000;
 
     this.ladyTimer = this.time.addEvent({
       delay: delay,
