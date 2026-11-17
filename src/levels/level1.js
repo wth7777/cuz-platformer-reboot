@@ -32,7 +32,8 @@ export default {
     sparse(W, [8, 'ccccc'], [144, 'XXXXXXXX'], [170, 'cccc'], [242, 'XXXXXX'],
       [262, 'xxx'], [266, 'xxx']),
     // r21 — spawn, decorations, enemies, pyramid base, stairs, castle + door
-    sparse(W, [3, 'p'], [6, '>'], [20, '*'], [36, '^'], [50, 'w'], [64, 'e'],
+    // Wolf moved to col 180 (farther from player at col 3), on a platform row
+    sparse(W, [3, 'p'], [6, '>'], [20, '*'], [36, '^'], [180, 'w'], [64, 'e'],
       [90, 'e'], [93, 'e'], [105, 'e'], [118, 'e'], [130, '"'], [131, 'e'], [142, ground(12)],
       [156, '*'], [162, 'e'], [174, '^'], [185, 'e'], [195, 'e'], [203, 'e'], [222, 'e'],
       [226, 'e'], [232, '^'], [240, ground(8)], [250, '"'], [262, 'xxx'], [265, 'd'], [266, 'xxx']),
