@@ -58,14 +58,23 @@ const config = {
   ],
 };
 
-const game = new Phaser.Game(config);
+// Wait for DOM to be ready before creating the game (script is in <head> with type=module)
+function createGame() {
+  const game = new Phaser.Game(config);
 
-// Rotating the device switches between the wide and narrow logical view
-portraitQuery.addEventListener('change', () => {
-  game.scale.setGameSize(logicalWidth(), HEIGHT);
-  game.scale.refresh();
-});
+  // Rotating the device switches between the wide and narrow logical view
+  portraitQuery.addEventListener('change', () => {
+    game.scale.setGameSize(logicalWidth(), HEIGHT);
+    game.scale.refresh();
+  });
 
-if (import.meta.env.DEV) {
-  window.__game = game; // debug handle for tools/probe.mjs (dev only)
+  if (import.meta.env.DEV) {
+    window.__game = game; // debug handle for tools/probe.mjs (dev only)
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', createGame);
+} else {
+  createGame();
 }
