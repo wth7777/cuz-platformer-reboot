@@ -5,6 +5,7 @@ import Zombie from '../objects/Zombie.js';
 import Wolf from '../objects/Wolf.js';
 import LavaCreature from '../objects/LavaCreature.js';
 import GoblinBoss from '../objects/GoblinBoss.js';
+import LadyInGrey from '../objects/LadyInGrey.js';
 import { touchState } from '../input/TouchControls.js';
 import { LEVELS, THEMES } from '../levels/index.js';
 import { sfx } from '../audio/sfx.js';
@@ -94,7 +95,18 @@ export default class GameScene extends Phaser.Scene {
     this.setupPause();
 
     sfx.startMusic(this.level.theme);
-    this.events.once('shutdown', () => sfx.stopMusic());
+    this.events.once('shutdown', () => {
+      sfx.stopMusic();
+      // Clean up Lady in Grey timer
+      if (this.ladyTimer) {
+        this.ladyTimer.remove(false);
+        this.ladyTimer = null;
+      }
+      if (this.ladyInGrey) {
+        this.ladyInGrey.stopAndCleanup();
+        this.ladyInGrey = null;
+      }
+    });
 
     this.autoPhase = null; // null | 'pipe' | 'flag' | 'walk' | 'done'
     this.pipeUnder = null;
@@ -168,6 +180,11 @@ export default class GameScene extends Phaser.Scene {
     // space is shown at either end of the world.
     cam.setZoom(GAME_ZOOM);
     cam.fadeIn(250);
+
+    // --- Lady in Grey ghost appearance system ---
+    this.ladyInGrey = null;
+    this.ladyTimer = null;
+    this.scheduleLadyAppearance();
 
     // --- Physics wiring
     this.physics.add.collider(this.player, this.solids);
@@ -840,6 +857,57 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // enterPipe removed - no pipes
+
+  // ------------------------------------------------------- Lady in Grey appearance system
+
+  /** Schedule next appearance with random timing (10-20 seconds between appearances) */
+  scheduleLadyAppearance() {
+    // Stop any existing timer
+    if (this.ladyTimer) {
+      this.ladyTimer.remove(false);
+      this.ladyTimer = null;
+    }
+
+    // Random interval: 10-20 seconds (10000-20000ms)
+    const minInterval = 10000;
+    const maxInterval = 20000;
+    const delay = Phaser.Math.Between(minInterval, maxInterval);
+
+    this.ladyTimer = this.time.addEvent({
+      delay: delay,
+      callback: () => {
+        if (!this.player || this.player.isDead || this.autoPhase) {
+          this.scheduleLadyAppearance(); // retry if game state is not ready
+          return;
+        }
+        this.spawnLadyInGrey();
+      },
+      loop: false,
+    });
+  }
+
+  /** Spawn Lady in Grey at a random position within camera view */
+  spawnLadyInGrey() {
+    if (this.ladyInGrey) return; // Only one at a time
+
+    const cam = this.cameras.main;
+    const camWidth = cam.width;
+    const camHeight = cam.height;
+
+    // Create Lady in Grey sprite at center (will be positioned/tweened in her class)
+    this.ladyInGrey = new LadyInGrey(this, camWidth / 2, camHeight / 2);
+
+    // Set her to render above gameplay
+    this.ladyInGrey.setDepth(5);
+
+    // Set callback to schedule next appearance after this one completes
+    this.ladyInGrey.onCompleteCallback = () => {
+      this.scheduleLadyAppearance();
+    };
+
+    // Start the animation sequence
+    this.ladyInGrey.start();
+  }
 
   // ------------------------------------------------------- timer & pause
 

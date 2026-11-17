@@ -62,6 +62,9 @@ export default class PreloadScene extends Phaser.Scene {
     // --- Goblin Boss enemy
     this.load.atlas('goblin', 'assets/goblin/goblin.png', 'assets/goblin/goblin.json');
 
+    // --- Lady in Grey ghost (visual prank character)
+    this.load.atlas('lady-in-grey', 'assets/graveyard-sprites/lady-in-grey.png', 'assets/graveyard-sprites/lady-in-grey.json');
+
     // --- Graveyard music
     this.load.audio('graveyard-music', 'assets/audio/graveyard-music.ogg');
     this.load.audio('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
@@ -354,5 +357,10 @@ export default class PreloadScene extends Phaser.Scene {
       frameRate: 8,
       repeat: 0,
     });
+
+    // --- Lady in Grey animations (16 frames: frame_0 to frame_15) ---
+    // Entrance: frames 1-7 (rapid ghostly entrance)
+    // Close-up: frames 8-11 (mischievous smile)
+    // Disappearance: frames 12-15 (rapid vanish)
   }
 }
