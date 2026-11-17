@@ -53,6 +53,9 @@ export default class PreloadScene extends Phaser.Scene {
     // --- Wolf enemy
     this.load.atlas('wolf', 'assets/wolf/wolf.png', 'assets/wolf/wolf.json');
 
+    // --- Lava Creature enemy
+    this.load.atlas('lava', 'assets/lava/lava.png', 'assets/lava/lava.json');
+
     // --- Graveyard music
     this.load.audio('graveyard-music', 'assets/audio/graveyard-music.ogg');
     this.load.audio('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
@@ -261,6 +264,47 @@ export default class PreloadScene extends Phaser.Scene {
       key: 'wolf-attack',
       frames: this.anims.generateFrameNames('wolf', { start: 8, end: 15, prefix: 'frame_', zeroPad: 0 }),
       frameRate: 12,
+      repeat: 0,
+    });
+
+    // --- Lava Creature animations (20 frames: frame_0 to frame_19) ---
+    // Idle: frames 0-3 (4 frames - subtle idle)
+    this.anims.create({
+      key: 'lava-idle',
+      frames: this.anims.generateFrameNames('lava', { start: 0, end: 3, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 6,
+      repeat: -1,
+    });
+
+    // Walk: frames 4-11 (8 frames - walk cycle)
+    this.anims.create({
+      key: 'lava-walk',
+      frames: this.anims.generateFrameNames('lava', { start: 4, end: 11, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 10,
+      repeat: -1,
+    });
+
+    // Claw attack: frames 12-15 (4 frames - claw swipe)
+    this.anims.create({
+      key: 'lava-claw-attack',
+      frames: this.anims.generateFrameNames('lava', { start: 12, end: 15, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 12,
+      repeat: 0,
+    });
+
+    // Lava eruption: frames 16-18 (3 frames - eruption)
+    this.anims.create({
+      key: 'lava-eruption',
+      frames: this.anims.generateFrameNames('lava', { start: 16, end: 18, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 8,
+      repeat: 0,
+    });
+
+    // Death: frames 19 (1 frame - death pose)
+    this.anims.create({
+      key: 'lava-death',
+      frames: this.anims.generateFrameNames('lava', { start: 19, end: 19, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 8,
       repeat: 0,
     });
   }

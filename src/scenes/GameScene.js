@@ -3,6 +3,7 @@ import Player from '../objects/Player.js';
 import Walker from '../objects/Walker.js';
 import Zombie from '../objects/Zombie.js';
 import Wolf from '../objects/Wolf.js';
+import LavaCreature from '../objects/LavaCreature.js';
 import { touchState } from '../input/TouchControls.js';
 import { LEVELS, THEMES } from '../levels/index.js';
 import { sfx } from '../audio/sfx.js';
@@ -119,6 +120,24 @@ export default class GameScene extends Phaser.Scene {
     console.log('[GameScene] After parseGrid');
     this.spawnPlayer();
     console.log('[GameScene] After spawnPlayer');
+
+    // TEST: Spawn Lava Creature for testing (near player, on ground)
+    // Spawn ~500px ahead of player, feet on ground
+    try {
+      const playerFeetY = this.player.y + 25.0; // player visual feet Y
+      const groundRow = this.findFloorRow(Math.floor((this.player.x + 500) / TILE));
+      const groundY = groundRow * TILE;
+      // Lava displayHeight = 256 * 0.22 = 56.32, feet ~22 below center
+      const testLavaX = this.player.x + 500;
+      const testLavaY = groundY - 22.0;
+      console.log('[GameScene] TEST: Spawning test lava at', { x: testLavaX, y: testLavaY, groundRow, groundY, playerX: this.player.x, playerFeetY });
+      window.__gameSceneTestLavaSpawned = true;
+      this.enemies.add(new LavaCreature(this, testLavaX, testLavaY, 'test_lava_direct'));
+      console.log('[GameScene] TEST: Lava added to enemies group');
+    } catch (err) {
+      console.error('[GameScene] TEST SPAWN ERROR:', err);
+      window.__gameSceneTestLavaSpawned = false;
+    }
 
     this.setupInput();
 
