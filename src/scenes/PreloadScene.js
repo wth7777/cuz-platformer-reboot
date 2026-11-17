@@ -41,6 +41,9 @@ export default class PreloadScene extends Phaser.Scene {
     // --- Graveyard parallax background (single cohesive 1168x784 painting)
     this.load.image('graveyard-bg', 'assets/parallax-bg.jpg');
 
+    // --- Lava level background (World 1-3)
+    this.load.image('lava-level-bg', 'assets/lava-level-bg.jpg');
+
     // --- Title screen background (user provided)
     this.load.image('title-bg', 'assets/title/title-bg.jpg');
 

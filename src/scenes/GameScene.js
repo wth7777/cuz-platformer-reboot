@@ -437,17 +437,16 @@ export default class GameScene extends Phaser.Scene {
   // ----------------------------------------------------------- parallax
 
   buildParallax() {
-    // Graveyard background: single 1168x784 cohesive painting.
-    // Painted ground/horizon at ~y=500 in texture; game ground top at y=432 (row 24 * 18).
-    // Texture center y=392, ground 108px below center → tileSprite center at game y=324.
-    // scrollFactor 0.15: background moves 15% of camera speed for parallax depth.
-    // TileSprite spans full world width; texture repeats every 1168px.
-    // Increased height to 700px (was GAME_HEIGHT=540) to reveal more of the lower
-    // painting (evil trees, gravestones, cemetery details at texture y=500-784).
-    // Visible parallax range = 700 * 0.15 = 105px + viewport ~269px = 374px vertical texture range.
+    // World 1-3 (level3) uses lava background; others use graveyard
+    const isLavaLevel = this.levelId === 'level3';
+    const bgKey = isLavaLevel ? 'lava-level-bg' : 'graveyard-bg';
+    const bgHeight = 700;
+    const centerY = 324;
+    const scrollFactor = 0.15;
+
     this.graveyardBg = this.add
-      .tileSprite(this.worldWidth / 2, 324, this.worldWidth, 700, 'graveyard-bg')
-      .setScrollFactor(0.15)
+      .tileSprite(this.worldWidth / 2, centerY, this.worldWidth, bgHeight, bgKey)
+      .setScrollFactor(scrollFactor)
       .setDepth(-10);
   }
 

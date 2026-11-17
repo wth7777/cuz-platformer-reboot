@@ -21,19 +21,19 @@ export default {
     sparse(W, [122, 'ccc']),
     // r17 — the high route
     sparse(W, [62, 'PPPPP'], [96, 'PPPPP'], [180, 'PPPPPP']),
-    // r18 — aid platform over the wide final gap; castle top
-    sparse(W, [211, 'PPPP'], [253, 'xxx']),
-    // r19 — blocks, gap platforms, stairs top, castle
+    // r18 — aid platform over the wide final gap (Astrohop castle top removed)
+    sparse(W, [211, 'PPPP']),
+    // r19 — blocks, gap platforms, stairs top (Astrohop castle removed)
     sparse(W, [30, 'cccc'], [38, 'BBB'], [56, 'PPPPP'], [86, 'BMB'], [139, 'PPPPP'],
-      [152, '?'], [240, 'XX'], [252, 'xxxxxxx']),
-    // r20 — coin arcs over pits; stairs; castle
-    sparse(W, [79, 'cccc'], [111, 'cccccc'], [238, 'XXXX'], [252, 'xxxxxxx']),
-    // r21 — walking coins; stairs; castle walls
-    sparse(W, [10, 'ccccc'], [171, 'cccc'], [236, 'XXXXXX'], [252, 'xxx'], [256, 'xxx']),
-    // r22 — spawn, decorations, enemies, stairs base, castle + door
+      [152, '?']),
+    // r20 — coin arcs over pits; stairs (Astrohop castle removed)
+    sparse(W, [79, 'cccc'], [111, 'cccccc'], [139, 'PPPPP']),
+    // r21 — walking coins; stairs (Astrohop castle walls removed)
+    sparse(W, [10, 'ccccc'], [171, 'cccc']),
+    // r22 — spawn, decorations, enemies, stairs base (Astrohop castle/door removed)
     sparse(W, [3, 'p'], [6, '>'], [20, 'e'], [44, 'e'], [50, '"'], [70, 'e'], [92, 'e'],
       [100, '^'], [126, 'e'], [150, '*'], [160, 'e'], [185, 'e'], [195, 'e'], [222, '^'],
-      [234, ground(8)], [252, 'xxx'], [255, 'd'], [256, 'xxx']),
+      [234, ground(8)]),
     // r23/r24 — seven pits of rising width
     ground(30) + gap(4) + ground(22) + gap(5) + ground(18) + gap(4) + ground(28) + gap(6) +
       ground(22) + gap(5) + ground(27) + gap(4) + ground(34) + gap(8) + ground(43),
