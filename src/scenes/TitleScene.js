@@ -108,8 +108,15 @@ export default class TitleScene extends Phaser.Scene {
       this.registry.set('lives', 3);
       this.scene.start('IntroScene', { levelId: 'level1' });
     };
+    const startLevel3 = () => {
+      this.registry.set('score', 0);
+      this.registry.set('coins', 0);
+      this.registry.set('lives', 3);
+      this.scene.start('GameScene', { levelId: 'level3' });
+    };
     this.input.keyboard.once('keydown-SPACE', start);
     this.input.keyboard.once('keydown-ENTER', start);
+    this.input.keyboard.once('keydown-L', startLevel3);  // TEMP: L key jumps to level 3
     this.input.once('pointerdown', start);
 
     // Start title music on first user gesture (handled by sfx unlock)
