@@ -59,6 +59,9 @@ export default class PreloadScene extends Phaser.Scene {
     // --- Lava Creature enemy
     this.load.atlas('lava', 'assets/lava/lava.png', 'assets/lava/lava.json');
 
+    // --- Goblin Boss enemy
+    this.load.atlas('goblin', 'assets/goblin/goblin.png', 'assets/goblin/goblin.json');
+
     // --- Graveyard music
     this.load.audio('graveyard-music', 'assets/audio/graveyard-music.ogg');
     this.load.audio('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
@@ -307,6 +310,47 @@ export default class PreloadScene extends Phaser.Scene {
     this.anims.create({
       key: 'lava-death',
       frames: this.anims.generateFrameNames('lava', { start: 19, end: 19, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 8,
+      repeat: 0,
+    });
+
+    // --- Goblin Boss animations (20 frames: frame_0 to frame_19) ---
+    // Idle: frames 0-3 (4 frames - subtle idle)
+    this.anims.create({
+      key: 'goblin-idle',
+      frames: this.anims.generateFrameNames('goblin', { start: 0, end: 3, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 6,
+      repeat: -1,
+    });
+
+    // Walk: frames 4-7 (4 frames - walk cycle)
+    this.anims.create({
+      key: 'goblin-walk',
+      frames: this.anims.generateFrameNames('goblin', { start: 4, end: 7, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 8,
+      repeat: -1,
+    });
+
+    // Attack: frames 8-11 (4 frames - attack)
+    this.anims.create({
+      key: 'goblin-attack',
+      frames: this.anims.generateFrameNames('goblin', { start: 8, end: 11, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 10,
+      repeat: 0,
+    });
+
+    // Super Attack: frames 12-15 (4 frames - super/charged attack)
+    this.anims.create({
+      key: 'goblin-super-attack',
+      frames: this.anims.generateFrameNames('goblin', { start: 12, end: 15, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 10,
+      repeat: 0,
+    });
+
+    // Death: frames 16-19 (4 frames - death)
+    this.anims.create({
+      key: 'goblin-death',
+      frames: this.anims.generateFrameNames('goblin', { start: 16, end: 19, prefix: 'frame_', zeroPad: 0 }),
       frameRate: 8,
       repeat: 0,
     });

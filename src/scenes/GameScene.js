@@ -4,6 +4,7 @@ import Walker from '../objects/Walker.js';
 import Zombie from '../objects/Zombie.js';
 import Wolf from '../objects/Wolf.js';
 import LavaCreature from '../objects/LavaCreature.js';
+import GoblinBoss from '../objects/GoblinBoss.js';
 import { touchState } from '../input/TouchControls.js';
 import { LEVELS, THEMES } from '../levels/index.js';
 import { sfx } from '../audio/sfx.js';
@@ -137,6 +138,24 @@ export default class GameScene extends Phaser.Scene {
     } catch (err) {
       console.error('[GameScene] TEST SPAWN ERROR:', err);
       window.__gameSceneTestLavaSpawned = false;
+    }
+
+    // TEST: Spawn Goblin Boss for testing (near player, on ground)
+    // Spawn ~600px ahead of player, feet on ground
+    try {
+      const playerFeetY = this.player.y + 25.0; // player visual feet Y
+      const groundRow = this.findFloorRow(Math.floor((this.player.x + 600) / TILE));
+      const groundY = groundRow * TILE;
+      // Goblin displayHeight = 268 * 0.25 = 67, feet ~22 below center (similar to lava)
+      const testGoblinX = this.player.x + 600;
+      const testGoblinY = groundY - 22.0;
+      console.log('[GameScene] TEST: Spawning test goblin at', { x: testGoblinX, y: testGoblinY, groundRow, groundY, playerX: this.player.x, playerFeetY });
+      window.__gameSceneTestGoblinSpawned = true;
+      this.enemies.add(new GoblinBoss(this, testGoblinX, testGoblinY, 'test_goblin_direct'));
+      console.log('[GameScene] TEST: Goblin added to enemies group');
+    } catch (err) {
+      console.error('[GameScene] TEST GOBLIN SPAWN ERROR:', err);
+      window.__gameSceneTestGoblinSpawned = false;
     }
 
     this.setupInput();
