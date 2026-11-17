@@ -60,11 +60,12 @@ const config = {
 
 const game = new Phaser.Game(config);
 
-// TEMP: Always expose game for debugging
-window.__game = game;
-
 // Rotating the device switches between the wide and narrow logical view
 portraitQuery.addEventListener('change', () => {
   game.scale.setGameSize(logicalWidth(), HEIGHT);
   game.scale.refresh();
 });
+
+if (import.meta.env.DEV) {
+  window.__game = game; // debug handle for tools/probe.mjs (dev only)
+}
