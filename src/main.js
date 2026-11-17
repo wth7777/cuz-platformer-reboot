@@ -1,4 +1,8 @@
 import Phaser from 'phaser';
+
+// Export Phaser so the Vite/Rollup bootstrap can access it for game creation
+export { Phaser };
+export default Phaser;
 import { isTouchDevice } from './input/TouchControls.js';
 import PreloadScene from './scenes/PreloadScene.js';
 import TitleScene from './scenes/TitleScene.js';
