@@ -81,6 +81,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
+    console.log('[GameScene] create() START');
     this.level = LEVELS[this.levelId];
     this.theme = THEMES[this.level.theme];
     this.worldWidth = this.level.width * TILE;
@@ -113,23 +114,32 @@ export default class GameScene extends Phaser.Scene {
     // World bounds: bottom check OFF so you can fall into pits.
     this.physics.world.setBounds(0, 0, this.worldWidth, GAME_HEIGHT, true, true, true, false);
 
+    console.log('[GameScene] Before parseGrid');
     this.parseGrid();
+    console.log('[GameScene] After parseGrid, before spawnPlayer');
     this.spawnPlayer();
+    console.log('[GameScene] After spawnPlayer, before test spawn');
 
     // TEST: Spawn a wolf directly to verify Wolf class works
     // Spawn ~500px ahead of player (player at ~x=63, so wolf at ~x=563)
     // Use ground level so wolf's feet sit on ground
-    const playerFeetY = this.player.y + 25.0; // player visual feet Y
-    const groundRow = this.findFloorRow(Math.floor((this.player.x + 500) / TILE));
-    const groundY = groundRow * TILE;
-    // Wolf visual feet at sprite.y + (displayHeight/2) ≈ sprite.y + 27.2
-    // So sprite.y = groundY - 27.2
-    const testWolfX = this.player.x + 500;
-    const testWolfY = groundY - 27.2;
-    console.log('[GameScene] TEST: Spawning test wolf at', { x: testWolfX, y: testWolfY, groundRow, groundY, playerX: this.player.x, playerFeetY });
-    // Global flag to verify this code runs
-    window.__gameSceneTestWolfSpawned = true;
-    this.enemies.add(new Wolf(this, testWolfX, testWolfY, 'test_wolf_direct'));
+    try {
+      const playerFeetY = this.player.y + 25.0; // player visual feet Y
+      const groundRow = this.findFloorRow(Math.floor((this.player.x + 500) / TILE));
+      const groundY = groundRow * TILE;
+      // Wolf visual feet at sprite.y + (displayHeight/2) ≈ sprite.y + 27.2
+      // So sprite.y = groundY - 27.2
+      const testWolfX = this.player.x + 500;
+      const testWolfY = groundY - 27.2;
+      console.log('[GameScene] TEST: Spawning test wolf at', { x: testWolfX, y: testWolfY, groundRow, groundY, playerX: this.player.x, playerFeetY });
+      // Global flag to verify this code runs
+      window.__gameSceneTestWolfSpawned = true;
+      this.enemies.add(new Wolf(this, testWolfX, testWolfY, 'test_wolf_direct'));
+      console.log('[GameScene] TEST: Wolf added to enemies group');
+    } catch (err) {
+      console.error('[GameScene] TEST SPAWN ERROR:', err);
+      window.__gameSceneTestWolfSpawned = false;
+    }
 
     this.setupInput();
 
