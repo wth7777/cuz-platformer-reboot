@@ -4,7 +4,7 @@ import Phaser from 'phaser';
 // Idle: frames 0-3 (4-frame subtle idle)
 // Walk: frames 4-11 (8-frame walk cycle)
 // Claw attack: frames 12-15 (4-frame claw swipe)
-// Lava eruption: frames 16-18 (3-frame eruption)
+// Lava eruption: frames 16-18 (3-frame eruption) - ONLY after taking fireball damage
 // Death: frame 19 (death pose)
 // Scale 0.22 (adjusted to match other enemies).
 // Artwork faces RIGHT by default.
@@ -25,6 +25,8 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     // Lava Creature scale: 0.22 (similar to wolf/zombie)
     // Frame: 307x256. At 0.22 → display ~67.5 x 56.3px
     // Body: effective 24x20, centered horizontally, feet aligned with visual feet
+    // Visual feet alignment: player feet at sprite.y + 25, lava feet at sprite.y + 22
+    // Raise by ~3px so feet align with player ground level
     this.body.setSize(24 / 0.22, 20 / 0.22); // effective 24x20
     this.body.setOffset(120, 120); // center horizontally, align feet
     this.setDepth(1);
@@ -32,12 +34,20 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     this.setScale(0.22);
     this.setOrigin(0.5, 0.5);
 
+    // Raise visual position by 3px so feet align with player ground level
+    this.y -= 3;
+
     this.direction = -1; // start walking left
     this.isSquashed = false;
     this.isDead = false;
     this.isAttacking = false;
     this.attackCooldown = 0;
     this.eruptionCooldown = 0;
+
+    // Health system: 2 fireball hits to die, 1 stomp kills
+    this.fireballHits = 0;
+    this.maxFireballHits = 2;
+    this.hasBeenDamaged = false; // enables eruption after first fireball hit
 
     // Lava Creature constants
     this.WALK_SPEED = 20; // slowest - lumbering
@@ -48,7 +58,7 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     this.ATTACK_DAMAGE = 30;
     this.ATTACK_COOLDOWN = 2000; // ms between attacks
     this.ERUPTION_COOLDOWN = 3000; // ms between eruptions
-    this.HEALTH = 8;
+    this.HEALTH = 8; // contact damage health (not used for fireball kills)
 
     // Play idle animation if available
     if (this.scene.anims.exists('lava-idle')) {
@@ -179,8 +189,8 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
       if (distX < this.CLAW_ATTACK_RANGE && distY < 25 && this.attackCooldown <= 0) {
         this.startClawAttack();
       }
-      // Lava eruption when at medium range
-      else if (distX < this.ERUPTION_RANGE && distY < 40 && this.eruptionCooldown <= 0) {
+      // Lava eruption ONLY after taking fireball damage (enraged), at medium range
+      else if (this.hasBeenDamaged && distX < this.ERUPTION_RANGE && distY < 40 && this.eruptionCooldown <= 0) {
         this.startEruption();
       }
     }
@@ -257,23 +267,52 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-  /** Killed by blue fireball: flip and fall away, then destroy. */
+  /** Hit by blue fireball: first hit damages, second hit kills. */
   knockAway(fromX = this.x) {
     if (this.isDead) return;
-    this.isDead = true;
-    this.isSquashed = true;
-    this.scene.consume?.(this.gridKey);
-    this.anims.stop();
-    this.body.checkCollision.none = true;
-    const dir = this.x < fromX ? -1 : 1;
-    this.body.setVelocity(dir * 100, -250);
-    this.body.setAngularVelocity(dir * 200);
-    this.scene.time.delayedCall(900, () => {
-      if (this.body && this.body.world) this.destroy();
+    
+    this.fireballHits++;
+    console.log('[LavaCreature] Fireball hit:', { fireballHits: this.fireballHits, max: this.maxFireballHits });
+    
+    if (this.fireballHits >= this.maxFireballHits) {
+      // Second hit - kill
+      this.isDead = true;
+      this.isSquashed = true;
+      this.scene.consume?.(this.gridKey);
+      this.anims.stop();
+      this.body.checkCollision.none = true;
+      const dir = this.x < fromX ? -1 : 1;
+      this.body.setVelocity(dir * 100, -250);
+      this.body.setAngularVelocity(dir * 200);
+      this.scene.time.delayedCall(900, () => {
+        if (this.body && this.body.world) this.destroy();
+      });
+    } else {
+      // First hit - damage, show hurt reaction, enable eruption
+      this.hasBeenDamaged = true; // enables eruption (enraged)
+      this.showHurt();
+    }
+  }
+
+  /** Show hurt reaction (flash red, brief pause) */
+  showHurt() {
+    // Flash red
+    this.setTint(0xff0000);
+    this.scene.time.delayedCall(150, () => {
+      if (!this.isDead && !this.isSquashed) {
+        this.clearTint();
+      }
+    });
+    // Brief pause
+    this.setVelocityX(0);
+    this.scene.time.delayedCall(300, () => {
+      if (!this.isDead && !this.isSquashed && !this.isAttacking) {
+        // Resume movement
+      }
     });
   }
 
-  /** Stomped from above: flatten and vanish shortly after. */
+  /** Stomped from above: instant kill (one stomp). */
   squash() {
     if (this.isDead) return;
     this.isDead = true;
