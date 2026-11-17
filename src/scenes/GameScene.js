@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import Player from '../objects/Player.js';
 import Walker from '../objects/Walker.js';
 import Zombie from '../objects/Zombie.js';
+import Wolf from '../objects/Wolf.js';
 import { touchState } from '../input/TouchControls.js';
 import { LEVELS, THEMES } from '../levels/index.js';
 import { sfx } from '../audio/sfx.js';
@@ -115,12 +116,15 @@ export default class GameScene extends Phaser.Scene {
     this.parseGrid();
     this.spawnPlayer();
 
-    // === TEMPORARY TEST SPAWN — Zombie only ===
+    // === TEMPORARY TEST SPAWN — Zombie + Wolf ===
     // Spawn on same ground row as player (col 20), dropped from above so it lands on ground.
-    // Player is at col 3 (~x=63). Zombie at col 20 (~x=369) — far enough to see pursuit.
+    // Player is at col 3 (~x=63). Zombie at col 20 (~x=369). Wolf at col 30 (~x=549) — far enough to see pursuit.
     const TEST_ENEMY_X = 20 * TILE + TILE / 2; // col 20, center of tile
     const TEST_ENEMY_Y = 100; // drop from above ground (ground feetY = 432)
     this.enemies.add(new Zombie(this, TEST_ENEMY_X, TEST_ENEMY_Y, 'test_zombie'));
+    // Wolf test spawn
+    const TEST_WOLF_X = 30 * TILE + TILE / 2;
+    this.enemies.add(new Wolf(this, TEST_WOLF_X, TEST_ENEMY_Y, 'test_wolf'));
     // === END TEMPORARY TEST SPAWN ===
 
     this.setupInput();
@@ -236,6 +240,10 @@ export default class GameScene extends Phaser.Scene {
           // Pipes removed: T, t
           case 'K':
             this.buildTattooShop(col, row);
+            break;
+          case 'w':
+            // Wolf enemy spawn
+            this.enemies.add(new Wolf(this, x, y, key));
             break;
           case 'd':
             this.buildDoor(col, row);
@@ -578,7 +586,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   onFireballHitsEnemy(a, b) {
-    // Handle any enemy that has knockAway method (Walker, Zombie, etc.)
+    // Handle any enemy that has knockAway method (Walker, Zombie, Wolf, etc.)
     const enemy = (a.knockAway ? a : b);
     const ball = enemy === a ? b : a;
     if (enemy.isSquashed || !ball.body.enable) return;

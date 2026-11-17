@@ -50,6 +50,9 @@ export default class PreloadScene extends Phaser.Scene {
     // --- Tattoo shop (level ending destination)
     this.load.atlas('tattooshop', 'assets/tattooshop/tattooshop.png', 'assets/tattooshop/tattooshop.json');
 
+    // --- Wolf enemy
+    this.load.atlas('wolf', 'assets/wolf/wolf.png', 'assets/wolf/wolf.json');
+
     // --- Graveyard music
     this.load.audio('graveyard-music', 'assets/audio/graveyard-music.ogg');
     this.load.audio('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
@@ -241,6 +244,23 @@ export default class PreloadScene extends Phaser.Scene {
       key: 'tattooshop-entrance',
       frames: this.anims.generateFrameNames('tattooshop', { start: 5, end: 15, prefix: 'frame_', zeroPad: 0 }),
       frameRate: 8,
+      repeat: 0,
+    });
+
+    // --- Wolf animations ---
+    // Walk: frames 0-7 (8-frame walk cycle)
+    this.anims.create({
+      key: 'wolf-walk',
+      frames: this.anims.generateFrameNames('wolf', { start: 0, end: 7, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 10,
+      repeat: -1,
+    });
+
+    // Attack: frames 8-15 (8-frame attack sequence)
+    this.anims.create({
+      key: 'wolf-attack',
+      frames: this.anims.generateFrameNames('wolf', { start: 8, end: 15, prefix: 'frame_', zeroPad: 0 }),
+      frameRate: 12,
       repeat: 0,
     });
   }
