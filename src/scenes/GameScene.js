@@ -444,10 +444,29 @@ export default class GameScene extends Phaser.Scene {
     const centerY = 324;
     const scrollFactor = 0.15;
 
+    console.log('[GameScene] buildParallax:', { levelId: this.levelId, isLavaLevel, bgKey, worldWidth: this.worldWidth, bgHeight, centerY, scrollFactor });
+    console.log('[GameScene] Texture exists:', this.textures.exists(bgKey));
+    if (this.textures.exists(bgKey)) {
+      const tex = this.textures.get(bgKey);
+      console.log('[GameScene] Texture source:', tex.getSourceImage().width, 'x', tex.getSourceImage().height);
+    }
+
     this.graveyardBg = this.add
       .tileSprite(this.worldWidth / 2, centerY, this.worldWidth, bgHeight, bgKey)
       .setScrollFactor(scrollFactor)
       .setDepth(-10);
+    
+    console.log('[GameScene] tileSprite created:', { 
+      x: this.graveyardBg.x, 
+      y: this.graveyardBg.y, 
+      width: this.graveyardBg.width, 
+      height: this.graveyardBg.height,
+      texture: this.graveyardBg.texture.key,
+      depth: this.graveyardBg.depth,
+      scrollFactorX: this.graveyardBg.scrollFactorX,
+      visible: this.graveyardBg.visible,
+      alpha: this.graveyardBg.alpha
+    });
   }
 
   // ------------------------------------------------------------- blocks
