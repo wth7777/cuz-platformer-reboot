@@ -14,7 +14,9 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
 
     this.gridKey = gridKey;
 
-    // DEBUG: Log spawn
+    // DEBUG: Store spawn info globally for inspection
+    if (!window.__wolfDebug) window.__wolfDebug = [];
+    window.__wolfDebug.push({ x, y, gridKey, texture: this.texture?.key, frame: this.frame?.name, time: Date.now() });
     console.log('[Wolf] Constructor called:', { x, y, gridKey, texture: this.texture?.key, frame: this.frame?.name });
 
     // Wolf scale: 0.2125 (reduced 15% from 0.25)
@@ -49,6 +51,8 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
       console.log('[Wolf] Playing wolf-walk animation');
     } else {
       console.warn('[Wolf] wolf-walk animation NOT found');
+      if (!window.__wolfDebug) window.__wolfDebug = [];
+      window.__wolfDebug.push({ error: 'wolf-walk animation NOT found', time: Date.now() });
     }
   }
 
