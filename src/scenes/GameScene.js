@@ -219,8 +219,7 @@ export default class GameScene extends Phaser.Scene {
             break;
           }
           case 'e':
-            // TEMPORARILY DISABLED for Phase 3 isolated zombie test
-            // if (!gone) this.enemies.add(new Walker(this, x, y, key))
+            if (!gone) this.enemies.add(new Zombie(this, x, y, key));
             break;
           case 'p':
             this.spawnCol = col;
