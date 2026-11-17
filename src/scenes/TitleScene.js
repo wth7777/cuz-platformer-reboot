@@ -118,6 +118,7 @@ export default class TitleScene extends Phaser.Scene {
     this.input.keyboard.once('keydown-ENTER', start);
     this.input.keyboard.once('keydown-L', startLevel3);  // TEMP: L key jumps to level 3
     // TEMP: Auto-start level 3 after 3 seconds for debugging
+    this.autoStartTimer = 0;
     setTimeout(() => {
       console.log('[TitleScene] setTimeout fired, starting level3');
       this.add.text(width / 2, height / 2, 'STARTING LEVEL 3...', { fontFamily: 'monospace', fontSize: '32px', color: '#ff0000' }).setOrigin(0.5).setDepth(100);
@@ -134,6 +135,17 @@ export default class TitleScene extends Phaser.Scene {
     if (this.fog) {
       this.fog.tilePositionX += 0.04;
       this.fog.tilePositionY += 0.02;
+    }
+    // TEMP: Auto-start level 3 after ~3 seconds (180 frames at 60fps)
+    if (this.autoStartTimer !== undefined) {
+      this.autoStartTimer++;
+      if (this.autoStartTimer >= 180) {
+        console.log('[TitleScene] frame counter fired, starting level3');
+        this.add.text(width / 2, height / 2, 'STARTING LEVEL 3...', { fontFamily: 'monospace', fontSize: '32px', color: '#ff0000' }).setOrigin(0.5).setDepth(100);
+        startLevel3();
+      }
+    } else {
+      this.autoStartTimer = 0;
     }
   }
 }
