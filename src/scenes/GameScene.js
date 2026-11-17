@@ -117,10 +117,16 @@ export default class GameScene extends Phaser.Scene {
     this.spawnPlayer();
 
     // TEST: Spawn a wolf directly to verify Wolf class works
-    // Spawn near player start (col 10, row 27 - same row as level wolf)
-    const testWolfX = 10 * TILE + TILE / 2;
-    const testWolfY = 27 * TILE + TILE / 2;
-    console.log('[GameScene] TEST: Spawning test wolf at', { x: testWolfX, y: testWolfY });
+    // Spawn ~500px ahead of player (player at ~x=63, so wolf at ~x=563)
+    // Use ground level so wolf's feet sit on ground
+    const playerFeetY = this.player.y + 25.0; // player visual feet Y
+    const groundRow = this.findFloorRow(Math.floor((this.player.x + 500) / TILE));
+    const groundY = groundRow * TILE;
+    // Wolf visual feet at sprite.y + (displayHeight/2) ≈ sprite.y + 27.2
+    // So sprite.y = groundY - 27.2
+    const testWolfX = this.player.x + 500;
+    const testWolfY = groundY - 27.2;
+    console.log('[GameScene] TEST: Spawning test wolf at', { x: testWolfX, y: testWolfY, groundRow, groundY, playerX: this.player.x, playerFeetY });
     // Global flag to verify this code runs
     window.__gameSceneTestWolfSpawned = true;
     this.enemies.add(new Wolf(this, testWolfX, testWolfY, 'test_wolf_direct'));

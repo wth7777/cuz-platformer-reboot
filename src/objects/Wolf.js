@@ -16,7 +16,7 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
 
     // DEBUG: Store spawn info globally for inspection
     if (!window.__wolfDebug) window.__wolfDebug = [];
-    window.__wolfDebug.push({ x, y, gridKey, texture: this.texture?.key, frame: this.frame?.name, time: Date.now() });
+    window.__wolfDebug.push({ event: 'constructor', x, y, gridKey, texture: this.texture?.key, frame: this.frame?.name, time: Date.now() });
     console.log('[Wolf] Constructor called:', { x, y, gridKey, texture: this.texture?.key, frame: this.frame?.name });
 
     // Wolf scale: 0.2125 (reduced 15% from 0.25)
@@ -57,7 +57,25 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
   }
 
   preUpdate(time, delta) {
+    // DEBUG: Log state at first few updates
+    if (!this._debugLogged) {
+      this._debugLogged = true;
+      console.log('[Wolf] preUpdate START:', { 
+        x: this.x, y: this.y, 
+        body: this.body ? { x: this.body.x, y: this.body.y, w: this.body.width, h: this.body.height, onFloor: this.body.onFloor(), blocked: { down: this.body.blocked.down, left: this.body.blocked.left, right: this.body.blocked.right } } : null,
+        active: this.active, visible: this.visible, alpha: this.alpha,
+        scene: this.scene ? this.scene.scene.key : 'no scene'
+      });
+    }
+
     super.preUpdate(time, delta);
+
+    // DEBUG: Check if destroyed/disabled
+    if (!this.active || !this.visible || this.alpha === 0) {
+      console.warn('[Wolf] DISABLED/DESTROYED:', { active: this.active, visible: this.visible, alpha: this.alpha, isDead: this.isDead, isSquashed: this.isSquashed });
+      if (!window.__wolfDebug) window.__wolfDebug = [];
+      window.__wolfDebug.push({ event: 'disabled', active: this.active, visible: this.visible, alpha: this.alpha, isDead: this.isDead, isSquashed: this.isSquashed, time: Date.now() });
+    }
 
     if (this.isSquashed || this.isDead) return;
 
@@ -68,7 +86,7 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
 
     // Sleep when far off-camera
     const cam = this.scene.cameras.main;
-    if (Math.abs(this.x - (cam.scrollX + cam.width / 2)) > 1100) {
+    if (cam && Math.abs(this.x - (cam.scrollX + cam.width / 2)) > 1100) {
       this.setVelocityX(0);
       return;
     }
