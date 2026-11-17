@@ -18,7 +18,7 @@ export default class IntroScene extends Phaser.Scene {
     this.scale.once('resize', () => this.scene.restart());
 
     this.add
-      .text(width / 2, height / 2 - 50, LEVELS[this.levelId].name, {
+      .text(width / 2, height / 2 - 60, LEVELS[this.levelId].name, {
         fontFamily: 'monospace',
         fontSize: '32px',
         fontStyle: 'bold',
@@ -26,8 +26,8 @@ export default class IntroScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // lives: the hero's face next to the count
-    this.add.sprite(width / 2 - 30, height / 2 + 14, 'chars', 0).setScale(0.8);
+    // lives: Cuz's face next to the count (replaced Astrohop character)
+    this.add.sprite(width / 2 - 30, height / 2 + 14, 'player', 'frame_0').setScale(0.5);
     this.add
       .text(width / 2 + 4, height / 2 + 14, `× ${this.registry.get('lives') ?? 3}`, {
         fontFamily: 'monospace',

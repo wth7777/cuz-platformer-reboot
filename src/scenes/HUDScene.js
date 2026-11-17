@@ -35,7 +35,8 @@ export default class HUDScene extends Phaser.Scene {
       lives: mkText('', '#ffffff'),
     };
     this.coinIcon = this.add.sprite(0, 0, 'tiles', 151).play('coin-spin').setScale(0.9);
-    this.livesIcon = this.add.sprite(0, 0, 'chars', 0).setScale(0.8);
+    // lives icon: Cuz's face (replaced Astrohop character)
+    this.livesIcon = this.add.sprite(0, 0, 'player', 'frame_0').setScale(0.4);
 
     const corner = (txt, onTap) => {
       const btn = this.add
