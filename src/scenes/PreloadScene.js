@@ -115,7 +115,9 @@ export default class PreloadScene extends Phaser.Scene {
     this.registry.set('time', 300);
     this.registry.set('world', '1-1');
 
-    this.scene.start('TitleScene');
+    // TEMP: Start directly at level 3 for debugging lava background
+    this.scene.start('GameScene', { levelId: 'level3' });
+    // this.scene.start('TitleScene');
   }
 
   makeTilingTexture(destKey, srcKey, frames, colorKey = null) {

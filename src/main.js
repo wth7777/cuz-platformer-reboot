@@ -48,7 +48,8 @@ const config = {
   },
   scene: [
     PreloadScene,
-    // TEMP: Skip TitleScene and IntroScene, go straight to GameScene level3 for debugging
+    TitleScene,
+    IntroScene,
     GameScene,
     HUDScene,
     PauseScene,
@@ -58,11 +59,6 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
-
-// TEMP: Start directly at level 3 for debugging lava background
-game.events.once('ready', () => {
-  game.scene.start('GameScene', { levelId: 'level3' });
-});
 
 // Rotating the device switches between the wide and narrow logical view
 portraitQuery.addEventListener('change', () => {
