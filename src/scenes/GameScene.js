@@ -127,9 +127,9 @@ export default class GameScene extends Phaser.Scene {
       const playerFeetY = this.player.y + 25.0; // player visual feet Y
       const groundRow = this.findFloorRow(Math.floor((this.player.x + 500) / TILE));
       const groundY = groundRow * TILE;
-      // Lava displayHeight = 256 * 0.22 = 56.32, feet ~22.2 below center (matches wolf)
+      // Lava displayHeight = 256 * 0.22 = 56.32, idle frame_0 feet at y=248 → 120px from center * 0.22 = 26.4px
       const testLavaX = this.player.x + 500;
-      const testLavaY = groundY - 22.2;  // match wolf visual feet offset (22.2)
+      const testLavaY = groundY - 26.4;  // lava idle frame_0: feet at y=248 (7px padding), 120px from center * 0.22 = 26.4px
       console.log('[GameScene] TEST: Spawning test lava at', { x: testLavaX, y: testLavaY, groundRow, groundY, playerX: this.player.x, playerFeetY });
       window.__gameSceneTestLavaSpawned = true;
       this.enemies.add(new LavaCreature(this, testLavaX, testLavaY, 'test_lava_direct'));
