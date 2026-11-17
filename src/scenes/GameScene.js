@@ -441,7 +441,8 @@ export default class GameScene extends Phaser.Scene {
     const isLavaLevel = this.levelId === 'level3';
     const bgKey = isLavaLevel ? 'lava-level-bg' : 'graveyard-bg';
     const bgHeight = 700;
-    const centerY = 324;
+    // Lava background: shift down to show more bottom of image (was 324)
+    const centerY = isLavaLevel ? 380 : 324;
     const scrollFactor = 0.15;
 
     this.graveyardBg = this.add
