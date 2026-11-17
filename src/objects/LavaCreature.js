@@ -26,7 +26,7 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     // Frame: 307x256. At 0.22 → display ~67.5 x 56.3px
     // Body: effective 24x20, centered horizontally, feet aligned with visual feet
     // Visual feet alignment: player feet at sprite.y + 25, lava feet at sprite.y + 22
-    // Raise by ~3px so feet align with player ground level
+    // Raise by ~5px so feet align with player ground level
     this.body.setSize(24 / 0.22, 20 / 0.22); // effective 24x20
     this.body.setOffset(120, 120); // center horizontally, align feet
     this.setDepth(1);
@@ -34,8 +34,8 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     this.setScale(0.22);
     this.setOrigin(0.5, 0.5);
 
-    // Raise visual position by 3px so feet align with player ground level
-    this.y -= 3;
+    // Raise visual position by 5px so feet align with player ground level
+    this.y -= 5;
 
     this.direction = -1; // start walking left
     this.isSquashed = false;
