@@ -2,8 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, recovery-69db9d5]
-  workflow_dispatch:
+    branches: [recovery-69db9d5, main]
 
 permissions:
   contents: read
@@ -19,10 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: 'npm'
       - run: npm ci
       - run: npm run build
       - uses: actions/configure-pages@v5
@@ -31,6 +32,7 @@ jobs:
           path: dist
 
   deploy:
+    name: Deploy to GitHub Pages
     needs: build
     runs-on: ubuntu-latest
     environment:
