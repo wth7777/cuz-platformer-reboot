@@ -174,8 +174,8 @@ export default class GameScene extends Phaser.Scene {
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, this.worldWidth, GAME_HEIGHT);
+    cam.startFollow(this.player, true, 0.12, 0.12);
     cam.setZoom(GAME_ZOOM);
-    cam.startFollow(this.player, true, 0.12, 0.12, cam.width / cam.zoom / 2, cam.height / cam.zoom / 2);
     cam.fadeIn(250);
 
     // --- Enemy AI diagnostic overlay (temporary, remove after debugging) ---
