@@ -118,7 +118,7 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     const cam = this.scene.cameras.main;
     const camWidthWorld = cam.width / cam.zoom;
     const camCenter = cam.scrollX + camWidthWorld / 2;
-    const ACTIVATION_MARGIN = 600; // world px beyond camera edge (~1.25x camera width)
+    const ACTIVATION_MARGIN = 300; // world px beyond camera edge (~0.6x camera width)
     const activationLeft = camCenter - camWidthWorld / 2 - ACTIVATION_MARGIN;
     const activationRight = camCenter + camWidthWorld / 2 + ACTIVATION_MARGIN;
     const isActive = this.x >= activationLeft && this.x <= activationRight;
@@ -159,8 +159,10 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
       const distX = player ? Math.abs(player.x - this.x) : 9999;
       const distY = player ? Math.abs(player.y - this.y) : 9999;
 
-      // Disengage: player far away OR player dead OR minimum chase time elapsed
-      if (!playerAlive || distX > this.loseRadius || distY > this.verticalTolerance) {
+      // Disengage: player dead (immediate) OR distance exceeded (with minimum chase duration)
+      if (!playerAlive) {
+        this.isChasing = false; // immediate disengage on player death
+      } else if (distX > this.loseRadius || distY > this.verticalTolerance) {
         // Require minimum chase duration to prevent rapid state flickering
         if (time - this.chaseStartTime > 1500) {
           this.isChasing = false;
