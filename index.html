@@ -39,7 +39,7 @@
         position: relative;
       }
 
-      /* ---- Virtual Joystick (landscape) ---- */
+      /* ---- Virtual Joystick (both orientations) ---- */
       #joystick-base {
         position: fixed;
         width: 144px;
@@ -73,29 +73,34 @@
         transition: transform 100ms ease-out;
       }
 
-      /* ---- GBA-style control area (portrait: below the game) ---- */
+      /* ---- Touch controls overlay (both orientations) ---- */
       #touch-controls {
         display: none;
-        height: 34%;
-        max-height: 230px;
-        /* generous side padding keeps thumbs out of Android's
-           edge-swipe (back gesture) zones */
-        padding: 14px calc(30px + env(safe-area-inset-right))
-          calc(14px + env(safe-area-inset-bottom))
-          calc(30px + env(safe-area-inset-left));
-        align-items: center;
-        justify-content: space-evenly;
-        background: linear-gradient(#2b2b34, #232329);
-        border-top: 2px solid #3a3a46;
       }
 
       body.touch #touch-controls {
         display: flex;
+        position: fixed;
+        inset: 0;
+        height: auto;
+        max-height: none;
+        background: none;
+        border: 0;
+        pointer-events: none; /* only the buttons catch touches */
+        align-items: flex-end;
+        justify-content: flex-end;
+        padding: 0 calc(34px + env(safe-area-inset-right))
+          calc(16px + env(safe-area-inset-bottom))
+          calc(34px + env(safe-area-inset-left));
+        z-index: 50;
       }
 
-      /* swapped = arrows on the right, action buttons on the left */
+      /* swapped = action buttons on the left, joystick zone on the right (not used in new layout) */
       #touch-controls.swapped {
-        flex-direction: row-reverse;
+        justify-content: flex-start;
+        padding: 0 calc(34px + env(safe-area-inset-left))
+          calc(16px + env(safe-area-inset-bottom))
+          calc(34px + env(safe-area-inset-right));
       }
 
       /* ---- swap toggle bar (between the game and the controls) ---- */
@@ -175,9 +180,10 @@
 
       /* ---- narrow phones: shrink the buttons so everything fits ---- */
       @media (max-width: 430px) {
-        #touch-controls {
-          padding-left: calc(24px + env(safe-area-inset-left));
-          padding-right: calc(24px + env(safe-area-inset-right));
+        body.touch #touch-controls {
+          padding: 0 calc(24px + env(safe-area-inset-right))
+            calc(12px + env(safe-area-inset-bottom))
+            calc(24px + env(safe-area-inset-left));
         }
 
         .btn-a,
@@ -201,50 +207,7 @@
         }
       }
 
-      /* ---- portrait: pin the game to the top, controls take the rest.
-             6/5 matches the narrower 540x450 logical view set in main.js ---- */
-      @media (orientation: portrait) {
-        body.touch #game-container {
-          flex: 0 0 auto;
-          width: 100%;
-          aspect-ratio: 6 / 5;
-        }
-
-        body.touch #touch-controls {
-          flex: 1;
-          height: auto;
-          max-height: none;
-        }
-
-        #joystick-base {
-          display: none !important;
-        }
-      }
-
-      /* ---- landscape: not enough height to stack — overlay the sides ---- */
-      @media (orientation: landscape) and (max-height: 520px) {
-        body.touch #touch-controls {
-          position: fixed;
-          inset: 0;
-          height: auto;
-          max-height: none;
-          background: none;
-          border: 0;
-          pointer-events: none; /* only the buttons catch touches */
-          align-items: flex-end;
-          justify-content: space-between;
-          padding: 0 calc(34px + env(safe-area-inset-right))
-            calc(16px + env(safe-area-inset-bottom))
-            calc(34px + env(safe-area-inset-left));
-        }
-
-        body.touch .actions {
-          pointer-events: auto;
-          opacity: 1;
-        }
-      }
-
-      /* ---- only if it truly cannot fit ---- */
+      /* ---- very narrow landscape: rotate hint ---- */
       #rotate-hint {
         display: none;
       }
