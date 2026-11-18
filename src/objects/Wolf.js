@@ -89,19 +89,22 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
       this.attackCooldown -= delta;
     }
 
-    // Camera-relative detection distances (scale with zoom/screen size)
+    // Camera visible world dimensions (account for zoom: cam.width is display px)
     const cam = this.scene.cameras.main;
-    const camHalfWidth = cam.width / 2; // center to edge in world pixels
-    const detectionRange = camHalfWidth * 0.75;   // 75% of center-to-edge
-    const disengageRange = camHalfWidth * 1.0;    // larger threshold for disengage
+    const camWidthWorld = cam.width / cam.zoom;          // world pixels visible
+    const camHalfWidthWorld = camWidthWorld / 2;         // center to edge in world px
 
-    // Is the enemy visible in the camera viewport?
-    const camLeft = cam.scrollX - camHalfWidth;
-    const camRight = cam.scrollX + camHalfWidth;
+    // Camera-relative detection distances (scale with zoom/screen size)
+    const detectionRange = camHalfWidthWorld * 0.75;   // 75% of center-to-edge
+    const disengageRange = camHalfWidthWorld * 1.0;    // larger threshold for disengage
+
+    // Is the enemy visible in the camera viewport? (world coordinates)
+    const camLeft = cam.scrollX;                           // left edge in world px
+    const camRight = cam.scrollX + camWidthWorld;          // right edge in world px
     const isVisible = this.x >= camLeft && this.x <= camRight;
 
     // Off-screen enemies keep patrolling but cannot detect/chase the player.
-    const farOffCamera = Math.abs(this.x - (cam.scrollX + camHalfWidth)) > 1100;
+    const farOffCamera = Math.abs(this.x - (cam.scrollX + camHalfWidthWorld)) > 1100;
 
     const player = this.scene.player;
     const playerAlive = player && !player.isDead;
@@ -132,6 +135,21 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
         // Not pursuing, just turn around at edges
         this.direction *= -1;
       }
+    }
+
+    // TEMP DIAGNOSTIC: log detection state once per second (60 frames)
+    if (!this._diagFrame) this._diagFrame = 0;
+    this._diagFrame++;
+    if (this._diagFrame % 60 === 0 && this.scene.player) {
+      const p = this.scene.player;
+      const dX = Math.abs(p.x - this.x);
+      console.log('[Wolf DIAG]', {
+        enemyX: Math.round(this.x), enemyY: Math.round(this.y),
+        playerX: Math.round(p.x), playerY: Math.round(p.y),
+        distX: Math.round(dX), detectionRange: Math.round(detectionRange),
+        isVisible, farOffCamera, isChasing: this.isChasing,
+        camScrollX: Math.round(cam.scrollX), camLeft: Math.round(camLeft), camRight: Math.round(camRight)
+      });
     }
 
     // State machine: patrol ↔ chase
