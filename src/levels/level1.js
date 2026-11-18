@@ -30,8 +30,8 @@ export default {
     sparse(W, [42, 'T'], [146, 'XXXX'], [168, 'T'], [244, 'XXXX']),
     // r20 — walking coins, pyramid, stairs (Astrohop castle removed)
     sparse(W, [8, 'ccccc'], [144, 'XXXXXXXX'], [170, 'cccc'], [242, 'XXXXXX']),
-    // r21 — spawn, decorations, enemies, pyramid base, stairs (Astrohop castle/door removed)
-    sparse(W, [3, 'p'], [6, '>'], [20, '*'], [36, '^'], [180, 'w'], [64, 'e'],
+    // r21 — spawn, decorations, enemies, pyramid base, stairs
+    sparse(W, [3, 'p'], [6, '>'], [20, '*'], [36, '^'], [40, 'w'], [100, 'w'], [180, 'w'], [64, 'e'],
       [90, 'e'], [93, 'e'], [105, 'e'], [118, 'e'], [130, '"'], [131, 'e'], [142, ground(12)],
       [156, '*'], [162, 'e'], [174, '^'], [185, 'e'], [195, 'e'], [203, 'e'], [222, 'e'],
       [226, 'e'], [232, '^'], [240, ground(8)], [250, '"']),

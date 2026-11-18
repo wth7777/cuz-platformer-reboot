@@ -1,13 +1,13 @@
 import { sparse, ground, gap } from './builder.js';
 
-// WORLD 1-4 — snow: icy ground (low friction — watch your stops!),
-// snowmen, and platform hops between drifts.
+// WORLD 1-4 — lava: volcanic chamber with wider pits, fewer safe platforms,
+// and darker rock terrain. Lava Creatures patrol here.
 
 const W = 240;
 
 export default {
   name: 'WORLD 1-4',
-  theme: 'snow',
+  theme: 'lava',
   next: 'level5',
   width: W,
   rows: [
@@ -30,14 +30,12 @@ export default {
     sparse(W),
     // r21 — walking coins; stairs (Astrohop castle walls removed)
     sparse(W, [8, 'cccc'], [150, 'ccc']),
-    // r22 — spawn, snowmen, enemies, stairs base (Astrohop castle/door removed)
-    sparse(W, [3, 'p'], [6, '>'], [15, 'o'], [30, 'e'], [58, 'e'], [88, 'o'], [100, 'e'],
-      [112, 'e'], [125, '^'], [135, 'e'], [155, 'o'], [170, 'e'], [196, 'e'], [204, 'e'],
+    // r22 — spawn, decorations, enemies, stairs base
+    sparse(W, [3, 'p'], [6, '>'], [20, 'w'], [30, 'e'], [35, 'l'], [58, 'e'], [70, 'w'], [75, 'l'], [100, 'e'],
+      [112, 'e'], [120, 'l'], [130, 'w'], [135, 'e'], [170, 'e'], [175, 'l'], [187, 'w'], [196, 'e'], [204, 'e'],
       [206, '^'], [208, ground(8)]),
-    // r23/r24 — four pits between snow drifts
-    ground(40) + gap(5) + ground(45) + gap(6) + ground(44) + gap(5) + ground(35) + gap(6) +
-      ground(54),
-    ground(40) + gap(5) + ground(45) + gap(6) + ground(44) + gap(5) + ground(35) + gap(6) +
-      ground(54),
+     // r23/r24 — four pits between volcanic drifts
+     ground(30) + gap(6) + ground(50) + gap(7) + ground(40) + gap(6) + ground(30) + gap(7) + ground(64),
+     ground(30) + gap(6) + ground(50) + gap(7) + ground(40) + gap(6) + ground(30) + gap(7) + ground(64),
   ],
 };

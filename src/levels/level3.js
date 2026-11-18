@@ -1,13 +1,14 @@
 import { sparse, ground, gap } from './builder.js';
 
-// WORLD 1-3 — athletic: island hopping over seven pits, high platform
+// WORLD 1-3 — lava: athletic island hopping over seven pits, high platform
 // routes with coin trails, and one wide final gap with a platform aid.
+// Lava Creatures appear for the first time here.
 
 const W = 260;
 
 export default {
   name: 'WORLD 1-3',
-  theme: 'overworld',
+  theme: 'lava',
   next: 'level4',
   width: W,
   rows: [
@@ -30,9 +31,9 @@ export default {
     sparse(W, [79, 'cccc'], [111, 'cccccc'], [139, 'PPPPP']),
     // r21 — walking coins; stairs (Astrohop castle walls removed)
     sparse(W, [10, 'ccccc'], [171, 'cccc']),
-    // r22 — spawn, decorations, enemies, stairs base (Astrohop castle/door removed)
-    sparse(W, [3, 'p'], [6, '>'], [20, 'e'], [44, 'e'], [50, '"'], [70, 'e'], [92, 'e'],
-      [100, '^'], [126, 'e'], [150, '*'], [160, 'e'], [185, 'e'], [195, 'e'], [222, '^'],
+    // r22 — spawn, decorations, enemies, stairs base
+    sparse(W, [3, 'p'], [6, '>'], [10, 'w'], [20, 'e'], [40, 'l'], [44, 'e'], [50, '"'], [70, 'e'], [85, 'w'], [90, 'l'], [92, 'e'],
+      [100, '^'], [120, 'w'], [126, 'e'], [130, 'l'], [150, '*'], [160, 'e'], [175, 'w'], [185, 'e'], [195, 'e'], [200, 'l'], [222, '^'],
       [234, ground(8)]),
     // r23/r24 — seven pits of rising width
     ground(30) + gap(4) + ground(22) + gap(5) + ground(18) + gap(4) + ground(28) + gap(6) +

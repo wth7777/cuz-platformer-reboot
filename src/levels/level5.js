@@ -32,10 +32,10 @@ export default {
     sparse(W),
     // r21 — walking coins; stairs (Astrohop castle walls removed)
     sparse(W, [8, 'ccccc'], [234, 'ccc']),
-    // r22 — spawn + the gauntlet (14 enemies), stairs base (Astrohop castle/door removed)
-    sparse(W, [3, 'p'], [6, '>'], [24, 'e'], [40, 'e'], [48, '"'], [62, 'e'], [64, 'e'],
-      [75, '*'], [94, 'e'], [118, 'e'], [122, 'e'], [133, '^'], [150, 'e'], [152, 'e'],
-      [175, 'e'], [188, '*'], [198, 'e'], [218, 'e'], [226, 'e'], [240, 'e'], [244, '^'],
+    // r22 — spawn + the gauntlet (14 enemies), stairs base
+    sparse(W, [3, 'p'], [6, '>'], [10, 'w'], [24, 'e'], [30, 'l'], [40, 'e'], [48, '"'], [62, 'e'], [64, 'e'],
+      [75, '*'], [80, 'w'], [90, 'l'], [94, 'e'], [118, 'e'], [122, 'e'], [133, '^'], [140, 'l'], [150, 'e'], [152, 'e'],
+      [170, 'g'], [175, 'e'], [188, '*'], [190, 'l'], [198, 'e'], [200, 'w'], [218, 'e'], [226, 'e'], [240, 'e'], [244, '^'],
       [246, ground(10)]),
     // r23/r24 — four pits, the last one wide
     ground(50) + gap(4) + ground(46) + gap(5) + ground(55) + gap(6) + ground(42) + gap(7) +

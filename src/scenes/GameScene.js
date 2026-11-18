@@ -314,6 +314,24 @@ export default class GameScene extends Phaser.Scene {
             console.log('[GameScene] Spawning wolf at:', { col, row, x, y: wolfSpawnY, groundRow: wolfGroundRow, groundY: wolfGroundY, key });
             this.enemies.add(new Wolf(this, x, wolfSpawnY, key));
             break;
+          case 'l':
+            // LavaCreature enemy spawn — find ground below and spawn with feet on ground
+            const lavaGroundRow = this.findFloorRow(col, row + 1);
+            const lavaGroundY = lavaGroundRow * TILE;
+            // LavaCreature visual feet at sprite.y + ~22.2 (matches Wolf: same frame height 256, similar scale)
+            const lavaSpawnY = lavaGroundY - 22.2;
+            console.log('[GameScene] Spawning LavaCreature at:', { col, row, x, y: lavaSpawnY, groundRow: lavaGroundRow, groundY: lavaGroundY, key });
+            this.enemies.add(new LavaCreature(this, x, lavaSpawnY, key));
+            break;
+          case 'g':
+            // GoblinBoss enemy spawn — find ground below and spawn with feet on ground
+            const goblinGroundRow = this.findFloorRow(col, row + 1);
+            const goblinGroundY = goblinGroundRow * TILE;
+            // GoblinBoss visual feet at sprite.y + ~28.5 (frame 268 * 0.25 = 67px display, center origin)
+            const goblinSpawnY = goblinGroundY - 28.5;
+            console.log('[GameScene] Spawning GoblinBoss at:', { col, row, x, y: goblinSpawnY, groundRow: goblinGroundRow, groundY: goblinGroundY, key });
+            this.enemies.add(new GoblinBoss(this, x, goblinSpawnY, key));
+            break;
           case 'd':
             this.buildDoor(col, row);
             break;
@@ -471,8 +489,8 @@ export default class GameScene extends Phaser.Scene {
   // ----------------------------------------------------------- parallax
 
   buildParallax() {
-    // World 1-3 (level3) uses lava background; others use graveyard
-    const isLavaLevel = this.levelId === 'level3';
+    // World 1-3 (level3) and 1-4 (level4) use lava background
+    const isLavaLevel = this.levelId === 'level3' || this.levelId === 'level4';
     const bgKey = isLavaLevel ? 'lava-level-bg' : 'graveyard-bg';
     const bgHeight = 700;
     // Lava background: shift down to show more bottom of image (was 324)

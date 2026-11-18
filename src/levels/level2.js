@@ -50,9 +50,9 @@ export default {
     sparse(W, [12, 'PPPPP'], [70, 'XX'], [115, 'PPP']),
     // r21 — entry coins; wall; stairs (Astrohop castle/door removed)
     sparse(W, [8, 'cccc'], [70, 'XX'], [178, 'XXXXXX']),
-    // r21 — spawn; enemies; wall; stairs (Astrohop castle/door removed)
-    sparse(W, [3, 'p'], [44, 'e'], [70, 'XX'], [92, 'e'], [100, 'e'], [108, 'e'],
-      [158, 'e'], [164, 'e'], [176, ground(8)]),
+    // r21 — spawn; enemies; wall; stairs
+    sparse(W, [3, 'p'], [30, 'w'], [44, 'e'], [70, 'XX'], [80, 'w'], [92, 'e'], [100, 'e'], [108, 'e'],
+      [130, 'w'], [158, 'e'], [164, 'e'], [176, ground(8)], [180, 'w']),
     // r22/r23 — ground with two pits (58-61 and 114-118)
     ground(58) + gap(4) + ground(52) + gap(5) + ground(81),
     ground(58) + gap(4) + ground(52) + gap(5) + ground(81),

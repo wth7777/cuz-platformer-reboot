@@ -31,4 +31,10 @@ export const THEMES = {
     parallax: true,
     dragFactor: 0.3,
   },
+  lava: {
+    sky: '#1a0a05',  // Dark volcanic red-orange
+    terrainTop: 42,   // dark rock
+    terrainFill: 142, // dark dirt
+    parallax: true,
+  },
 };
