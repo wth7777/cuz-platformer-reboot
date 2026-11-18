@@ -51,6 +51,10 @@ export default class LadyInGrey extends Phaser.GameObjects.Sprite {
         volume: 0.6,
         loop: false
       });
+      // Ensure Phaser's AudioContext is unlocked (created lazily on first sound play)
+      if (this.scene.sound.context && this.scene.sound.context.state === 'suspended') {
+        this.scene.sound.context.resume().catch(() => {});
+      }
       this.ladySound.play();
     }
     
