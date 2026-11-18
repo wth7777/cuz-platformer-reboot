@@ -1,0 +1,172 @@
+{
+  "frames": {
+    "frame_0": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "sourceSize": {
+        "w": 332,
+        "h": 503
+      }
+    },
+    "frame_1": {
+      "frame": {
+        "x": 332,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "sourceSize": {
+        "w": 332,
+        "h": 503
+      }
+    },
+    "frame_2": {
+      "frame": {
+        "x": 664,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "sourceSize": {
+        "w": 332,
+        "h": 503
+      }
+    },
+    "frame_3": {
+      "frame": {
+        "x": 996,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "sourceSize": {
+        "w": 332,
+        "h": 503
+      }
+    },
+    "frame_4": {
+      "frame": {
+        "x": 0,
+        "y": 503,
+        "w": 332,
+        "h": 503
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "sourceSize": {
+        "w": 332,
+        "h": 503
+      }
+    },
+    "frame_5": {
+      "frame": {
+        "x": 332,
+        "y": 503,
+        "w": 332,
+        "h": 503
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "sourceSize": {
+        "w": 332,
+        "h": 503
+      }
+    },
+    "frame_6": {
+      "frame": {
+        "x": 664,
+        "y": 503,
+        "w": 332,
+        "h": 503
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "sourceSize": {
+        "w": 332,
+        "h": 503
+      }
+    },
+    "frame_7": {
+      "frame": {
+        "x": 996,
+        "y": 503,
+        "w": 332,
+        "h": 503
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 332,
+        "h": 503
+      },
+      "sourceSize": {
+        "w": 332,
+        "h": 503
+      }
+    }
+  },
+  "meta": {
+    "image": "zombie-atlas.png",
+    "size": {
+      "w": 1328,
+      "h": 1006
+    },
+    "scale": "1"
+  }
+}

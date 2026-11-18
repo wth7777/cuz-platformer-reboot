@@ -1,0 +1,572 @@
+{
+  "frames": {
+    "25_bot_spanning_terrain": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 276,
+        "h": 275
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 276,
+        "h": 275
+      },
+      "sourceSize": {
+        "w": 276,
+        "h": 275
+      }
+    },
+    "24_bot_large_terrain": {
+      "frame": {
+        "x": 278,
+        "y": 0,
+        "w": 275,
+        "h": 167
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 275,
+        "h": 167
+      },
+      "sourceSize": {
+        "w": 275,
+        "h": 167
+      }
+    },
+    "27_bot_spanning_terrain_2": {
+      "frame": {
+        "x": 555,
+        "y": 0,
+        "w": 230,
+        "h": 273
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 230,
+        "h": 273
+      },
+      "sourceSize": {
+        "w": 230,
+        "h": 273
+      }
+    },
+    "28_bot_bottom_strip": {
+      "frame": {
+        "x": 787,
+        "y": 0,
+        "w": 263,
+        "h": 68
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 263,
+        "h": 68
+      },
+      "sourceSize": {
+        "w": 263,
+        "h": 68
+      }
+    },
+    "26_bot_right_terrain": {
+      "frame": {
+        "x": 1052,
+        "y": 0,
+        "w": 262,
+        "h": 150
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 262,
+        "h": 150
+      },
+      "sourceSize": {
+        "w": 262,
+        "h": 150
+      }
+    },
+    "19_mid_tall_structure": {
+      "frame": {
+        "x": 1316,
+        "y": 0,
+        "w": 139,
+        "h": 241
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 139,
+        "h": 241
+      },
+      "sourceSize": {
+        "w": 139,
+        "h": 241
+      }
+    },
+    "20_mid_tall_structure_2": {
+      "frame": {
+        "x": 1457,
+        "y": 0,
+        "w": 134,
+        "h": 234
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 134,
+        "h": 234
+      },
+      "sourceSize": {
+        "w": 134,
+        "h": 234
+      }
+    },
+    "15_mid_large_structure": {
+      "frame": {
+        "x": 1593,
+        "y": 0,
+        "w": 230,
+        "h": 149
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 230,
+        "h": 149
+      },
+      "sourceSize": {
+        "w": 230,
+        "h": 149
+      }
+    },
+    "18_mid_platform_3": {
+      "frame": {
+        "x": 1825,
+        "y": 0,
+        "w": 92,
+        "h": 191
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 92,
+        "h": 191
+      },
+      "sourceSize": {
+        "w": 92,
+        "h": 191
+      }
+    },
+    "01_top_terrain_large": {
+      "frame": {
+        "x": 0,
+        "y": 277,
+        "w": 182,
+        "h": 131
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 182,
+        "h": 131
+      },
+      "sourceSize": {
+        "w": 182,
+        "h": 131
+      }
+    },
+    "02_top_terrain_wide": {
+      "frame": {
+        "x": 184,
+        "y": 277,
+        "w": 181,
+        "h": 78
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 181,
+        "h": 78
+      },
+      "sourceSize": {
+        "w": 181,
+        "h": 78
+      }
+    },
+    "23_mid_decor_3": {
+      "frame": {
+        "x": 367,
+        "y": 277,
+        "w": 98,
+        "h": 174
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 98,
+        "h": 174
+      },
+      "sourceSize": {
+        "w": 98,
+        "h": 174
+      }
+    },
+    "16_mid_platform_1": {
+      "frame": {
+        "x": 467,
+        "y": 277,
+        "w": 134,
+        "h": 162
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 134,
+        "h": 162
+      },
+      "sourceSize": {
+        "w": 134,
+        "h": 162
+      }
+    },
+    "17_mid_platform_2": {
+      "frame": {
+        "x": 603,
+        "y": 277,
+        "w": 111,
+        "h": 158
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 111,
+        "h": 158
+      },
+      "sourceSize": {
+        "w": 111,
+        "h": 158
+      }
+    },
+    "21_mid_decor_1": {
+      "frame": {
+        "x": 716,
+        "y": 277,
+        "w": 84,
+        "h": 155
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 84,
+        "h": 155
+      },
+      "sourceSize": {
+        "w": 84,
+        "h": 155
+      }
+    },
+    "22_mid_decor_2": {
+      "frame": {
+        "x": 802,
+        "y": 277,
+        "w": 86,
+        "h": 154
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 86,
+        "h": 154
+      },
+      "sourceSize": {
+        "w": 86,
+        "h": 154
+      }
+    },
+    "08_top_terrain_2": {
+      "frame": {
+        "x": 890,
+        "y": 277,
+        "w": 87,
+        "h": 135
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 87,
+        "h": 135
+      },
+      "sourceSize": {
+        "w": 87,
+        "h": 135
+      }
+    },
+    "04_top_block_1": {
+      "frame": {
+        "x": 979,
+        "y": 277,
+        "w": 90,
+        "h": 131
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 90,
+        "h": 131
+      },
+      "sourceSize": {
+        "w": 90,
+        "h": 131
+      }
+    },
+    "05_top_terrain_small": {
+      "frame": {
+        "x": 1071,
+        "y": 277,
+        "w": 93,
+        "h": 131
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 93,
+        "h": 131
+      },
+      "sourceSize": {
+        "w": 93,
+        "h": 131
+      }
+    },
+    "03_top_terrain_medium": {
+      "frame": {
+        "x": 1166,
+        "y": 277,
+        "w": 130,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 130,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 130,
+        "h": 124
+      }
+    },
+    "09_top_decor_3": {
+      "frame": {
+        "x": 1298,
+        "y": 277,
+        "w": 84,
+        "h": 123
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 84,
+        "h": 123
+      },
+      "sourceSize": {
+        "w": 84,
+        "h": 123
+      }
+    },
+    "07_top_decor_2": {
+      "frame": {
+        "x": 1384,
+        "y": 277,
+        "w": 88,
+        "h": 116
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 88,
+        "h": 116
+      },
+      "sourceSize": {
+        "w": 88,
+        "h": 116
+      }
+    },
+    "10_top_decor_4": {
+      "frame": {
+        "x": 1474,
+        "y": 277,
+        "w": 73,
+        "h": 113
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 73,
+        "h": 113
+      },
+      "sourceSize": {
+        "w": 73,
+        "h": 113
+      }
+    },
+    "06_top_decor_1": {
+      "frame": {
+        "x": 1549,
+        "y": 277,
+        "w": 84,
+        "h": 99
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 84,
+        "h": 99
+      },
+      "sourceSize": {
+        "w": 84,
+        "h": 99
+      }
+    },
+    "11_top_decor_5": {
+      "frame": {
+        "x": 1635,
+        "y": 277,
+        "w": 79,
+        "h": 88
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 79,
+        "h": 88
+      },
+      "sourceSize": {
+        "w": 79,
+        "h": 88
+      }
+    },
+    "12_top_terrain_3": {
+      "frame": {
+        "x": 1716,
+        "y": 277,
+        "w": 88,
+        "h": 78
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 88,
+        "h": 78
+      },
+      "sourceSize": {
+        "w": 88,
+        "h": 78
+      }
+    },
+    "13_top_decor_6": {
+      "frame": {
+        "x": 1806,
+        "y": 277,
+        "w": 85,
+        "h": 82
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 85,
+        "h": 82
+      },
+      "sourceSize": {
+        "w": 85,
+        "h": 82
+      }
+    },
+    "14_top_decor_7": {
+      "frame": {
+        "x": 1893,
+        "y": 277,
+        "w": 85,
+        "h": 77
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 85,
+        "h": 77
+      },
+      "sourceSize": {
+        "w": 85,
+        "h": 77
+      }
+    }
+  },
+  "meta": {
+    "image": "graveyard-sprites-atlas.png",
+    "size": {
+      "w": 1978,
+      "h": 451
+    },
+    "scale": "1"
+  }
+}
