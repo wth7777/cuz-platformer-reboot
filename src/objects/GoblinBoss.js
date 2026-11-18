@@ -62,6 +62,14 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     this.patrolStartX = x - 120;
     this.patrolEndX = x + 120;
     this.isChasing = false; // start in patrol mode
+    this.chaseStartTime = 0; // timestamp when chase began
+
+    // World-space detection parameters (fixed, independent of camera/zoom)
+    this.detectRadius = 200;    // horizontal aggro distance
+    this.loseRadius = 350;      // disengagement distance (hysteresis)
+    this.attackRadius = 55;     // regular attack range
+    this.superAttackRadius = 80; // super attack range
+    this.verticalTolerance = 80; // vertical distance tolerance for detection
 
     // Play idle animation if available
     if (this.scene.anims.exists('goblin-idle')) {
@@ -105,22 +113,15 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
       this.superAttackCooldown -= delta;
     }
 
+    // Activation region: camera bounds + modest margin (world coordinates)
+    // Only run detection logic for enemies near the active gameplay area
     const cam = this.scene.cameras.main;
-
-    // Camera visible world dimensions (account for zoom: cam.width is display px)
-    const camWidthWorld = cam.width / cam.zoom;          // world pixels visible
-
-    // Camera-relative detection distances (scale with zoom/screen size)
-    const detectionRange = camWidthWorld * 0.75;   // 75% of full visible width
-    const disengageRange = camWidthWorld * 0.90;   // larger threshold for disengage
-
-    // Is the enemy visible in the camera viewport? (world coordinates)
-    const camLeft = cam.scrollX;                           // left edge in world px
-    const camRight = cam.scrollX + camWidthWorld;          // right edge in world px
-    const isVisible = this.x >= camLeft && this.x <= camRight;
-
-    // Off-screen enemies keep patrolling but cannot detect/chase the player.
-    const farOffCamera = Math.abs(this.x - (cam.scrollX + camWidthWorld / 2)) > 1100;
+    const camWidthWorld = cam.width / cam.zoom;
+    const camCenter = cam.scrollX + camWidthWorld / 2;
+    const ACTIVATION_MARGIN = 600; // world px beyond camera edge (~1.25x camera width)
+    const activationLeft = camCenter - camWidthWorld / 2 - ACTIVATION_MARGIN;
+    const activationRight = camCenter + camWidthWorld / 2 + ACTIVATION_MARGIN;
+    const isActive = this.x >= activationLeft && this.x <= activationRight;
 
     const player = this.scene.player;
     const playerAlive = player && !player.isDead;
@@ -153,12 +154,17 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
-    // State machine: patrol ↔ chase
+    // State machine: patrol <-> chase (world-space detection, no camera gating)
     if (this.isChasing) {
-      // Disengage: player too far away OR enemy not visible in camera
       const distX = player ? Math.abs(player.x - this.x) : 9999;
-      if (!playerAlive || distX > disengageRange || !isVisible || farOffCamera) {
-        this.isChasing = false;
+      const distY = player ? Math.abs(player.y - this.y) : 9999;
+
+      // Disengage: player far away OR player dead OR minimum chase time elapsed
+      if (!playerAlive || distX > this.loseRadius || distY > this.verticalTolerance) {
+        // Require minimum chase duration to prevent rapid state flickering
+        if (time - this.chaseStartTime > 1500) {
+          this.isChasing = false;
+        }
       } else {
         // Attack logic retained
         if (!this.isAttacking && !this.isSuperAttacking) {
@@ -180,11 +186,13 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
         return;
       }
     } else {
-      // Patrol mode: check for player detection (only when on-screen)
-      if (playerAlive && !farOffCamera && isVisible) {
+      // Patrol mode: check for player detection (only if active)
+      if (playerAlive && isActive) {
         const distX = Math.abs(player.x - this.x);
-        if (distX < detectionRange) {
+        const distY = Math.abs(player.y - this.y);
+        if (distX < this.detectRadius && distY < this.verticalTolerance) {
           this.isChasing = true;
+          this.chaseStartTime = time; // record when chase began
           this.pursuePlayer(player);
           return;
         }

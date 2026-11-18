@@ -178,15 +178,6 @@ export default class GameScene extends Phaser.Scene {
     cam.setZoom(GAME_ZOOM);
     cam.fadeIn(250);
 
-    // --- Enemy AI diagnostic overlay (temporary, remove after debugging) ---
-    this.enemyDiagText = this.add.text(10, 10, '', {
-      fontFamily: 'monospace',
-      fontSize: '12px',
-      color: '#00ff00',
-      backgroundColor: '#000000',
-      padding: { x: 6, y: 4 },
-    }).setScrollFactor(0).setDepth(10000);
-
     // --- Lady in Grey ghost appearance system ---
     this.ladyInGrey = null;
     this.ladyTimer = null;
@@ -1008,65 +999,6 @@ export default class GameScene extends Phaser.Scene {
   update() {
     if (this.hills) {
       this.hills.tilePositionX = (this.cameras.main.scrollX * 0.4) / 3;
-    }
-
-    // --- Enemy AI diagnostic overlay (temporary, remove after debugging) ---
-    if (this.enemyDiagText && this.enemies && this.player) {
-      const cam = this.cameras.main;
-      const camWidthWorld = cam.width / cam.zoom;
-      const camHalfWidthWorld = camWidthWorld / 2;
-      const camLeft = cam.scrollX;
-      const camRight = cam.scrollX + camWidthWorld;
-      const camCenter = cam.scrollX + camHalfWidthWorld;
-
-      let nearestEnemy = null;
-      let nearestDist = Infinity;
-
-      this.enemies.getChildren().forEach((enemy) => {
-        if (enemy.isDead || enemy.isSquashed) return;
-        const d = Math.abs(enemy.x - this.player.x);
-        if (d < nearestDist) {
-          nearestDist = d;
-          nearestEnemy = enemy;
-        }
-      });
-
-      if (nearestEnemy) {
-        const playerAlive = this.player && !this.player.isDead;
-        const distX = Math.abs(nearestEnemy.x - this.player.x);
-        const detectionRange = camWidthWorld * 0.75;
-        const disengageRange = camWidthWorld * 0.90;
-        const isVisible = nearestEnemy.x >= camLeft && nearestEnemy.x <= camRight;
-        const farOffCamera = Math.abs(nearestEnemy.x - camCenter) > 1100;
-
-        let reason = '';
-        if (!playerAlive) reason = 'player not alive';
-        else if (farOffCamera) reason = 'far off camera';
-        else if (!isVisible) reason = 'not in viewport';
-        else if (distX >= detectionRange) reason = 'outside detection range';
-        else reason = 'SHOULD DETECT';
-
-        this.enemyDiagText.setText([
-          'ENEMY AI DIAG',
-          `CamScrollX: ${Math.round(cam.scrollX)}`,
-          `CamLeft: ${Math.round(camLeft)}`,
-          `CamRight: ${Math.round(camRight)}`,
-          `CamCenter: ${Math.round(camCenter)}`,
-          `PlayerX: ${Math.round(this.player.x)}`,
-          `Type: ${nearestEnemy.constructor.name}`,
-          `EnemyX: ${Math.round(nearestEnemy.x)}`,
-          `Dist: ${Math.round(distX)}px`,
-          `Detect: ${Math.round(detectionRange)}px`,
-          `Disengage: ${Math.round(disengageRange)}px`,
-          `Visible: ${isVisible}`,
-          `FarOffCam: ${farOffCamera}`,
-          `PlayerOK: ${playerAlive}`,
-          `Chasing: ${nearestEnemy.isChasing}`,
-          `Result: ${reason}`,
-        ].join('\n'));
-      } else {
-        this.enemyDiagText.setText('ENEMY AI DIAG: No active enemies');
-      }
     }
 
     if (this.player.isDead) return;

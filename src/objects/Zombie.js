@@ -48,10 +48,17 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     this.isSquashed = false;
     this.isDead = false;
     this.isChasing = false; // start in patrol mode
+    this.chaseStartTime = 0; // timestamp when chase began
 
     // Patrol boundaries around spawn location (±120px)
     this.patrolStartX = x - 120;
     this.patrolEndX = x + 120;
+
+    // World-space detection parameters (fixed, independent of camera/zoom)
+    this.detectRadius = 150;   // horizontal aggro distance
+    this.loseRadius = 250;     // disengagement distance (hysteresis)
+    this.attackRadius = 20;    // contact damage range
+    this.verticalTolerance = 80; // vertical distance tolerance for detection
 
     // Play walk animation if available
     if (this.scene.anims.exists('zombie-walk')) {
@@ -60,88 +67,89 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
   }
 
   preUpdate(time, delta) {
-    super.preUpdate(time, delta);
+      super.preUpdate(time, delta);
 
-    if (this.isSquashed || this.isDead) return;
+      if (this.isSquashed || this.isDead) return;
 
-    // Camera visible world dimensions (account for zoom: cam.width is display px)
-    const cam = this.scene.cameras.main;
-    const camWidthWorld = cam.width / cam.zoom;          // world pixels visible
+      // Activation region: camera bounds + modest margin (world coordinates)
+      // Only run detection logic for enemies near the active gameplay area
+      const cam = this.scene.cameras.main;
+      const camWidthWorld = cam.width / cam.zoom;
+      const camCenter = cam.scrollX + camWidthWorld / 2;
+      const ACTIVATION_MARGIN = 600; // world px beyond camera edge (~1.25x camera width)
+      const activationLeft = camCenter - camWidthWorld / 2 - ACTIVATION_MARGIN;
+      const activationRight = camCenter + camWidthWorld / 2 + ACTIVATION_MARGIN;
+      const isActive = this.x >= activationLeft && this.x <= activationRight;
 
-    // Camera-relative detection distances (scale with zoom/screen size)
-    const detectionRange = camWidthWorld * 0.75;   // 75% of full visible width
-    const disengageRange = camWidthWorld * 0.90;   // larger threshold for disengage
+      const player = this.scene.player;
+      const playerAlive = player && !player.isDead;
 
-    // Is the enemy visible in the camera viewport? (world coordinates)
-    const camLeft = cam.scrollX;                           // left edge in world px
-    const camRight = cam.scrollX + camWidthWorld;          // right edge in world px
-    const isVisible = this.x >= camLeft && this.x <= camRight;
-
-    // Off-screen enemies keep patrolling but cannot detect/chase the player.
-    const farOffCamera = Math.abs(this.x - (cam.scrollX + camWidthWorld / 2)) > 1100;
-
-    const player = this.scene.player;
-    const playerAlive = player && !player.isDead;
-
-    // Turn at walls
-    if (this.body.blocked.left || this.body.touching.left) {
-      this.direction = 1;
-    } else if (this.body.blocked.right || this.body.touching.right) {
-      this.direction = -1;
-    }
-
-    // Patrol boundaries: turn around when reaching either edge of spawn zone
-    if (this.x <= this.patrolStartX) {
-      this.direction = 1;
-    } else if (this.x >= this.patrolEndX) {
-      this.direction = -1;
-    }
-
-    // Platform edge detection and drop-down logic
-    if (this.body.onFloor()) {
-      const aheadX = this.direction > 0 ? this.body.right + 2 : this.body.left - 3;
-      const ground = this.scene.physics.overlapRect(
-        aheadX, this.body.bottom + 2, 2, 4,
-        false, true
-      );
-
-      if (ground.length === 0) {
-        // Not pursuing, just turn around at edges
-        this.direction *= -1;
+      // Turn at walls
+      if (this.body.blocked.left || this.body.touching.left) {
+        this.direction = 1;
+      } else if (this.body.blocked.right || this.body.touching.right) {
+        this.direction = -1;
       }
-    }
 
-    // State machine: patrol ↔ chase
-    if (this.isChasing) {
-      // Disengage: player too far away OR enemy not visible in camera
-      const distX = player ? Math.abs(player.x - this.x) : 9999;
-      if (!playerAlive || distX > disengageRange || !isVisible || farOffCamera) {
-        this.isChasing = false;
-      } else {
-        // Continue pursuing
-        this.pursuePlayer(player);
-        return;
+      // Patrol boundaries: turn around when reaching either edge of spawn zone
+      if (this.x <= this.patrolStartX) {
+        this.direction = 1;
+      } else if (this.x >= this.patrolEndX) {
+        this.direction = -1;
       }
-    } else {
-      // Patrol mode: check for player detection (only when on-screen)
-      if (playerAlive && !farOffCamera && isVisible) {
-        const distX = Math.abs(player.x - this.x);
-        if (distX < detectionRange) {
-          this.isChasing = true;
+
+      // Platform edge detection and drop-down logic
+      if (this.body.onFloor()) {
+        const aheadX = this.direction > 0 ? this.body.right + 2 : this.body.left - 3;
+        const ground = this.scene.physics.overlapRect(
+          aheadX, this.body.bottom + 2, 2, 4,
+          false, true
+        );
+
+        if (ground.length === 0) {
+          // Not pursuing, just turn around at edges
+          this.direction *= -1;
+        }
+      }
+
+      // State machine: patrol <-> chase (world-space detection, no camera gating)
+      if (this.isChasing) {
+        const distX = player ? Math.abs(player.x - this.x) : 9999;
+        const distY = player ? Math.abs(player.y - this.y) : 9999;
+
+        // Disengage: player far away OR player dead OR minimum chase time elapsed
+        if (!playerAlive || distX > this.loseRadius || distY > this.verticalTolerance) {
+          // Require minimum chase duration to prevent rapid state flickering
+          if (time - this.chaseStartTime > 1500) {
+            this.isChasing = false;
+          }
+        } else {
+          // Continue pursuing
           this.pursuePlayer(player);
           return;
         }
+      } else {
+        // Patrol mode: check for player detection (only if active)
+        if (playerAlive && isActive) {
+          const distX = Math.abs(player.x - this.x);
+          const distY = Math.abs(player.y - this.y);
+          if (distX < this.detectRadius && distY < this.verticalTolerance) {
+            this.isChasing = true;
+            this.chaseStartTime = time; // record when chase began
+            this.pursuePlayer(player);
+            return;
+          }
+        }
       }
+
+      // Patrol movement
+      const speed = WALK_SPEED;
+      this.setVelocityX(speed * this.direction);
+
+      // Artwork faces RIGHT. When moving LEFT (direction < 0), flip to face left.
+      // When moving RIGHT (direction > 0), no flip (faces right).
+      this.setFlipX(this.direction < 0);
     }
-
-    // Patrol movement
-    const speed = WALK_SPEED;
-    this.setVelocityX(speed * this.direction);
-
-    // Artwork faces RIGHT. When moving LEFT (direction < 0), flip to face left.
-    // When moving RIGHT (direction > 0), no flip (faces right).
-    this.setFlipX(this.direction < 0);
-  }
 
   /** Shared pursuit logic: move toward the player. */
   pursuePlayer(player) {
