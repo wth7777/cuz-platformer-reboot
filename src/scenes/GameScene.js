@@ -184,8 +184,8 @@ export default class GameScene extends Phaser.Scene {
     // --- Lady in Grey ghost appearance system ---
     this.ladyInGrey = null;
     this.ladyTimer = null;
-    // First appearance: randomly between 1-6 seconds after level start
-    this.scheduleLadyAppearance(true);
+    // First appearance: randomly between 10-30 seconds after level start
+    this.scheduleLadyAppearance();
 
     // --- Physics wiring
     this.physics.add.collider(this.player, this.solids);
@@ -861,27 +861,78 @@ export default class GameScene extends Phaser.Scene {
 
   // ------------------------------------------------------- Lady in Grey appearance system
 
-  /** Schedule next appearance - fixed 2-second delay for testing */
-  scheduleLadyAppearance(useQuickInterval = false) {
+  /** Schedule next appearance with random timing (10-30 seconds between appearances) */
+  scheduleLadyAppearance() {
     // Stop any existing timer
     if (this.ladyTimer) {
       this.ladyTimer.remove(false);
       this.ladyTimer = null;
     }
 
-    // Fixed 2-second delay for testing Lady in Grey visibility
-    const delay = 2000;
+    // Random interval: 10-30 seconds between appearances
+    const delay = Phaser.Math.Between(10000, 30000);
 
     this.ladyTimer = this.time.addEvent({
       delay: delay,
       callback: () => {
         if (!this.player || this.player.isDead || this.autoPhase) {
+          this.scheduleLadyAppearance(); // retry if game state is not ready
+          return;
+        }
+        if (this.isInTattooShopExclusionZone()) {
+          // Postpone: reschedule to check again in 5 seconds
+          this.scheduleLadyAppearanceAfter(5000);
           return;
         }
         this.spawnLadyInGrey();
       },
       loop: false,
     });
+  }
+
+  /** Schedule Lady appearance after a fixed delay (used for postponing) */
+  scheduleLadyAppearanceAfter(delay) {
+    // Stop any existing timer
+    if (this.ladyTimer) {
+      this.ladyTimer.remove(false);
+      this.ladyTimer = null;
+    }
+
+    this.ladyTimer = this.time.addEvent({
+      delay: delay,
+      callback: () => {
+        if (!this.player || this.player.isDead || this.autoPhase) {
+          this.scheduleLadyAppearanceAfter(delay);
+          return;
+        }
+        if (this.isInTattooShopExclusionZone()) {
+          this.scheduleLadyAppearanceAfter(5000);
+          return;
+        }
+        this.spawnLadyInGrey();
+      },
+      loop: false,
+    });
+  }
+
+  /** Check if the tattoo shop is visible in the camera (player is near it) */
+  isInTattooShopExclusionZone() {
+    if (!this.tattooShopInfo) return false;
+
+    const cam = this.cameras.main;
+    const camWidth = cam.width;
+    const shopX = this.tattooShopInfo.x;
+
+    // Camera visible range in world coordinates
+    const camLeft = cam.scrollX - camWidth / 2;
+    const camRight = cam.scrollX + camWidth / 2;
+
+    // Exclude if the tattoo shop is in the camera's viewing area
+    if (shopX >= camLeft && shopX <= camRight) {
+      return true;
+    }
+
+    return false;
   }
 
   /** Spawn Lady in Grey at a random position within camera view */
@@ -898,10 +949,10 @@ export default class GameScene extends Phaser.Scene {
     // Set her to render above gameplay
     this.ladyInGrey.setDepth(5);
 
-    // Set callback - no reschedule after completion (subsequent appearances disabled)
+    // Set callback to schedule next random appearance after she completes
     this.ladyInGrey.onCompleteCallback = () => {
       this.ladyInGrey = null;
-      // Subsequent appearances disabled per user request
+      this.scheduleLadyAppearance();
     };
 
     // Start the animation sequence
