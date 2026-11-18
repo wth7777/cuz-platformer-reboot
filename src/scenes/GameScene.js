@@ -1001,6 +1001,36 @@ export default class GameScene extends Phaser.Scene {
       this.hills.tilePositionX = (this.cameras.main.scrollX * 0.4) / 3;
     }
 
+    // TEMP DIAGNOSTIC: Log actual runtime positions of all characters every 60 frames
+    if (!this._diagFrame) this._diagFrame = 0;
+    this._diagFrame++;
+    if (this._diagFrame % 60 === 0) {
+      const logChar = (name, char) => {
+        if (!char || char.isDead || char.isSquashed) return;
+        const b = char.body;
+        const feetY = char.y + (char.displayHeight / 2) * (1 - char.originY);
+        console.log(`[POS] ${name}:`, {
+          sprite: { x: Math.round(char.x), y: Math.round(char.y) },
+          origin: { x: char.originX, y: char.originY },
+          displaySize: { w: Math.round(char.displayWidth), h: Math.round(char.displayHeight) },
+          body: {
+            x: Math.round(b.x), y: Math.round(b.y),
+            w: Math.round(b.width), h: Math.round(b.height),
+            centerX: Math.round(b.center.x), centerY: Math.round(b.center.y),
+            top: Math.round(b.top), bottom: Math.round(b.bottom),
+            left: Math.round(b.left), right: Math.round(b.right),
+            offset: { x: b.offset.x, y: b.offset.y },
+            blocked: b.blocked, touching: b.touching,
+            onFloor: b.onFloor(),
+          },
+          visualFeetY: Math.round(feetY),
+          animFrame: char.anims.currentFrame?.index,
+        });
+      };
+      logChar('Player', this.player);
+      this.enemies.getChildren().forEach(e => logChar(e.constructor.name, e));
+    }
+
     if (this.player.isDead) return;
 
     // fell into a pit
