@@ -60,6 +60,9 @@ const config = {
 
 const game = new Phaser.Game(config);
 
+// Unlock Phaser's AudioContext on first user gesture (same gesture unlocks sfx.js Web Audio context)
+sfx.setupPhaserUnlock(game);
+
 // Rotating the device switches between the wide and narrow logical view
 portraitQuery.addEventListener('change', () => {
   game.scale.setGameSize(logicalWidth(), HEIGHT);

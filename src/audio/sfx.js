@@ -386,6 +386,28 @@ class Sfx {
     // Start loading but don't await - fire and forget for preload
     this.loadAudioBuffer(key, url).catch(() => {});
   }
+
+  /** Register Phaser AudioContext unlock on the same user gestures that unlock our Web Audio context.
+   * Call once after `new Phaser.Game(config)` to ensure Phaser's sound system can play on mobile.
+   * Safe to call multiple times - uses a flag to prevent duplicate listeners. */
+  setupPhaserUnlock(game) {
+    if (this._phaserUnlockRegistered) return;
+    this._phaserUnlockRegistered = true;
+
+    const unlockPhaser = () => {
+      if (game && game.sound && game.sound.context) {
+        if (game.sound.context.state === 'suspended') {
+          game.sound.context.resume().catch(() => {
+            // Ignore resume errors - context may already be running or unavailable
+          });
+        }
+      }
+    };
+
+    // Reuse the same gesture events as our existing unlock
+    window.addEventListener('pointerdown', unlockPhaser, { once: true });
+    window.addEventListener('keydown', unlockPhaser, { once: true });
+  }
 }
 
 // One shared instance for the whole game.
