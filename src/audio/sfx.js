@@ -387,6 +387,86 @@ class Sfx {
     this.loadAudioBuffer(key, url).catch(() => {});
   }
 
+  /** Preload an external sound effect file (WAV/OGG/MP3) for later playback via playExternalSfx.
+   * Unlike preloadMusic, this accepts a full URL (not restricted to assets/audio/*.ogg).
+   * Usage: sfx.preloadExternalSfx('lady-in-grey', 'assets/lady-in-grey.wav');
+   * Should be called during PreloadScene.preload(). */
+  preloadExternalSfx(key, url) {
+    if (!this.ctx) {
+      // Queue for later if context not ready
+      if (!this.pendingPreloads) this.pendingPreloads = [];
+      this.pendingPreloads.push({ key, url });
+      return;
+    }
+    // Start loading but don't await - fire and forget for preload
+    this.loadAudioBuffer(key, url).catch(() => {});
+  }
+
+  /** Load and play an external sound effect (WAV/OGG/MP3) through the shared Web Audio context.
+   * Use this for one-shot sound effects that should use the same AudioContext as sfx.play()
+   * and respect the master volume/mute.
+   *
+   * @param {string} key - Unique cache key for this sound
+   * @param {string} url - Path to audio file (relative to public/)
+   * @param {Object} options - { volume: number (0-1, default 1), loop: boolean (default false) }
+   * @returns {Promise<Object>} Handle with { stop(): void, destroy(): void, source: AudioBufferSourceNode }
+   *   Call stop() to stop playback, destroy() to clean up the source node.
+   */
+  async playExternalSfx(key, url, options = {}) {
+    if (!this.ctx) {
+      this.ensure();
+      if (!this.ctx) {
+        throw new Error('AudioContext not available');
+      }
+    }
+    this.ensure(); // Ensure context is running (handles mobile unlock)
+
+    const { volume = 1, loop = false } = options;
+
+    // Load and decode audio buffer (uses existing cache)
+    let audioBuffer;
+    try {
+      audioBuffer = await this.loadAudioBuffer(key, url);
+    } catch (err) {
+      console.error(`[SFX] Failed to load external SFX "${key}" from "${url}":`, err);
+      throw err;
+    }
+
+    // Create source node on shared context
+    const source = this.ctx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.loop = loop;
+
+    // Connect through master gain (respects mute/volume)
+    const gainNode = this.ctx.createGain();
+    gainNode.gain.value = volume;
+    source.connect(gainNode);
+    gainNode.connect(this.master);
+
+    // Start playback
+    source.start(0);
+
+    // Return handle for cleanup
+    return {
+      source,
+      gainNode,
+      stop() {
+        if (source) {
+          try { source.stop(); } catch {}
+          source.disconnect();
+        }
+        if (gainNode) {
+          try { gainNode.disconnect(); } catch {}
+        }
+      },
+      destroy() {
+        this.stop();
+      },
+      // For backward compatibility with Phaser sound API
+      isPlaying: true
+    };
+  }
+
   /** Register Phaser AudioContext unlock on the same user gestures that unlock our Web Audio context.
    * Call once after `new Phaser.Game(config)` to ensure Phaser's sound system can play on mobile.
    * Safe to call multiple times - uses a flag to prevent duplicate listeners. */

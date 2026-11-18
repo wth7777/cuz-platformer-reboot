@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sfx } from '../audio/sfx.js';
 
 /**
  * Lady in Grey - A mischievous ghost that appears as a visual prank.
@@ -31,7 +32,7 @@ export default class LadyInGrey extends Phaser.GameObjects.Sprite {
     // Callback to schedule next appearance after this one completes
     this.onCompleteCallback = null;
     
-    // Sound effect
+    // Sound effect handle (from sfx.playExternalSfx)
     this.ladySound = null;
     
     // Add to scene but don't set active yet
@@ -39,23 +40,23 @@ export default class LadyInGrey extends Phaser.GameObjects.Sprite {
   }
 
   /** Start the full animation sequence */
-  start() {
+  async start() {
     if (this.isActive) return;
     
     this.isActive = true;
     this.isAppearing = true;
     
-    // Play the Lady in Grey sound effect
-    if (!this.ladySound && this.scene.cache.audio.has('lady-in-grey-sfx')) {
-      this.ladySound = this.scene.sound.add('lady-in-grey-sfx', {
-        volume: 0.6,
-        loop: false
-      });
-      // Ensure Phaser's AudioContext is unlocked (created lazily on first sound play)
-      if (this.scene.sound.context && this.scene.sound.context.state === 'suspended') {
-        this.scene.sound.context.resume().catch(() => {});
+    // Play the Lady in Grey sound effect via sfx.js (shared Web Audio context)
+    if (!this.ladySound) {
+      try {
+        this.ladySound = await sfx.playExternalSfx('lady-in-grey', 'assets/lady-in-grey.wav', {
+          volume: 0.6,
+          loop: false
+        });
+      } catch (err) {
+        console.error('[LadyInGrey] Failed to play sound effect:', err);
+        this.ladySound = null;
       }
-      this.ladySound.play();
     }
     
     // Get camera dimensions
