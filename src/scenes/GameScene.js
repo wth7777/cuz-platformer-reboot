@@ -87,6 +87,10 @@ export default class GameScene extends Phaser.Scene {
     console.log('[GameScene] create() START');
     this.level = LEVELS[this.levelId];
     this.theme = THEMES[this.level.theme];
+    // Level 1-3 retains its original sky color despite lava parallax background
+    if (this.levelId === 'level3') {
+      this.theme = { ...this.theme, sky: '#1a1a2e' };
+    }
     this.worldWidth = this.level.width * TILE;
 
     if (!this.scene.isActive('HUDScene')) this.scene.launch('HUDScene');

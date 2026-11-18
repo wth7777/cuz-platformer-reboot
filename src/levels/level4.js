@@ -31,11 +31,11 @@ export default {
     // r21 — walking coins; stairs (Astrohop castle walls removed)
     sparse(W, [8, 'cccc'], [150, 'ccc']),
     // r22 — spawn, decorations, enemies, stairs base
-    sparse(W, [3, 'p'], [6, '>'], [20, 'w'], [30, 'e'], [35, 'l'], [58, 'e'], [70, 'w'], [75, 'l'], [100, 'e'],
-      [112, 'e'], [120, 'l'], [130, 'w'], [135, 'e'], [170, 'e'], [175, 'l'], [187, 'w'], [196, 'e'], [204, 'e'],
+    sparse(W, [3, 'p'], [6, '>'], [20, 'w'], [30, 'e'], [40, 'l'], [58, 'e'], [70, 'w'], [75, 'l'], [100, 'e'],
+      [112, 'e'], [120, 'l'], [130, 'w'], [135, 'e'], [170, 'e'], [180, 'l'], [187, 'w'], [196, 'e'], [204, 'e'],
       [206, '^'], [208, ground(8)]),
-     // r23/r24 — four pits between volcanic drifts
-     ground(30) + gap(6) + ground(50) + gap(7) + ground(40) + gap(6) + ground(30) + gap(7) + ground(64),
-     ground(30) + gap(6) + ground(50) + gap(7) + ground(40) + gap(6) + ground(30) + gap(7) + ground(64),
+    // r23/r24 — four pits between volcanic drifts
+    ground(30) + gap(6) + ground(50) + gap(7) + ground(40) + gap(6) + ground(30) + gap(7) + ground(64),
+    ground(30) + gap(6) + ground(50) + gap(7) + ground(40) + gap(6) + ground(30) + gap(7) + ground(64),
   ],
 };
