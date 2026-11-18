@@ -61,7 +61,7 @@ export function setupTouchControls() {
 
   document.body.classList.add('touch');
 
-  const container = document.getElementById('touch-controls');
+  const container = document.getElementById('app');
   const baseEl = document.getElementById('joystick-base');
   const knobEl = document.getElementById('joystick-knob');
   const jumpBtn = document.getElementById('btn-jump');
