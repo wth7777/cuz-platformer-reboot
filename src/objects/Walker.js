@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 
 const WALK_SPEED = 40;
+const PURSUE_SPEED = 60; // faster when chasing
 const FRAME_WALK = 18; // blue slime: two walk frames (18, 19)...
 const FRAME_SQUASHED = 20; // ...and a ready-made flattened frame
 
@@ -25,6 +26,7 @@ export default class Walker extends Phaser.Physics.Arcade.Sprite {
     // Patrol boundaries: turn around when reaching either edge of spawn zone
     this.patrolStartX = x - 120;
     this.patrolEndX = x + 120;
+    this.isChasing = false; // start in patrol mode
 
     this.play('walker-walk');
   }
@@ -34,13 +36,23 @@ export default class Walker extends Phaser.Physics.Arcade.Sprite {
 
     if (this.isSquashed) return;
 
-    // Sleep when far off-camera: no patrolling or edge probes for
-    // enemies the player can't see (perf + they stay where designed).
     const cam = this.scene.cameras.main;
-    if (Math.abs(this.x - (cam.scrollX + cam.width / 2)) > 1100) {
-      this.setVelocityX(0);
-      return;
-    }
+    const camHalfWidth = cam.width / 2;
+
+    // Off-screen enemies keep patrolling but cannot detect/chase the player.
+    const farOffCamera = Math.abs(this.x - (cam.scrollX + camHalfWidth)) > 1100;
+
+    // Camera-relative detection distances (scale with zoom/screen size)
+    const detectionRange = camHalfWidth * 0.75;   // 75% of center-to-edge
+    const disengageRange = camHalfWidth * 1.0;    // larger threshold for disengage
+
+    // Is the enemy visible in the camera viewport?
+    const camLeft = cam.scrollX - camHalfWidth;
+    const camRight = cam.scrollX + camHalfWidth;
+    const isVisible = this.x >= camLeft && this.x <= camRight;
+
+    const player = this.scene.player;
+    const playerAlive = player && !player.isDead;
 
     // Turn at patrol boundaries around spawn location
     if (this.x <= this.patrolStartX) {
@@ -67,7 +79,59 @@ export default class Walker extends Phaser.Physics.Arcade.Sprite {
       if (ground.length === 0) this.direction *= -1;
     }
 
+    // State machine: patrol <-> chase (detection only when on-screen)
+    if (this.isChasing) {
+      const distX = player ? Math.abs(player.x - this.x) : 9999;
+      if (!playerAlive || distX > disengageRange || !isVisible || farOffCamera) {
+        this.isChasing = false;
+      } else {
+        this.pursuePlayer(player);
+        return;
+      }
+    } else {
+      // Patrol mode: check for player detection (only if on-screen)
+      if (playerAlive && !farOffCamera && isVisible) {
+        const distX = Math.abs(player.x - this.x);
+        if (distX < detectionRange) {
+          this.isChasing = true;
+          this.pursuePlayer(player);
+          return;
+        }
+      }
+    }
+
+    // Patrol movement (runs both on-screen and off-screen)
     this.setVelocityX(WALK_SPEED * this.direction);
+    this.setFlipX(this.direction > 0);
+  }
+
+  /** Shared pursuit logic: move toward the player. */
+  pursuePlayer(player) {
+    const distX = player.x - this.x;
+    const towardPlayer = distX > 0 ? 1 : -1;
+
+    // Only pursue toward player if there's ground in that direction
+    if (this.body.onFloor()) {
+      const checkX = towardPlayer > 0 ? this.body.right + 2 : this.body.left - 3;
+      const ground = this.scene.physics.overlapRect(
+        checkX, this.body.bottom + 2, 2, 4,
+        false, true
+      );
+      if (ground.length > 0) {
+        this.direction = towardPlayer;
+      } else {
+        const dropCheck = this.scene.physics.overlapRect(
+          checkX, this.body.bottom + 2, 2, 120,
+          false, true
+        );
+        if (dropCheck.length > 0) {
+          this.direction = towardPlayer;
+        }
+      }
+    }
+
+    const speed = PURSUE_SPEED;
+    this.setVelocityX(speed * this.direction);
     this.setFlipX(this.direction > 0);
   }
 

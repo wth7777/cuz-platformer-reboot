@@ -100,11 +100,8 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
     const camRight = cam.scrollX + camHalfWidth;
     const isVisible = this.x >= camLeft && this.x <= camRight;
 
-    // Sleep when far off-camera
-    if (cam && Math.abs(this.x - (cam.scrollX + camHalfWidth)) > 1100) {
-      this.setVelocityX(0);
-      return;
-    }
+    // Off-screen enemies keep patrolling but cannot detect/chase the player.
+    const farOffCamera = Math.abs(this.x - (cam.scrollX + camHalfWidth)) > 1100;
 
     const player = this.scene.player;
     const playerAlive = player && !player.isDead;
@@ -141,7 +138,7 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
     if (this.isChasing) {
       // Disengage: player too far away OR enemy not visible in camera
       const distX = player ? Math.abs(player.x - this.x) : 9999;
-      if (!playerAlive || distX > disengageRange || !isVisible) {
+      if (!playerAlive || distX > disengageRange || !isVisible || farOffCamera) {
         this.isChasing = false;
       } else {
         // Attack check when close enough
@@ -158,8 +155,8 @@ export default class Wolf extends Phaser.Physics.Arcade.Sprite {
         return;
       }
     } else {
-      // Patrol mode: check for player detection
-      if (playerAlive && isVisible) {
+      // Patrol mode: check for player detection (only when on-screen)
+      if (playerAlive && !farOffCamera && isVisible) {
         const distX = Math.abs(player.x - this.x);
         if (distX < detectionRange) {
           this.isChasing = true;
