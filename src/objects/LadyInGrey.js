@@ -155,8 +155,8 @@ export default class LadyInGrey extends Phaser.GameObjects.Sprite {
     
     this.play('lady-closeup');
     
-    // Hold the close-up for a few seconds to disrupt the player's view
-    this.scene.time.delayedCall(3000, () => {
+    // Hold the close-up for 1.5 seconds (shortened from 3 seconds)
+    this.scene.time.delayedCall(1500, () => {
       if (this.isCloseUp) {
         this.playPhase4Disappearance();
       }
