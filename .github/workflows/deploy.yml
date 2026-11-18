@@ -3,6 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [recovery-69db9d5, main]
+  workflow_dispatch:
 
 permissions:
   contents: read
