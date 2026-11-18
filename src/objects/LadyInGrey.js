@@ -42,34 +42,21 @@ export default class LadyInGrey extends Phaser.GameObjects.Sprite {
   /** Start the full animation sequence */
   async start() {
     if (this.isActive) return;
-    
+
     this.isActive = true;
     this.isAppearing = true;
-    
-    // Play the Lady in Grey sound effect via sfx.js (shared Web Audio context)
-    if (!this.ladySound) {
-      try {
-        this.ladySound = await sfx.playExternalSfx('lady-in-grey', 'assets/lady-in-grey.wav', {
-          volume: 0.6,
-          loop: false
-        });
-      } catch (err) {
-        console.error('[LadyInGrey] Failed to play sound effect:', err);
-        this.ladySound = null;
-      }
-    }
-    
+
     // Get camera dimensions
     const cam = this.scene.cameras.main;
     const camWidth = cam.width;
     const camHeight = cam.height;
-    
+
     // Start tiny and positioned at a random edge of the camera view
     const edge = Phaser.Math.Between(0, 3);
     let startX, startY;
     const targetScale = 1.0;
     const startScale = 0.3;
-    
+
     switch (edge) {
       case 0: // top
         startX = Phaser.Math.Between(0, camWidth);
@@ -88,12 +75,25 @@ export default class LadyInGrey extends Phaser.GameObjects.Sprite {
         startY = Phaser.Math.Between(0, camHeight);
         break;
     }
-    
+
     this.setPosition(startX, startY);
     this.setScale(startScale);
     this.setVisible(true);
     this.setAlpha(1);
-    
+
+    // Play the Lady in Grey sound effect via sfx.js (shared Web Audio context)
+    if (!this.ladySound) {
+      try {
+        this.ladySound = await sfx.playExternalSfx('lady-in-grey', 'assets/lady-in-grey.wav', {
+          volume: 0.6,
+          loop: false
+        });
+      } catch (err) {
+        console.error('[LadyInGrey] Failed to play sound effect:', err);
+        this.ladySound = null;
+      }
+    }
+
     // Phase 1: Fly toward camera center with scale up
     this.scene.tweens.add({
       targets: this,
