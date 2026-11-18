@@ -1033,24 +1033,31 @@ export default class GameScene extends Phaser.Scene {
     }
     if (this.autoPhase) return; // pipe / flag / done / tattooshop — tweens/animations are in charge
 
-    const left = this.cursors.left.isDown || this.keys.A.isDown || touchState.left;
-    const right = this.cursors.right.isDown || this.keys.D.isDown || touchState.right;
-    const down = this.cursors.down.isDown || this.keys.S.isDown || touchState.down;
-    const jumpHeld =
-      this.cursors.up.isDown ||
-      this.cursors.space.isDown ||
-      this.keys.W.isDown ||
-      touchState.jump;
-    const attackHeld = this.keys.SHIFT.isDown || this.keys.X.isDown || touchState.fire;
+    // --- Input handling ---
+    let moveX = touchState.moveX;  // analog -1 to 1
 
+    // Keyboard OVERRIDES joystick when ANY keyboard direction pressed
+    const keyLeft = this.cursors.left.isDown || this.keys.A.isDown;
+    const keyRight = this.cursors.right.isDown || this.keys.D.isDown;
+
+    if (keyLeft && !keyRight) {
+      moveX = -1;          // Left only (A or ←) → full left
+    } else if (!keyLeft && keyRight) {
+      moveX = 1;           // Right only (D or →) → full right
+    } else if (keyLeft && keyRight) {
+      moveX = 0;           // Both pressed → STOP (preserves existing behavior)
+    }
+    // else: neither pressed → use touchState.moveX (joystick analog)
+
+    const jumpHeld = this.cursors.up.isDown || this.keys.W.isDown || touchState.jump;
     const jumpPressed = jumpHeld && !this.jumpWasHeld;
-    const attackPressed = attackHeld && !this.attackWasHeld;
     this.jumpWasHeld = jumpHeld;
-    this.attackWasHeld = attackHeld;
 
-    this.player.handleInput({ left, right, jumpHeld, jumpPressed, attackPressed });
+    const fireHeld = this.keys.SHIFT.isDown || this.keys.X.isDown || touchState.fire;
+    const firePressed = fireHeld && !this.attackWasHeld;
+    this.attackWasHeld = fireHeld;
 
-    // standing on a secret pipe + Down = travel (removed - no pipes)
+    this.player.handleInput({ moveX, jumpHeld, jumpPressed, attackPressed: firePressed });
 
     // tidy up items and enemies that fell into pits
     this.items.getChildren().forEach((item) => {

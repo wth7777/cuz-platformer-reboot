@@ -70,17 +70,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /** Called by GameScene every frame with the merged input state. */
-  handleInput({ left, right, jumpHeld, jumpPressed, attackPressed }) {
+  handleInput({ moveX, jumpHeld, jumpPressed, attackPressed }) {
     if (this.isDead || this.isAttacking) return;
 
     const body = this.body;
     const onGround = body.onFloor();
 
-    if (left && !right) {
-      body.setAccelerationX(-ACCELERATION);
+    // ANALOG HORIZONTAL — PROPORTIONAL ACCELERATION
+    if (moveX < -0.1) {
+      body.setAccelerationX(-ACCELERATION * Math.abs(moveX));
       this.setFlipX(true);
-    } else if (right && !left) {
-      body.setAccelerationX(ACCELERATION);
+    } else if (moveX > 0.1) {
+      body.setAccelerationX(ACCELERATION * Math.abs(moveX));
       this.setFlipX(false);
     } else {
       body.setAccelerationX(0);
