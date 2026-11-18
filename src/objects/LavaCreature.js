@@ -28,7 +28,7 @@ export default class LavaCreature extends Phaser.Physics.Arcade.Sprite {
     // Match wolf's visual feet alignment (wolf: scale 0.2125, frame 384x256, feet offset 22.2)
     // Lava: scale 0.22, frame 307x256, same frame height, similar scale → use same feet offset
     this.body.setSize(24 / 0.22, 20 / 0.22); // effective 24x20
-    this.body.setOffset(120, 157); // center horizontally, align feet
+    this.body.setOffset(120, 193); // center horizontally, align feet (accommodates walk frames)
     this.setDepth(1);
     this.setCollideWorldBounds(true);
     this.setScale(0.22);

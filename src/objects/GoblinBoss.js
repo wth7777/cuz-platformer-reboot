@@ -25,9 +25,9 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     // Goblin Boss scale: 0.25 (similar to wolf)
     // Frame: 308x268. At 0.25 → display ~77 x 67px
     // Body: effective 28x24, centered horizontally, feet aligned with visual feet
-    // Visual feet alignment: match wolf/lava feet offset
+    // Visual feet alignment: match wolf/lava feet offset (accommodates walk frames)
     this.body.setSize(28 / 0.25, 24 / 0.25); // effective 28x24
-    this.body.setOffset(110, 127); // center horizontally, align feet
+    this.body.setOffset(110, 142); // center horizontally, align feet (accommodates walk frames)
     this.setDepth(1);
     this.setCollideWorldBounds(true);
     this.setScale(0.25);
