@@ -31,6 +31,9 @@ export default class LadyInGrey extends Phaser.GameObjects.Sprite {
     // Callback to schedule next appearance after this one completes
     this.onCompleteCallback = null;
     
+    // Sound effect
+    this.ladySound = null;
+    
     // Add to scene but don't set active yet
     scene.add.existing(this);
   }
@@ -41,6 +44,15 @@ export default class LadyInGrey extends Phaser.GameObjects.Sprite {
     
     this.isActive = true;
     this.isAppearing = true;
+    
+    // Play the Lady in Grey sound effect
+    if (!this.ladySound && this.scene.cache.audio.has('lady-in-grey-sfx')) {
+      this.ladySound = this.scene.sound.add('lady-in-grey-sfx', {
+        volume: 0.6,
+        loop: false
+      });
+      this.ladySound.play();
+    }
     
     // Get camera dimensions
     const cam = this.scene.cameras.main;
@@ -202,6 +214,13 @@ export default class LadyInGrey extends Phaser.GameObjects.Sprite {
 
   /** Clean up the sprite and schedule next appearance */
   cleanup() {
+    // Stop and destroy sound effect
+    if (this.ladySound) {
+      this.ladySound.stop();
+      this.ladySound.destroy();
+      this.ladySound = null;
+    }
+    
     this.isActive = false;
     this.isAppearing = false;
     this.isCloseUp = false;
@@ -222,6 +241,13 @@ export default class LadyInGrey extends Phaser.GameObjects.Sprite {
 
   /** Stop all animations and clean up immediately */
   stopAndCleanup() {
+    // Stop and destroy sound effect
+    if (this.ladySound) {
+      this.ladySound.stop();
+      this.ladySound.destroy();
+      this.ladySound = null;
+    }
+    
     this.anims.stop();
     this.isAppearing = false;
     this.isCloseUp = false;
