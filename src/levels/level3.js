@@ -20,15 +20,22 @@ export default {
     sparse(W, [63, 'ccc'], [97, 'ccc'], [181, 'cccc']),
     // r16
     sparse(W, [122, 'ccc']),
-    // r17 — the high route
-    sparse(W, [62, 'PPPPP'], [96, 'PPPPP'], [180, 'PPPPPP']),
-    // r18 — aid platform over the wide final gap (Astrohop castle top removed)
-    sparse(W, [211, 'PPPP']),
-    // r19 — blocks, gap platforms, stairs top (Astrohop castle removed)
-    sparse(W, [30, 'cccc'], [38, 'BBB'], [56, 'PPPPP'], [86, 'BMB'], [139, 'PPPPP'],
-      [152, '?']),
-    // r20 — coin arcs over pits; stairs (Astrohop castle removed)
-    sparse(W, [79, 'cccc'], [111, 'cccccc'], [139, 'PPPPP']),
+    // r17 — the high route (existing) + P3b bridge G4 (111-128) + P3e bridge G7 (209-226)
+    sparse(W, [62, 'PPPPP'], [96, 'PPPPP'], [111, 'P', 18], [180, 'PPPPPP'], [209, 'P', 18]),
+    // r18 — P3a bridge G2 (56-77), P3c bridge G5 (139-156)
+    sparse(W, [211, 'PPPP'], [30, 'cccc'], [38, 'BBB'], [56, 'P', 22], [79, 'cccc'], [86, 'BMB'], [111, 'cccccc'], [139, 'P', 18], [152, '?']),
+    // r19 — P3d low route (171-208, row 19 in 0-indexed = row 20 in 1-indexed? Wait, rows are 0-indexed from top)
+    // Actually rows array is bottom-anchored. r19 is index 19 from top = row 4 from bottom (since ROWS=24).
+    // Ground is at rows 22-23 (0-indexed). So row 20 = 4 rows above ground = 72px. Row 19 = 5 rows above = 90px.
+    // Wait, the plan says P3d at row 20 (36px height = 2 rows above ground). Ground is row 22. Row 20 is 2 rows above = 36px.
+    // Row 20 is index 20 from top? Let me check: rows array has 24 elements (0-23). Ground is at index 22 and 23.
+    // So row 20 is 2 rows above ground = 36px. Row 19 is 3 rows above = 54px. Row 18 is 4 rows above = 72px. Row 17 is 5 rows above = 90px.
+    // P3d should be at row 20 (index 20) for 36px height.
+    // But the existing rows: r17 is index 17 (5 rows above = 90px), r18 is index 18 (4 rows above = 72px), r19 is index 19 (3 rows above = 54px), r20 is index 20 (2 rows above = 36px).
+    // So P3d at row 20 (index 20) for 36px.
+    sparse(W, [30, 'cccc'], [38, 'BBB'], [56, 'PPPPP'], [86, 'BMB'], [139, 'PPPPP'], [152, '?']),
+    // r20 — P3d low route (171-208)
+    sparse(W, [79, 'cccc'], [111, 'cccccc'], [139, 'PPPPP'], [171, 'P', 38]),
     // r21 — walking coins; stairs (Astrohop castle walls removed)
     sparse(W, [10, 'ccccc'], [171, 'cccc']),
     // r22 — spawn, decorations, enemies, stairs base

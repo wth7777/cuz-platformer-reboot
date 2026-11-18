@@ -22,22 +22,21 @@ export default {
     sparse(W, [58, 'PPPPP'], [66, 'ccc']),
     // r16 — early platforms, mid platforms, high route
     sparse(W, [23, 'PPPPP'], [31, 'ccc'], [109, 'ccc'], [120, 'PPPPP'], [178, 'PPPPPP'], [196, 'PPPPPP']),
-    // r17 — platform enemy, coins over pit 2
-    sparse(W, [53, 'e'], [65, 'PPPPP'], [96, 'cccc'], [147, 'cc']),
-    // r18 — first blocks, platforms, bricks, final blocks (Astrohop castle removed)
-    sparse(W, [16, 'BMB'], [30, 'PPPPP'], [45, 'ccc'], [51, 'PPPPP'], [78, 'BMB'], [85, 'BMB'], [108, 'PPPPP'], [212, 'BMB']),
+    // r17 — platform enemy, coins over pit 2, P1a entry bridge over G1
+    sparse(W, [36, 'PPPPPPPP'], [53, 'e'], [65, 'PPPPP'], [96, 'cccc'], [147, 'cc']),
+    // r18 — first blocks, platforms, bricks, P1b continuous route (44-86) + P1c + P1d
+    sparse(W, [16, 'BMB'], [30, 'PPPPP'], [44, 'P'], [45, 'ccc'], [48, 'PPP'], [51, 'PPPPP'], [56, 'P', 22], [78, 'BMB'], [80, 'PPPP'], [84, 'P'], [85, 'BMB'], [108, 'PPPPP'], [119, 'P', 8], [194, 'P', 20], [212, 'BMB']),
     // r19 — pyramid top, stairs (Astrohop castle removed)
     sparse(W, [42, 'T'], [146, 'XXXX'], [168, 'T'], [244, 'XXXX']),
     // r20 — walking coins, pyramid, stairs (Astrohop castle removed)
     sparse(W, [8, 'ccccc'], [144, 'XXXXXXXX'], [170, 'cccc'], [242, 'XXXXXX']),
     // r21 — spawn, decorations, enemies, pyramid base, stairs
-    sparse(W, [3, 'p'], [6, '>'], [20, '*'], [36, '^'], [40, 'w'], [100, 'w'], [180, 'w'], [64, 'e'],
-      [90, 'e'], [93, 'e'], [105, 'e'], [118, 'e'], [130, '"'], [131, 'e'], [142, ground(12)],
+    sparse(W, [3, 'p'], [6, '>'], [20, '*'], [36, '^'], [44, 'w'], [64, 'e'], [85, 'e'], [88, 'e'], [105, 'e'], [118, 'e'], [130, '"'], [131, 'e'], [142, ground(12)],
       [156, '*'], [162, 'e'], [174, '^'], [185, 'e'], [195, 'e'], [203, 'e'], [222, 'e'],
       [226, 'e'], [232, '^'], [240, ground(8)], [250, '"']),
-    // r22/r23 — ground with two pits (45-47 and 96-99)
-    ground(45) + gap(3) + ground(48) + gap(4) + ground(180),
+    // r22/r23 — ground with gaps at 40-43, 81-84, 120-123, 159-162, 198-201, 237-240
+    ground(40) + gap(4) + ground(37) + gap(4) + ground(35) + gap(4) + ground(35) + gap(4) + ground(35) + gap(4) + ground(35) + gap(4) + ground(39),
     // Second ground row: decorative only (no collision) to avoid double-body issues
-    groundDeco(45) + gap(3) + groundDeco(48) + gap(4) + groundDeco(180),
+    groundDeco(40) + gap(4) + groundDeco(37) + gap(4) + groundDeco(35) + gap(4) + groundDeco(35) + gap(4) + groundDeco(35) + gap(4) + groundDeco(35) + gap(4) + groundDeco(39),
   ],
 };

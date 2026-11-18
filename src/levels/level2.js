@@ -41,20 +41,19 @@ export default {
     sparse(W, [20, 'PPPPP'], [68, 'PPPPPP'], [138, 'PPPPP']),
     // r17 — powerup block removed
     sparse(W),
-    // r18 — coin arc over pit 1 (Astrohop castle top removed)
-    sparse(W, [58, 'cccc']),
-    // r19 — bricks; final climb base; stairs (Astrohop castle removed)
-    sparse(W, [38, 'B?BB'], [88, 'B?B'], [130, 'PPPPP'], [168, '?B?'],
-      [182, 'XX']),
-    // r20 — entry platform; wall; pit island; stairs (Astrohop castle removed)
-    sparse(W, [12, 'PPPPP'], [70, 'XX'], [115, 'PPP']),
+    // r18 — P2c bridge over G2 (94-99), P2e bridge over G3 (145-156)
+    sparse(W, [58, 'cccc'], [94, 'P', 12], [145, 'P', 12]),
+    // r19 — existing 44-48 + P2a bridge G1 (49-60), P2d mid route (106-131)
+    sparse(W, [38, 'B?BB'], [44, 'PPPPP'], [49, 'P', 12], [88, 'B?B'], [106, 'P', 26], [130, 'PPPPP'], [168, '?B?'], [182, 'XX']),
+    // r20 — P2b low route (61-86)
+    sparse(W, [12, 'PPPPP'], [61, 'P', 26], [70, 'XX'], [115, 'PPP']),
     // r21 — entry coins; wall; stairs (Astrohop castle/door removed)
     sparse(W, [8, 'cccc'], [70, 'XX'], [178, 'XXXXXX']),
     // r21 — spawn; enemies; wall; stairs
-    sparse(W, [3, 'p'], [30, 'w'], [44, 'e'], [70, 'XX'], [80, 'w'], [92, 'e'], [100, 'e'], [108, 'e'],
-      [130, 'w'], [158, 'e'], [164, 'e'], [176, ground(8)], [180, 'w']),
-    // r22/r23 — ground with two pits (58-61 and 114-118)
-    ground(58) + gap(4) + ground(52) + gap(5) + ground(81),
-    ground(58) + gap(4) + ground(52) + gap(5) + ground(81),
+    sparse(W, [3, 'p'], [30, 'w'], [43, 'e'], [70, 'XX'], [80, 'w'], [92, 'e'], [100, 'e'], [108, 'e'],
+      [130, 'w'], [158, 'e'], [164, 'e'], [176, ground(8)], [185, 'w']),
+    // r22/r23 — ground with gaps at 44-49, 94-99, 144-149
+    ground(44) + gap(6) + ground(44) + gap(6) + ground(44) + gap(6) + ground(50),
+    ground(44) + gap(6) + ground(44) + gap(6) + ground(44) + gap(6) + ground(50),
   ],
 };

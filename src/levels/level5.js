@@ -23,8 +23,8 @@ export default {
     sparse(W, [121, 'cccc'], [181, 'ccc']),
     // r17 — platforms
     sparse(W, [20, 'PPPPP'], [140, 'PPPPP'], [200, 'PPPPP']),
-    // r18 — coin arcs over pits; aid platform over the wide gap; stairs top (Astrohop castle removed)
-    sparse(W, [50, 'cccc'], [100, 'ccccc'], [160, 'cccccc'], [208, 'PPPPP']),
+    // r18 — P5a bridge G1 (51-68), P5b bridge G2 (107-124), P5c bridge G3 (163-180), P5d bridge G4 (219-236)
+    sparse(W, [50, 'K'], [51, 'P', 18], [100, 'ccccc'], [106, 'K'], [107, 'P', 18], [160, 'cccccc'], [162, 'K'], [163, 'P', 18], [208, 'PPPPP'], [218, 'K'], [219, 'P', 18]),
     // r19 — blocks galore, stairs, (Astrohop castle removed)
     sparse(W, [16, 'BMB'], [44, '?'], [80, 'B?B'], [86, 'BMB'], [110, 'T'],
       [130, '?'], [170, 'B?B'], [220, '?']),
@@ -33,11 +33,11 @@ export default {
     // r21 — walking coins; stairs (Astrohop castle walls removed)
     sparse(W, [8, 'ccccc'], [234, 'ccc']),
     // r22 — spawn + the gauntlet (14 enemies), stairs base
-    sparse(W, [3, 'p'], [6, '>'], [10, 'w'], [24, 'e'], [30, 'l'], [40, 'e'], [48, '"'], [62, 'e'], [64, 'e'],
-      [75, '*'], [80, 'w'], [90, 'l'], [94, 'e'], [118, 'e'], [122, 'e'], [133, '^'], [140, 'l'], [150, 'e'], [152, 'e'],
-      [170, 'g'], [175, 'e'], [188, '*'], [190, 'l'], [198, 'e'], [200, 'w'], [218, 'e'], [226, 'e'], [240, 'e'], [244, '^'],
+    sparse(W, [3, 'p'], [6, '>'], [10, 'w'], [24, 'e'], [30, 'l'], [40, 'e'], [43, '"'], [62, 'e'], [64, 'e'],
+      [75, '*'], [80, 'w'], [90, 'l'], [94, 'e'], [118, 'e'], [122, 'e'], [133, '^'], [140, 'l'], [150, 'e'], [151, 'e'],
+      [170, 'g'], [175, 'e'], [188, '*'], [190, 'l'], [198, 'e'], [200, 'w'], [224, 'e'], [226, 'e'], [240, 'e'], [244, '^'],
       [246, ground(10)]),
-    // r23/r24 — four pits, the last one wide
+    // r23/r24 — four pits
     ground(50) + gap(4) + ground(46) + gap(5) + ground(55) + gap(6) + ground(42) + gap(7) +
       ground(85),
     ground(50) + gap(4) + ground(46) + gap(5) + ground(55) + gap(6) + ground(42) + gap(7) +

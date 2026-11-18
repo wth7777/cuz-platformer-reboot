@@ -138,42 +138,6 @@ export default class GameScene extends Phaser.Scene {
     this.spawnPlayer();
     console.log('[GameScene] After spawnPlayer');
 
-    // TEST: Spawn Lava Creature for testing (near player, on ground)
-    // Spawn ~500px ahead of player, feet on ground
-    try {
-      const playerFeetY = this.player.y + 25.0; // player visual feet Y
-      const groundRow = this.findFloorRow(Math.floor((this.player.x + 500) / TILE));
-      const groundY = groundRow * TILE;
-      // Lava displayHeight = 256 * 0.22 = 56.32, idle frame_0 feet at y=248 → 120px from center * 0.22 = 26.4px
-      const testLavaX = this.player.x + 500;
-      const testLavaY = groundY - 26.4;  // lava idle frame_0: feet at y=248 (7px padding), 120px from center * 0.22 = 26.4px
-      console.log('[GameScene] TEST: Spawning test lava at', { x: testLavaX, y: testLavaY, groundRow, groundY, playerX: this.player.x, playerFeetY });
-      window.__gameSceneTestLavaSpawned = true;
-      this.enemies.add(new LavaCreature(this, testLavaX, testLavaY, 'test_lava_direct'));
-      console.log('[GameScene] TEST: Lava added to enemies group');
-    } catch (err) {
-      console.error('[GameScene] TEST SPAWN ERROR:', err);
-      window.__gameSceneTestLavaSpawned = false;
-    }
-
-    // TEST: Spawn Goblin Boss for testing (near player, on ground)
-    // Spawn ~600px ahead of player, feet on ground
-    try {
-      const playerFeetY = this.player.y + 25.0; // player visual feet Y
-      const groundRow = this.findFloorRow(Math.floor((this.player.x + 600) / TILE));
-      const groundY = groundRow * TILE;
-      // Goblin displayHeight = 268 * 0.25 = 67, feet ~22 below center (similar to lava)
-      const testGoblinX = this.player.x + 600;
-      const testGoblinY = groundY - 22.0;
-      console.log('[GameScene] TEST: Spawning test goblin at', { x: testGoblinX, y: testGoblinY, groundRow, groundY, playerX: this.player.x, playerFeetY });
-      window.__gameSceneTestGoblinSpawned = true;
-      this.enemies.add(new GoblinBoss(this, testGoblinX, testGoblinY, 'test_goblin_direct'));
-      console.log('[GameScene] TEST: Goblin added to enemies group');
-    } catch (err) {
-      console.error('[GameScene] TEST GOBLIN SPAWN ERROR:', err);
-      window.__gameSceneTestGoblinSpawned = false;
-    }
-
     this.setupInput();
 
     const cam = this.cameras.main;
@@ -497,8 +461,8 @@ export default class GameScene extends Phaser.Scene {
     const isLavaLevel = this.levelId === 'level3' || this.levelId === 'level4';
     const bgKey = isLavaLevel ? 'lava-level-bg' : 'graveyard-bg';
     const bgHeight = 700;
-    // Lava background: shift down to show more bottom of image (was 324)
-    const centerY = isLavaLevel ? 380 : 324;
+    // Lava background: shift up to reveal more lower artwork (was 380)
+    const centerY = isLavaLevel ? 340 : 324;
     const scrollFactor = 0.15;
 
     this.graveyardBg = this.add
@@ -880,7 +844,7 @@ export default class GameScene extends Phaser.Scene {
 
   // ------------------------------------------------------- Lady in Grey appearance system
 
-  /** Schedule next appearance with random timing (10-30 seconds between appearances) */
+  /** Schedule next appearance with random timing (30-60 seconds between appearances) */
   scheduleLadyAppearance() {
     // Stop any existing timer
     if (this.ladyTimer) {
@@ -888,8 +852,8 @@ export default class GameScene extends Phaser.Scene {
       this.ladyTimer = null;
     }
 
-    // Random interval: 10-30 seconds between appearances
-    const delay = Phaser.Math.Between(10000, 30000);
+    // Random interval: 30-60 seconds between appearances
+    const delay = Phaser.Math.Between(30000, 60000);
 
     this.ladyTimer = this.time.addEvent({
       delay: delay,
