@@ -49,7 +49,7 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     // Goblin Boss constants
     this.WALK_SPEED = 30; // slightly faster than zombie
     this.PURSUE_SPEED = 45;
-    this.PURSUE_RANGE = 200;
+    // PURSUE_RANGE removed — detection is now camera-relative (see preUpdate)
     this.ATTACK_RANGE = 55;
     this.SUPER_ATTACK_RANGE = 80;
     this.ATTACK_DAMAGE = 30;
@@ -57,6 +57,11 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     this.ATTACK_COOLDOWN = 3000; // ms between attacks
     this.SUPER_ATTACK_COOLDOWN = 6000; // ms between super attacks
     this.HEALTH = 6; // contact damage health
+
+    // Patrol boundaries around spawn location (±120px)
+    this.patrolStartX = x - 120;
+    this.patrolEndX = x + 120;
+    this.isChasing = false; // start in patrol mode
 
     // Play idle animation if available
     if (this.scene.anims.exists('goblin-idle')) {
@@ -102,18 +107,35 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
 
     // Sleep when far off-camera
     const cam = this.scene.cameras.main;
-    if (cam && Math.abs(this.x - (cam.scrollX + cam.width / 2)) > 1200) {
+    if (cam && Math.abs(this.x - (cam.scrollX + cam.width / 2)) > 1100) {
       this.setVelocityX(0);
       return;
     }
 
     const player = this.scene.player;
-    const pursuing = player && !player.isDead;
+    const playerAlive = player && !player.isDead;
+
+    // Camera-relative detection distances (scale with zoom/screen size)
+    const camHalfWidth = cam.width / 2; // center to edge in world pixels
+    const detectionRange = camHalfWidth * 0.75;   // 75% of center-to-edge
+    const disengageRange = camHalfWidth * 1.0;    // larger threshold for disengage
+
+    // Is the enemy visible in the camera viewport?
+    const camLeft = cam.scrollX - camHalfWidth;
+    const camRight = cam.scrollX + camHalfWidth;
+    const isVisible = this.x >= camLeft && this.x <= camRight;
 
     // Turn at walls
     if (this.body.blocked.left || this.body.touching.left) {
       this.direction = 1;
     } else if (this.body.blocked.right || this.body.touching.right) {
+      this.direction = -1;
+    }
+
+    // Patrol boundaries: turn around when reaching either edge of spawn zone
+    if (this.x <= this.patrolStartX) {
+      this.direction = 1;
+    } else if (this.x >= this.patrolEndX) {
       this.direction = -1;
     }
 
@@ -125,81 +147,86 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
         false, true
       );
 
-      // If pursuing and no ground ahead, check if there's ground further down
-      if (pursuing && ground.length === 0) {
-        const dropCheck = this.scene.physics.overlapRect(
-          aheadX, this.body.bottom + 2, 2, 120, // check up to 120px down
-          false, true
-        );
-        if (dropCheck.length > 0) {
-          // Safe to drop - walk off the edge
-        } else {
-          // No ground below either - turn around
-          this.direction *= -1;
-        }
-      } else if (ground.length === 0) {
+      if (ground.length === 0) {
         // Not pursuing, just turn around at edges
         this.direction *= -1;
       }
     }
 
-    // Pursuit: detect player and move toward them
-    let targetDir = this.direction;
-    if (pursuing) {
-      const distX = player.x - this.x;
-      const distY = Math.abs(player.y - this.y);
-      // Only pursue if player is on same general level
-      if (Math.abs(distX) < this.PURSUE_RANGE && distY < 100) {
-        const towardPlayer = distX > 0 ? 1 : -1;
-        // Only pursue toward player if there's ground in that direction
-        if (this.body.onFloor()) {
-          const checkX = towardPlayer > 0 ? this.body.right + 2 : this.body.left - 3;
-          const ground = this.scene.physics.overlapRect(
-            checkX, this.body.bottom + 2, 2, 4,
-            false, true
-          );
-          if (ground.length > 0) {
-            targetDir = towardPlayer;
-          } else {
-            // No ground directly ahead - check if we can drop down to reach player
-            const dropCheck = this.scene.physics.overlapRect(
-              checkX, this.body.bottom + 2, 2, 120,
-              false, true
-            );
-            if (dropCheck.length > 0) {
-              targetDir = towardPlayer;
-            }
+    // State machine: patrol ↔ chase
+    if (this.isChasing) {
+      // Disengage: player too far away OR enemy not visible in camera
+      const distX = player ? Math.abs(player.x - this.x) : 9999;
+      if (!playerAlive || distX > disengageRange || !isVisible) {
+        this.isChasing = false;
+      } else {
+        // Attack logic retained
+        if (!this.isAttacking && !this.isSuperAttacking) {
+          const atkDistX = Math.abs(player.x - this.x);
+          const atkDistY = Math.abs(player.y - this.y);
+          // Super attack when damaged and at medium range
+          if (this.hasBeenDamaged && atkDistX < this.SUPER_ATTACK_RANGE && atkDistY < 50 && this.superAttackCooldown <= 0) {
+            this.startSuperAttack();
+            return;
           }
+          // Regular attack when close
+          if (atkDistX < this.ATTACK_RANGE && atkDistY < 35 && this.attackCooldown <= 0) {
+            this.startAttack();
+            return;
+          }
+        }
+        // Continue pursuing
+        this.pursuePlayer(player);
+        return;
+      }
+    } else {
+      // Patrol mode: check for player detection
+      if (playerAlive && isVisible) {
+        const distX = Math.abs(player.x - this.x);
+        if (distX < detectionRange) {
+          this.isChasing = true;
+          this.pursuePlayer(player);
+          return;
         }
       }
     }
 
-    if (targetDir !== this.direction) {
-      this.direction = targetDir;
+    // Patrol movement
+    const speed = this.WALK_SPEED;
+    this.setVelocityX(speed * this.direction);
+
+    // Artwork faces RIGHT. When moving LEFT (direction < 0), flip to face left.
+    this.setFlipX(this.direction < 0);
+  }
+
+  /** Shared pursuit logic: move toward the player. */
+  pursuePlayer(player) {
+    const distX = player.x - this.x;
+    const towardPlayer = distX > 0 ? 1 : -1;
+
+    // Only pursue toward player if there's ground in that direction
+    if (this.body.onFloor()) {
+      const checkX = towardPlayer > 0 ? this.body.right + 2 : this.body.left - 3;
+      const ground = this.scene.physics.overlapRect(
+        checkX, this.body.bottom + 2, 2, 4,
+        false, true
+      );
+      if (ground.length > 0) {
+        this.direction = towardPlayer;
+      } else {
+        // No ground directly ahead - check if we can drop down to reach player
+        const dropCheck = this.scene.physics.overlapRect(
+          checkX, this.body.bottom + 2, 2, 120,
+          false, true
+        );
+        if (dropCheck.length > 0) {
+          this.direction = towardPlayer;
+        }
+      }
     }
 
-    // Attack logic
-    if (pursuing && !this.isAttacking && !this.isSuperAttacking) {
-      const distX = Math.abs(player.x - this.x);
-      const distY = Math.abs(player.y - this.y);
-      
-      // Super attack when damaged and at medium range
-      if (this.hasBeenDamaged && distX < this.SUPER_ATTACK_RANGE && distY < 50 && this.superAttackCooldown <= 0) {
-        this.startSuperAttack();
-      }
-      // Regular attack when close
-      else if (distX < this.ATTACK_RANGE && distY < 35 && this.attackCooldown <= 0) {
-        this.startAttack();
-      }
-    }
-
-    // Movement
-    if (!this.isAttacking && !this.isSuperAttacking) {
-      const speed = pursuing ? this.PURSUE_SPEED : this.WALK_SPEED;
-      this.setVelocityX(speed * this.direction);
-    } else {
-      this.setVelocityX(0);
-    }
+    const speed = this.PURSUE_SPEED;
+    this.setVelocityX(speed * this.direction);
 
     // Artwork faces RIGHT. When moving LEFT (direction < 0), flip to face left.
     this.setFlipX(this.direction < 0);

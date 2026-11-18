@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 
 const WALK_SPEED = 30; // slower than player
 const PURSUE_SPEED = 45; // faster when chasing
-const PURSUE_RANGE = 220; // horizontal detection distance
+// PURSUE_RANGE removed — detection is now camera-relative (see preUpdate)
 
 // Zombie enemy using supplied custom artwork (8 frames, 332x503 each).
 // walk = frames 0-7 (8-frame cycle).
@@ -47,6 +47,11 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
     this.direction = -1; // start walking left
     this.isSquashed = false;
     this.isDead = false;
+    this.isChasing = false; // start in patrol mode
+
+    // Patrol boundaries around spawn location (±120px)
+    this.patrolStartX = x - 120;
+    this.patrolEndX = x + 120;
 
     // Play walk animation if available
     if (this.scene.anims.exists('zombie-walk')) {
@@ -59,20 +64,37 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
 
     if (this.isSquashed || this.isDead) return;
 
-    // Sleep when far off-camera
+    // Camera-relative detection distances (scale with zoom/screen size)
     const cam = this.scene.cameras.main;
-    if (Math.abs(this.x - (cam.scrollX + cam.width / 2)) > 1100) {
+    const camHalfWidth = cam.width / 2; // center to edge in world pixels
+    const detectionRange = camHalfWidth * 0.75;   // 75% of center-to-edge
+    const disengageRange = camHalfWidth * 1.0;    // larger threshold for disengage
+
+    // Is the enemy visible in the camera viewport?
+    const camLeft = cam.scrollX - camHalfWidth;
+    const camRight = cam.scrollX + camHalfWidth;
+    const isVisible = this.x >= camLeft && this.x <= camRight;
+
+    // Sleep when far off-camera
+    if (Math.abs(this.x - (cam.scrollX + camHalfWidth)) > 1100) {
       this.setVelocityX(0);
       return;
     }
 
     const player = this.scene.player;
-    const pursuing = player && !player.isDead;
+    const playerAlive = player && !player.isDead;
 
     // Turn at walls
     if (this.body.blocked.left || this.body.touching.left) {
       this.direction = 1;
     } else if (this.body.blocked.right || this.body.touching.right) {
+      this.direction = -1;
+    }
+
+    // Patrol boundaries: turn around when reaching either edge of spawn zone
+    if (this.x <= this.patrolStartX) {
+      this.direction = 1;
+    } else if (this.x >= this.patrolEndX) {
       this.direction = -1;
     }
 
@@ -84,67 +106,75 @@ export default class Zombie extends Phaser.Physics.Arcade.Sprite {
         false, true
       );
 
-      // If pursuing and no ground ahead, check if there's ground further down
-      // (i.e., a lower platform or ground we can safely drop to)
-      if (pursuing && ground.length === 0) {
-        // Check if there's ground further below within a reasonable drop distance
-        const dropCheck = this.scene.physics.overlapRect(
-          aheadX, this.body.bottom + 2, 2, 120, // check up to 120px down
-          false, true
-        );
-        if (dropCheck.length > 0) {
-          // Safe to drop - walk off the edge
-        } else {
-          // No ground below either - turn around
-          this.direction *= -1;
-        }
-      } else if (ground.length === 0) {
+      if (ground.length === 0) {
         // Not pursuing, just turn around at edges
         this.direction *= -1;
       }
     }
 
-    // Pursuit: detect player and move toward them
-    let targetDir = this.direction;
-    if (pursuing) {
-      const distX = player.x - this.x;
-      const distY = Math.abs(player.y - this.y);
-      // Only pursue if player is on same general level (not far above/below)
-      // AND if there's ground ahead in that direction
-      if (Math.abs(distX) < PURSUE_RANGE && distY < 80) {
-        const towardPlayer = distX > 0 ? 1 : -1;
-        // Only pursue toward player if there's ground in that direction
-        if (this.body.onFloor()) {
-          const checkX = towardPlayer > 0 ? this.body.right + 2 : this.body.left - 3;
-          const ground = this.scene.physics.overlapRect(
-            checkX, this.body.bottom + 2, 2, 4,
-            false, true
-          );
-          if (ground.length > 0) {
-            targetDir = towardPlayer;
-          } else {
-            // No ground directly ahead - check if we can drop down to reach player
-            const dropCheck = this.scene.physics.overlapRect(
-              checkX, this.body.bottom + 2, 2, 120,
-              false, true
-            );
-            if (dropCheck.length > 0) {
-              targetDir = towardPlayer;
-            }
-          }
+    // State machine: patrol ↔ chase
+    if (this.isChasing) {
+      // Disengage: player too far away OR enemy not visible in camera
+      const distX = player ? Math.abs(player.x - this.x) : 9999;
+      if (!playerAlive || distX > disengageRange || !isVisible) {
+        this.isChasing = false;
+      } else {
+        // Continue pursuing
+        this.pursuePlayer(player);
+        return;
+      }
+    } else {
+      // Patrol mode: check for player detection
+      if (playerAlive && isVisible) {
+        const distX = Math.abs(player.x - this.x);
+        if (distX < detectionRange) {
+          this.isChasing = true;
+          this.pursuePlayer(player);
+          return;
         }
       }
     }
 
-    if (targetDir !== this.direction) {
-      this.direction = targetDir;
-    }
-
-    const speed = pursuing ? PURSUE_SPEED : WALK_SPEED;
+    // Patrol movement
+    const speed = WALK_SPEED;
     this.setVelocityX(speed * this.direction);
 
     // Artwork faces RIGHT. When moving LEFT (direction < 0), flip to face left.
     // When moving RIGHT (direction > 0), no flip (faces right).
+    this.setFlipX(this.direction < 0);
+  }
+
+  /** Shared pursuit logic: move toward the player. */
+  pursuePlayer(player) {
+    const distX = player.x - this.x;
+    const distY = Math.abs(player.y - this.y);
+    const towardPlayer = distX > 0 ? 1 : -1;
+
+    // Only pursue toward player if there's ground in that direction
+    if (this.body.onFloor()) {
+      const checkX = towardPlayer > 0 ? this.body.right + 2 : this.body.left - 3;
+      const ground = this.scene.physics.overlapRect(
+        checkX, this.body.bottom + 2, 2, 4,
+        false, true
+      );
+      if (ground.length > 0) {
+        this.direction = towardPlayer;
+      } else {
+        // No ground directly ahead - check if we can drop down to reach player
+        const dropCheck = this.scene.physics.overlapRect(
+          checkX, this.body.bottom + 2, 2, 120,
+          false, true
+        );
+        if (dropCheck.length > 0) {
+          this.direction = towardPlayer;
+        }
+      }
+    }
+
+    const speed = PURSUE_SPEED;
+    this.setVelocityX(speed * this.direction);
+
+    // Artwork faces RIGHT. When moving LEFT (direction < 0), flip to face left.
     this.setFlipX(this.direction < 0);
   }
 

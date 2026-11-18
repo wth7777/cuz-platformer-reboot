@@ -19,8 +19,13 @@ export default class Walker extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(1); // same layer as items, above terrain
     this.setCollideWorldBounds(true);
 
-    this.direction = -1; // start walking left, toward the player
+    this.direction = -1; // start walking left
     this.isSquashed = false;
+
+    // Patrol boundaries: turn around when reaching either edge of spawn zone
+    this.patrolStartX = x - 120;
+    this.patrolEndX = x + 120;
+
     this.play('walker-walk');
   }
 
@@ -35,6 +40,13 @@ export default class Walker extends Phaser.Physics.Arcade.Sprite {
     if (Math.abs(this.x - (cam.scrollX + cam.width / 2)) > 1100) {
       this.setVelocityX(0);
       return;
+    }
+
+    // Turn at patrol boundaries around spawn location
+    if (this.x <= this.patrolStartX) {
+      this.direction = 1;
+    } else if (this.x >= this.patrolEndX) {
+      this.direction = -1;
     }
 
     // Turn at walls (blocked = static obstacle, touching = another enemy)
