@@ -27,7 +27,7 @@ export default class GoblinBoss extends Phaser.Physics.Arcade.Sprite {
     // Body: effective 28x24, centered horizontally, feet aligned with visual feet
     // Visual feet alignment: match wolf/lava feet offset (accommodates walk frames)
     this.body.setSize(28 / 0.25, 24 / 0.25); // effective 28x24
-    this.body.setOffset(110, 142); // center horizontally, align feet (accommodates walk frames)
+    this.body.setOffset(110, 150); // center horizontally, align feet (accommodates walk frames)
     this.setDepth(1);
     this.setCollideWorldBounds(true);
     this.setScale(0.25);
