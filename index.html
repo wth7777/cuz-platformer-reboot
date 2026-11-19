@@ -86,7 +86,6 @@
         max-height: none;
         background: none;
         border: 0;
-        pointer-events: none; /* only the buttons catch touches */
         align-items: flex-end;
         justify-content: flex-end;
         padding: 0 calc(34px + env(safe-area-inset-right))
@@ -136,9 +135,10 @@
       /* ---- action buttons ---- */
       .actions {
         display: flex;
-        flex-direction: column;
-        gap: 24px;
+        flex-direction: row;
+        gap: 16px;
         align-items: center;
+        justify-content: flex-end;
       }
 
       .ctrl {
@@ -236,8 +236,8 @@
       </div>
       <div id="touch-controls">
         <div class="actions">
-          <button class="ctrl btn-b" id="btn-fire" data-key="fire" tabindex="-1">B</button>
           <button class="ctrl btn-a" id="btn-jump" data-key="jump" tabindex="-1">A</button>
+          <button class="ctrl btn-b" id="btn-fire" data-key="fire" tabindex="-1">B</button>
         </div>
       </div>
       <div id="joystick-base">
