@@ -132,8 +132,8 @@ export function setupTouchControls() {
       if (output === 0) {
         touchState.moveX = 0;
       } else {
-        const factor = output / magnitude;
-        touchState.moveX = Math.max(-1, Math.min(1, (clampedX / maxDist) * factor));
+        // Consistent speed: direction only, at 25% of keyboard speed
+        touchState.moveX = clampedX > 0 ? 0.25 : -0.25;
       }
     }
 
