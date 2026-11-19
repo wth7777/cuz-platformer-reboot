@@ -126,7 +126,14 @@ export default class PreloadScene extends Phaser.Scene {
     this.registry.set('time', 300);
     this.registry.set('world', '1-1');
 
-    this.scene.start('TitleScene');
+    // Direct level launch: if ?level=N (1-5) was provided, skip TitleScene and go
+    // straight to IntroScene for that level. All registry values are already
+    // initialized above (score=0, coins=0, lives=3, time=300, world='1-1').
+    if (window.__DIRECT_LEVEL__) {
+      this.scene.start('IntroScene', { levelId: window.__DIRECT_LEVEL__ });
+    } else {
+      this.scene.start('TitleScene');
+    }
   }
 
   makeTilingTexture(destKey, srcKey, frames, colorKey = null) {

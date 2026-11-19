@@ -10,6 +10,19 @@ import GameOverScene from './scenes/GameOverScene.js';
 import EndScene from './scenes/EndScene.js';
 import { setupTouchControls } from './input/TouchControls.js';
 
+// Parse URL parameter for direct level launch (?level=1 through ?level=5)
+// Strict validation: only exact integers 1-5 accepted; anything else falls back to normal title screen.
+const params = new URLSearchParams(window.location.search);
+const levelParam = params.get('level');
+let directLevel = null;
+if (levelParam !== null) {
+  const levelNum = parseInt(levelParam, 10);
+  if (Number.isInteger(levelNum) && levelNum >= 1 && levelNum <= 5 && levelParam === String(levelNum)) {
+    directLevel = `level${levelNum}`;
+  }
+}
+window.__DIRECT_LEVEL__ = directLevel;
+
 // Show/wire the on-screen buttons before the game boots, so the
 // layout (game on top, controls below) is settled when Phaser measures
 // its parent container.
