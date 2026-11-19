@@ -79,10 +79,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // JOYSTICK: constant velocity (no acceleration buildup)
     // Keyboard OVERRIDES joystick when keyboard is actively pressed
     if (!keyboardActive && joystickMoveX !== 0) {
-      // Joystick constant velocity: 25% of keyboard max speed (240 * 0.25 = 60)
-      const JOYSTICK_SPEED = 60;
+      // Joystick constant velocity: 150 units/sec (keyboard max is 240)
+      const JOYSTICK_SPEED = 150;
       body.setAccelerationX(0);
-      body.setVelocityX(joystickMoveX > 0 ? 60 : -60);
+      body.setVelocityX(joystickMoveX > 0 ? 150 : -150);
       // joystickMoveY is VISUAL ONLY - no vertical velocity change
       this.setFlipX(joystickMoveX > 0 ? false : true);
     } else {

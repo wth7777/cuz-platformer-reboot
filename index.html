@@ -39,21 +39,21 @@
         position: relative;
       }
 
-      /* ---- Virtual Joystick - Classic Arcade Style ---- */
+      /* ---- Virtual Joystick - Compact Top-Down Style ---- */
       #joystick-base {
         position: fixed;
-        width: 140px;
-        height: 140px;
+        width: 105px;
+        height: 105px;
         border-radius: 50%;
         background: 
-          radial-gradient(circle at 30% 30%, #2a2a2a 0%, #151515 70%, #0a0a0a 100%),
-          radial-gradient(circle at 70% 70%, #1a1a1a 0%, #0a0a0a 100%);
-        border: 3px solid #2a2a2a;
+          radial-gradient(circle at 50% 50%, #2a2a2a 0%, #1a1a1a 50%, #0d0d0d 100%),
+          radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0d0d0d 100%);
+        border: 2px solid #333;
         box-shadow: 
-          inset 0 3px 6px rgba(255,255,255,0.1),
-          inset 0 -3px 6px rgba(0,0,0,0.3),
-          0 4px 12px rgba(0,0,0,0.4),
-          0 0 0 1px rgba(255,255,255,0.05);
+          inset 0 2px 4px rgba(255,255,255,0.08),
+          inset 0 -2px 4px rgba(0,0,0,0.3),
+          0 3px 8px rgba(0,0,0,0.4),
+          0 0 0 1px rgba(255,255,255,0.04);
         pointer-events: none;
         transition: opacity 150ms ease-out, visibility 0s 150ms;
         z-index: 100;
@@ -71,23 +71,22 @@
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 50px;
-        height: 90px;
-        margin-left: -25px;
-        margin-top: -90px;
+        width: 28px;
+        height: 28px;
+        margin-left: -14px;
+        margin-top: -14px;
         background: 
-          linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 50%, #1a1a1a 100%),
-          linear-gradient(90deg, #444 0%, #2a2a2a 50%, #1a1a1a 100%);
-        border-radius: 10px;
-        border-left: 1px solid #3a3a3a;
-        border-right: 1px solid #1a1a1a;
+          radial-gradient(circle at 30% 30%, #4a4a4a 0%, #2a2a2a 60%, #1a1a1a 100%),
+          linear-gradient(135deg, #444 0%, #2a2a2a 50%, #1a1a1a 100%);
+        border-radius: 50%;
+        border: 1px solid #333;
         box-shadow: 
-          inset 2px 0 4px rgba(255,255,255,0.1),
-          inset -2px 0 4px rgba(0,0,0,0.3),
-          0 2px 4px rgba(0,0,0,0.3);
-        transform-origin: center bottom;
-        transform: translate(-50%, -100%) rotate(0deg);
-        transition: transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1);
+          inset 0 1px 2px rgba(255,255,255,0.1),
+          inset 0 -1px 2px rgba(0,0,0,0.3),
+          0 1px 2px rgba(0,0,0,0.3);
+        transform-origin: center center;
+        transform: translate(-50%, -50%) scale(1);
+        transition: transform 60ms cubic-bezier(0.34, 1.56, 0.64, 1);
         z-index: 10;
       }
 
@@ -95,31 +94,35 @@
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 56px;
-        height: 56px;
-        margin-left: -28px;
-        margin-top: -98px;
+        width: 32px;
+        height: 32px;
+        margin-left: -16px;
+        margin-top: -16px;
         background: 
-          radial-gradient(circle at 30% 30%, #ffffff 0%, #e0e0e0 40%, #c0c0c0 70%, #a0a0a0 100%),
-          radial-gradient(circle at 70% 70%, #c0c0c0 0%, #808080 100%);
+          radial-gradient(circle at 30% 30%, #ffffff 0%, #e8e8e8 30%, #c8c8c8 60%, #a8a8a8 100%),
+          radial-gradient(circle at 70% 70%, #b8b8b8 0%, #888888 100%);
         border-radius: 50%;
-        border: 2px solid #909090;
+        border: 1.5px solid #888;
         box-shadow: 
-          inset 0 -3px 6px rgba(255,255,255,0.3),
-          inset 0 3px 6px rgba(0,0,0,0.2),
-          0 4px 8px rgba(0,0,0,0.4),
-          0 0 0 1px rgba(255,255,255,0.2);
+          inset 0 -2px 4px rgba(255,255,255,0.25),
+          inset 0 2px 3px rgba(0,0,0,0.15),
+          0 2px 4px rgba(0,0,0,0.35),
+          0 0 0 1px rgba(255,255,255,0.15);
         transform-origin: center center;
         transform: translate(-50%, -50%);
         z-index: 20;
       }
 
-      /* Tilt classes for shaft */
-      #joystick-shaft.tilt-left { transform: translate(-50%, -100%) rotate(-18deg); }
-      #joystick-shaft.tilt-right { transform: translate(-50%, -100%) rotate(18deg); }
-      #joystick-shaft.tilt-up { transform: translate(-50%, -100%) rotate(-18deg) scaleY(1.1); }
-      #joystick-shaft.tilt-down { transform: translate(-50%, -100%) rotate(18deg) scaleY(1.1); }
-      #joystick-shaft.tilt-center { transform: translate(-50%, -100%) rotate(0deg); }
+      /* Tilt classes for shaft - subtle offset for directional feedback */
+      #joystick-shaft.tilt-left { transform: translate(calc(-50% - 6px), -50%) scale(1); }
+      #joystick-shaft.tilt-right { transform: translate(calc(-50% + 6px), -50%) scale(1); }
+      #joystick-shaft.tilt-up { transform: translate(-50%, calc(-50% - 6px)) scale(1); }
+      #joystick-shaft.tilt-down { transform: translate(-50%, calc(-50% + 6px)) scale(1); }
+      #joystick-shaft.tilt-center { transform: translate(-50%, -50%) scale(1); }
+
+      #joystick-knob {
+        display: none;
+      }
 
       /* ---- Touch controls overlay (both orientations) ---- */
       #touch-controls {
@@ -248,10 +251,11 @@
         }
 
         #joystick-base {
-          width: 128px;
-          height: 128px;
+          width: 100px;
+          height: 100px;
         }
 
+      }
 
       /* ---- very narrow landscape: rotate hint ---- */
       #rotate-hint {
