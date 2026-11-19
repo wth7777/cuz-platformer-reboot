@@ -143,41 +143,42 @@ export function setupTouchControls() {
     }
 
     move(pointerId, clientX, clientY) {
-      if (!this.active || pointerId !== this.pointerId) return;
+          if (!this.active || pointerId !== this.pointerId) return;
 
-      const dx = clientX - this.centerX;
-      const dy = clientY - this.centerY;
-      const distance = Math.hypot(dx, dy);
-      const maxDist = this.maxTravel;
+          const dx = clientX - this.centerX;
+          const dy = clientY - this.centerY;
+          const distance = Math.hypot(dx, dy);
+          const maxDist = this.maxTravel;
 
-      // Clamp to max travel
-      let clampedX = dx;
-      let clampedY = dy;
-      if (distance > maxDist) {
-        const ratio = maxDist / distance;
-        clampedX = dx * ratio;
-        clampedY = dy * ratio;
-      }
+          // Clamp to max travel
+          let clampedX = dx;
+          let clampedY = dy;
+          if (distance > maxDist) {
+            const ratio = maxDist / distance;
+            clampedX = dx * ratio;
+            clampedY = dy * ratio;
+          }
 
-      // Update visual knob position (follows finger within maxTravel)
-      this.handleEl.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
+          // Update visual knob position (follows finger within maxTravel)
+          // Use translate3d to isolate from parent transforms and ensure correct coordinate mapping
+          this.handleEl.style.transform = `translate3d(${clampedX}px, ${clampedY}px, 0)`;
 
-      // Get 4-direction direction
-      const direction = this.getDirection(clampedX / maxDist, clampedY / maxDist);
-      
-      // Update touchState
-      if (direction.x !== this.currentDirection.x) {
-        touchState.moveX = direction.x;
-        this.currentDirection.x = direction.x;
-      }
-      if (direction.y !== this.currentDirection.y) {
-        touchState.moveY = direction.y;
-        this.currentDirection.y = direction.y;
-      }
-      
-      // Update visual tilt
-      this.setTilt(direction);
-    }
+          // Get 4-direction direction
+          const direction = this.getDirection(clampedX / maxDist, clampedY / maxDist);
+
+          // Update touchState
+          if (direction.x !== this.currentDirection.x) {
+            touchState.moveX = direction.x;
+            this.currentDirection.x = direction.x;
+          }
+          if (direction.y !== this.currentDirection.y) {
+            touchState.moveY = direction.y;
+            this.currentDirection.y = direction.y;
+          }
+
+          // Update visual tilt
+          this.setTilt(direction);
+        }
 
     deactivate(pointerId) {
       if (pointerId !== this.pointerId || !this.active) return;
