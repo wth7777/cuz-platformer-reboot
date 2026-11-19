@@ -20,7 +20,7 @@ export default {
     // r16 — coins above the platforms
     sparse(W, [21, 'ccc'], [61, 'ccc'], [121, 'ccc'], [166, 'ccc']),
     // r17 — existing platform line + P4c bridge G3 (133-150) + P4e optional high route (50-59)
-    sparse(W, [20, 'PPPPP'], [50, 'P', 10], [60, 'PPPPP'], [120, 'PPPPP'], [133, 'P', 18], [165, 'PPPPP']),
+    sparse(W, [20, 'PPPPP'], [50, 'P', 10], [60, 'PPPPP'], [88, 'PPPP'], [120, 'PPPPP'], [133, 'P', 18], [165, 'PPPPP']),
     // r18 — coin arcs over the pits + P4a bridge G1 (30-41) + P4d bridge G4 (169-179)
     sparse(W, [30, 'P', 12], [90, 'cccccc'], [169, 'P', 11], [180, 'cccccc']),
     // r19 — blocks, gap platforms, stairs top (Astrohop castle removed)

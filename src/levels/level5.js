@@ -24,7 +24,7 @@ export default {
     // r17 — platforms
     sparse(W, [20, 'PPPPP'], [140, 'PPPPP'], [200, 'PPPPP']),
     // r18 — P5a bridge G1 (51-68), P5b bridge G2 (107-124), P5c bridge G3 (163-180), P5d bridge G4 (219-236)
-    sparse(W, [51, 'P', 18], [100, 'ccccc'], [106, 'K'], [107, 'P', 18], [160, 'cccccc'], [163, 'P', 18], [208, 'PPPPP'], [218, 'K'], [219, 'P', 18]),
+    sparse(W, [51, 'P', 18], [100, 'ccccc'], [107, 'P', 18], [160, 'cccccc'], [163, 'P', 18], [208, 'PPPPP'], [219, 'P', 18]),
     // r19 — blocks galore, stairs, (Astrohop castle removed)
     sparse(W, [16, 'BMB'], [44, '?'], [80, 'B?B'], [86, 'BMB'], [110, 'T'],
       [130, '?'], [170, 'B?B'], [220, '?']),
