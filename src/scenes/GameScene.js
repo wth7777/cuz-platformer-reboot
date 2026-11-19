@@ -280,7 +280,13 @@ export default class GameScene extends Phaser.Scene {
             // displayHeight = 256 * 0.2125 = 54.4, feet ~22.2 below center
             const wolfSpawnY = wolfGroundY - 22.2;
             console.log('[GameScene] Spawning wolf at:', { col, row, x, y: wolfSpawnY, groundRow: wolfGroundRow, groundY: wolfGroundY, key });
-            this.enemies.add(new Wolf(this, x, wolfSpawnY, key));
+            const wolf = new Wolf(this, x, wolfSpawnY, key);
+            // Level 2 wolves are 10% faster
+            if (this.levelId === 'level2') {
+              wolf.WALK_SPEED = Math.round(wolf.WALK_SPEED * 1.1);
+              wolf.PURSUE_SPEED = Math.round(wolf.PURSUE_SPEED * 1.1);
+            }
+            this.enemies.add(wolf);
             break;
           case 'l':
             // LavaCreature enemy spawn — find ground below and spawn with feet on ground

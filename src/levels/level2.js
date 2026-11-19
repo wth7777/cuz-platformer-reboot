@@ -39,8 +39,8 @@ export default {
     sparse(W, [21, 'ccc']),
     // r16 — entry climb mid; wall-top platform; final climb mid
     sparse(W, [20, 'PPPPP'], [68, 'PPPPPP'], [138, 'PPPPP']),
-    // r17 — powerup block removed
-    sparse(W),
+    // r17 — breakaway platform between bridge (r19) and four-coin platform (r16)
+    sparse(W, [61, 'PPPP']),
     // r18 — P2c bridge over G2 (94-99), P2e bridge over G3 (145-156)
     sparse(W, [58, 'cccc'], [94, 'P', 12], [145, 'P', 12]),
     // r19 — existing 44-48 + P2a bridge G1 (49-60), P2d mid route (106-131)
