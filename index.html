@@ -121,10 +121,6 @@
       #joystick-shaft.tilt-down { transform: translate(-50%, -100%) rotate(18deg) scaleY(1.1); }
       #joystick-shaft.tilt-center { transform: translate(-50%, -100%) rotate(0deg); }
 
-      #joystick-knob {
-        display: none;
-      }
-
       /* ---- Touch controls overlay (both orientations) ---- */
       #touch-controls {
         display: none;
@@ -256,11 +252,6 @@
           height: 128px;
         }
 
-        #joystick-knob {
-          width: 80px;
-          height: 80px;
-        }
-      }
 
       /* ---- very narrow landscape: rotate hint ---- */
       #rotate-hint {
@@ -296,7 +287,9 @@
         </div>
       </div>
       <div id="joystick-base">
-        <div id="joystick-knob"></div>
+        <div id="joystick-shaft">
+          <div id="joystick-handle"></div>
+        </div>
       </div>
     </div>
     <div id="rotate-hint">&#10227; Rotate your device</div>
