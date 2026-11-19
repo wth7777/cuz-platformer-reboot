@@ -51,7 +51,7 @@ export default {
     sparse(W, [8, 'cccc'], [70, 'XX'], [178, 'XXXXXX']),
     // r21 — spawn; enemies; wall; stairs
     sparse(W, [3, 'p'], [30, 'w'], [43, 'e'], [70, 'XX'], [80, 'w'], [92, 'e'], [100, 'e'], [108, 'e'],
-      [130, 'w'], [158, 'e'], [164, 'e'], [176, ground(8)], [185, 'w']),
+      [130, 'w'], [158, 'e'], [164, 'e'], [170, 'w'], [176, ground(8)]),
     // r22/r23 — ground with gaps at 44-49, 94-99, 144-149
     ground(44) + gap(6) + ground(44) + gap(6) + ground(44) + gap(6) + ground(50),
     ground(44) + gap(6) + ground(44) + gap(6) + ground(44) + gap(6) + ground(50),
