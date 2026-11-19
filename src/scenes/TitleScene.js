@@ -120,7 +120,7 @@ export default class TitleScene extends Phaser.Scene {
     this.input.once('pointerdown', start);
 
     // Start title music on first user gesture (handled by sfx unlock)
-    sfx.startMusic('title');
+    sfx.startMusic('intro');
   }
 
   update() {

@@ -69,10 +69,20 @@ export default class PreloadScene extends Phaser.Scene {
     this.load.atlas('lady-in-grey', 'assets/graveyard-sprites/lady-in-grey.png', 'assets/graveyard-sprites/lady-in-grey.json');
 
     // --- Graveyard music
+    this.load.audio('graveyard-intro', 'assets/audio/graveyard-intro.ogg');
+    this.load.audio('graveyard-overworld', 'assets/audio/graveyard-overworld.ogg');
+    this.load.audio('graveyard-lava', 'assets/audio/graveyard-lava.ogg');
+    this.load.audio('graveyard-finale', 'assets/audio/graveyard-finale.ogg');
+    // Legacy music files (kept for fallback)
     this.load.audio('graveyard-music', 'assets/audio/graveyard-music.ogg');
     this.load.audio('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
 
     // Preload external music files for Web Audio API (sfx.js) - do this EARLY in preload
+    sfx.preloadMusic('graveyard-intro', 'assets/audio/graveyard-intro.ogg');
+    sfx.preloadMusic('graveyard-overworld', 'assets/audio/graveyard-overworld.ogg');
+    sfx.preloadMusic('graveyard-lava', 'assets/audio/graveyard-lava.ogg');
+    sfx.preloadMusic('graveyard-finale', 'assets/audio/graveyard-finale.ogg');
+    // Legacy preloads (kept for fallback)
     sfx.preloadMusic('graveyard-music', 'assets/audio/graveyard-music.ogg');
     sfx.preloadMusic('graveyard-title-music', 'assets/audio/graveyard-title-music.ogg');
     // Preload Lady in Grey sound effect via sfx.js (uses shared Web Audio context)

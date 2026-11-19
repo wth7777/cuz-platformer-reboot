@@ -9,6 +9,7 @@ const W = 280;
 export default {
   name: 'WORLD 1-1',
   theme: 'overworld',
+  musicKind: 'overworld',
   next: 'level2',
   // the 't' pipe leads to the bonus room and its exit drops you at col 168
   // secret removed - no pipes

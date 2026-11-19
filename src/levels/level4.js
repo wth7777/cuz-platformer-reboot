@@ -8,6 +8,7 @@ const W = 240;
 export default {
   name: 'WORLD 1-4',
   theme: 'lava',
+  musicKind: 'lava',
   next: 'level5',
   width: W,
   rows: [

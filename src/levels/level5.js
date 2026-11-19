@@ -8,6 +8,7 @@ const W = 300;
 export default {
   name: 'WORLD 1-5',
   theme: 'overworld',
+  musicKind: 'finale',
   next: 'end',
   time: 400,
   // secret removed - no pipes

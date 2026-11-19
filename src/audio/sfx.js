@@ -165,19 +165,28 @@ class Sfx {
   // Place your music files in assets/audio/ and reference them here.
   //
   // Expected files (to be provided by user):
-  // - assets/audio/graveyard-music.ogg (gameplay music, loops)
-  // - assets/audio/graveyard-title-music.ogg (title screen music, loops)
+  // - assets/audio/graveyard-intro.ogg (title/intro music, loops)
+  // - assets/audio/graveyard-overworld.ogg (levels 1-2, loops)
+  // - assets/audio/graveyard-lava.ogg (levels 3-4, loops)
+  // - assets/audio/graveyard-finale.ogg (level 5, loops)
+  // - assets/audio/graveyard-music.ogg (legacy fallback)
+  // - assets/audio/graveyard-title-music.ogg (legacy fallback)
   //
   // If files are not found, falls back to synthesized retro loops.
 
   /** Map music kinds to audio file keys. */
   getAudioKey(kind) {
     const musicMap = {
-      overworld: 'graveyard-title-music',
-      underground: 'graveyard-title-music',
-      title: 'graveyard-music',
+      intro: 'graveyard-intro',
+      overworld: 'graveyard-overworld',
+      lava: 'graveyard-lava',
+      finale: 'graveyard-finale',
+      // Legacy mappings (for backward compatibility)
+      overworld: 'graveyard-overworld',
+      underground: 'graveyard-overworld',
+      title: 'graveyard-intro',
     };
-    return musicMap[kind] || 'graveyard-title-music';
+    return musicMap[kind] || 'graveyard-overworld';
   }
 
   /** Start playing music for the given kind. Stops any existing music first. */
@@ -248,6 +257,14 @@ class Sfx {
     // Fallback to synthesized retro loops if external music fails
     this.startSynthesizedMusic(kind);
     this.currentMusicKind = kind;
+  }
+
+  /** Switch music only if different from current; otherwise keep playing seamlessly. */
+  async switchMusic(kind) {
+    if (this.currentMusicKind === kind && this.musicSource) {
+      return; // Already playing the right music
+    }
+    await this.startMusic(kind);
   }
 
   /** Load and play an external audio buffer as looping music. */

@@ -98,7 +98,7 @@ export default class GameScene extends Phaser.Scene {
     this.setupTimer();
     this.setupPause();
 
-    sfx.startMusic(this.level.theme);
+    sfx.switchMusic(this.level.musicKind ?? this.level.theme);
     this.events.once('shutdown', () => {
       sfx.stopMusic();
       // Clean up Lady in Grey timer

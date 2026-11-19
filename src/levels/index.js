@@ -17,12 +17,14 @@ export const THEMES = {
     terrainTop: 2,   // grass (will be replaced in Phase 2)
     terrainFill: 122, // dirt (will be replaced in Phase 2)
     parallax: true,
+    musicKind: 'overworld',
   },
   underground: {
     sky: '#0d0d1a',
     terrainTop: 42,
     terrainFill: 142,
-    parallax: true,  // Enable parallax for all themes now
+    parallax: true,
+    musicKind: 'overworld',
   },
   snow: {
     sky: '#1a1a2e',
@@ -30,11 +32,13 @@ export const THEMES = {
     terrainFill: 121,
     parallax: true,
     dragFactor: 0.3,
+    musicKind: 'overworld',
   },
   lava: {
     sky: '#1a0a05',  // Dark volcanic red-orange
     terrainTop: 42,   // dark rock
     terrainFill: 142, // dark dirt
     parallax: true,
+    musicKind: 'lava',
   },
 };

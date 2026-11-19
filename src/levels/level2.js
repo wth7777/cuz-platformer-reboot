@@ -8,6 +8,7 @@ const W = 200;
 export default {
   name: 'WORLD 1-2',
   theme: 'underground',
+  musicKind: 'overworld',
   next: 'level3',
   width: W,
   rows: [
