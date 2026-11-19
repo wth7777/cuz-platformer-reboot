@@ -70,21 +70,31 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /** Called by GameScene every frame with the merged input state. */
-  handleInput({ moveX, jumpHeld, jumpPressed, attackPressed }) {
+  handleInput({ moveX, jumpHeld, jumpPressed, attackPressed, joystickMoveX, keyboardActive }) {
     if (this.isDead || this.isAttacking) return;
 
     const body = this.body;
     const onGround = body.onFloor();
 
-    // ANALOG HORIZONTAL — PROPORTIONAL ACCELERATION
-    if (moveX < -0.1) {
-      body.setAccelerationX(-ACCELERATION * Math.abs(moveX));
-      this.setFlipX(true);
-    } else if (moveX > 0.1) {
-      body.setAccelerationX(ACCELERATION * Math.abs(moveX));
-      this.setFlipX(false);
-    } else {
+    // JOYSTICK: constant velocity (no acceleration buildup)
+    // Keyboard OVERRIDES joystick when keyboard is actively pressed
+    if (!keyboardActive && joystickMoveX !== 0) {
+      // Joystick constant velocity: 25% of keyboard max speed (240 * 0.25 = 60)
+      const JOYSTICK_SPEED = 60;
       body.setAccelerationX(0);
+      body.setVelocityX(joystickMoveX > 0 ? 60 : -60);
+      this.setFlipX(joystickMoveX > 0 ? false : true);
+    } else {
+      // KEYBOARD: proportional acceleration (original behavior)
+      if (moveX < -0.1) {
+        body.setAccelerationX(-ACCELERATION);
+        this.setFlipX(true);
+      } else if (moveX > 0.1) {
+        body.setAccelerationX(ACCELERATION);
+        this.setFlipX(false);
+      } else {
+        body.setAccelerationX(0);
+      }
     }
 
     if (jumpPressed && onGround) {

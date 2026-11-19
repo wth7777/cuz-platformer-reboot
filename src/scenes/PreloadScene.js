@@ -44,6 +44,9 @@ export default class PreloadScene extends Phaser.Scene {
     // --- Lava level background (World 1-3)
     this.load.image('lava-level-bg', 'assets/lava-level-bg.jpg');
 
+    // --- Goblin level background (World 1-5)
+    this.load.image('goblin-level-bg', 'assets/goblin-level-bg.jpg');
+
     // --- Title screen background (user provided)
     this.load.image('title-bg', 'assets/title/title-bg.jpg');
 
@@ -192,15 +195,18 @@ export default class PreloadScene extends Phaser.Scene {
     const size = 10;
     const canvas = this.textures.createCanvas('fireball', size, size);
     const ctx = canvas.context;
-    ctx.fillStyle = '#d83b0c';
+    // Blue outer ring
+    ctx.fillStyle = '#1e5fff';
     ctx.beginPath();
     ctx.arc(size / 2, size / 2, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#ff9b1c';
+    // Blue middle ring
+    ctx.fillStyle = '#4d88ff';
     ctx.beginPath();
     ctx.arc(size / 2, size / 2, 3.4, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#ffe45c';
+    // White hot center
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.arc(size / 2, size / 2, 1.8, 0, Math.PI * 2);
     ctx.fill();

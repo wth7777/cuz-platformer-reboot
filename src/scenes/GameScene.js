@@ -459,10 +459,20 @@ export default class GameScene extends Phaser.Scene {
   buildParallax() {
     // World 1-3 (level3) and 1-4 (level4) use lava background
     const isLavaLevel = this.levelId === 'level3' || this.levelId === 'level4';
-    const bgKey = isLavaLevel ? 'lava-level-bg' : 'graveyard-bg';
-    const bgHeight = 700;
-    // Lava background: shift up to reveal more lower artwork (was 380)
-    const centerY = isLavaLevel ? 340 : 324;
+    const isGoblinLevel = this.levelId === 'level5';
+    let bgKey, centerY, bgHeight = 700;
+    
+    if (isLavaLevel) {
+      bgKey = 'lava-level-bg';
+      centerY = 340; // Lava background: shift up to reveal more lower artwork
+    } else if (isGoblinLevel) {
+      bgKey = 'goblin-level-bg';
+      // Bottom-aligned: match graveyard levels (1,2) so bottom portion is visible at ground level
+      centerY = 324;
+    } else {
+      bgKey = 'graveyard-bg';
+      centerY = 324;
+    }
     const scrollFactor = 0.15;
 
     this.graveyardBg = this.add
@@ -1057,7 +1067,9 @@ export default class GameScene extends Phaser.Scene {
     const firePressed = fireHeld && !this.attackWasHeld;
     this.attackWasHeld = fireHeld;
 
-    this.player.handleInput({ moveX, jumpHeld, jumpPressed, attackPressed: firePressed });
+    const keyboardActive = keyLeft || keyRight;
+
+    this.player.handleInput({ moveX, jumpHeld, jumpPressed, attackPressed: firePressed, joystickMoveX: touchState.moveX, keyboardActive });
 
     // tidy up items and enemies that fell into pits
     this.items.getChildren().forEach((item) => {
