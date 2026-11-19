@@ -1069,7 +1069,7 @@ export default class GameScene extends Phaser.Scene {
 
     const keyboardActive = keyLeft || keyRight;
 
-    this.player.handleInput({ moveX, jumpHeld, jumpPressed, attackPressed: firePressed, joystickMoveX: touchState.moveX, keyboardActive });
+    this.player.handleInput({ moveX, jumpHeld, jumpPressed, attackPressed: firePressed, joystickMoveX: touchState.moveX, joystickMoveY: touchState.moveY, keyboardActive });
 
     // tidy up items and enemies that fell into pits
     this.items.getChildren().forEach((item) => {

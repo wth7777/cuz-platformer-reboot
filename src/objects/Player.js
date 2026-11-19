@@ -70,7 +70,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   /** Called by GameScene every frame with the merged input state. */
-  handleInput({ moveX, jumpHeld, jumpPressed, attackPressed, joystickMoveX, keyboardActive }) {
+  handleInput({ moveX, jumpHeld, jumpPressed, attackPressed, joystickMoveX, joystickMoveY, keyboardActive }) {
     if (this.isDead || this.isAttacking) return;
 
     const body = this.body;
@@ -83,6 +83,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       const JOYSTICK_SPEED = 60;
       body.setAccelerationX(0);
       body.setVelocityX(joystickMoveX > 0 ? 60 : -60);
+      // joystickMoveY is VISUAL ONLY - no vertical velocity change
       this.setFlipX(joystickMoveX > 0 ? false : true);
     } else {
       // KEYBOARD: proportional acceleration (original behavior)

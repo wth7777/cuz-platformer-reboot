@@ -2,7 +2,8 @@
 // every frame alongside the keyboard. The game never knows where input
 // came from.
 export const touchState = {
-  moveX: 0,   // -1 to 1 (analog horizontal)
+  moveX: 0,   // -1, 0, 1 (horizontal direction only)
+  moveY: 0,   // -1, 0, 1 (vertical direction only - VISUAL ONLY, no gameplay effect)
   jump: false,  // held
   fire: false,  // held
 };
@@ -71,13 +72,16 @@ export function setupTouchControls() {
   class VirtualJoystick {
     constructor(baseEl, knobEl) {
       this.base = baseEl;
-      this.knob = knobEl;
+      this.shaftEl = document.getElementById('joystick-shaft');
+      this.handleEl = document.getElementById('joystick-handle');
       this.radius = baseEl.offsetWidth / 2;
-      this.deadZone = 0.15;
+      this.deadZone = 0.08; // 8% dead zone - micro-switch feel
+      this.maxTravel = this.radius * 0.35; // short throw - 35% of radius
       this.pointerId = null;
       this.active = false;
       this.centerX = 0;
       this.centerY = 0;
+      this.currentDirection = { x: 0, y: 0 };
     }
 
     activate(pointerId, clientX, clientY) {
@@ -86,8 +90,7 @@ export function setupTouchControls() {
       this.active = true;
       this.setCenter(clientX, clientY);
       this.updateVisualCenter();
-      this.knob.style.transform = 'translate(0, 0)';
-      this.knob.style.transition = 'none';
+      this.resetVisual();
       this.base.classList.add('active');
       return true;
     }
@@ -108,14 +111,46 @@ export function setupTouchControls() {
       this.base.style.top = (this.centerY - this.base.offsetHeight / 2) + 'px';
     }
 
+    resetVisual() {
+      this.shaftEl.className = 'tilt-center';
+      this.handleEl.style.transform = 'translate(-50%, -50%)';
+    }
+
+    setTilt(direction) {
+      const tiltClass = direction.x < 0 ? 'tilt-left' :
+                        direction.x > 0 ? 'tilt-right' :
+                        direction.y < 0 ? 'tilt-up' :
+                        direction.y > 0 ? 'tilt-down' : 'tilt-center';
+      this.shaftEl.className = tiltClass;
+    }
+
+    getDirection(dx, dy) {
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+      const deadZone = this.deadZone;
+      
+      // Check dead zone first
+      if (absX < deadZone && absY < deadZone) {
+        return { x: 0, y: 0 };
+      }
+      
+      // Dominant axis wins - NO diagonals ever
+      if (absX > absY) {
+        return { x: dx > 0 ? 1 : -1, y: 0 };
+      } else {
+        return { x: 0, y: dy > 0 ? 1 : -1 };
+      }
+    }
+
     move(pointerId, clientX, clientY) {
       if (!this.active || pointerId !== this.pointerId) return;
 
       const dx = clientX - this.centerX;
       const dy = clientY - this.centerY;
       const distance = Math.hypot(dx, dy);
-      const maxDist = this.base.offsetWidth / 2;
+      const maxDist = this.maxTravel;
 
+      // Clamp to max travel
       let clampedX = dx;
       let clampedY = dy;
       if (distance > maxDist) {
@@ -124,37 +159,35 @@ export function setupTouchControls() {
         clampedY = dy * ratio;
       }
 
-      this.knob.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+      // Update visual knob position (follows finger within maxTravel)
+      this.handleEl.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
 
-      const magnitude = Math.hypot(clampedX, clampedY) / maxDist;
-      const output = this.applyResponseCurve(magnitude);
-
-      if (output === 0) {
-        touchState.moveX = 0;
-      } else {
-        // Consistent speed: direction only, at 25% of keyboard speed
-        touchState.moveX = clampedX > 0 ? 0.25 : -0.25;
+      // Get 4-direction direction
+      const direction = this.getDirection(clampedX / maxDist, clampedY / maxDist);
+      
+      // Update touchState
+      if (direction.x !== this.currentDirection.x) {
+        touchState.moveX = direction.x;
+        this.currentDirection.x = direction.x;
       }
-    }
-
-    applyResponseCurve(magnitude) {
-      const deadZone = 0.15;
-      if (magnitude < deadZone) return 0;
-      const normalized = (magnitude - deadZone) / (1 - deadZone);
-      if (normalized < 0.4) return normalized * 0.8;
-      if (normalized < 0.8) return 0.32 + (normalized - 0.4) * 1.2;
-      return 0.8 + (normalized - 0.8);
+      if (direction.y !== this.currentDirection.y) {
+        touchState.moveY = direction.y;
+        this.currentDirection.y = direction.y;
+      }
+      
+      // Update visual tilt
+      this.setTilt(direction);
     }
 
     deactivate(pointerId) {
       if (pointerId !== this.pointerId || !this.active) return;
       this.active = false;
       this.pointerId = null;
-      this.knob.style.transition = 'transform 100ms ease-out';
-      this.knob.style.transform = 'translate(0, 0)';
+      this.currentDirection = { x: 0, y: 0 };
       touchState.moveX = 0;
+      touchState.moveY = 0;
+      this.resetVisual();
       this.base.classList.remove('active');
-      setTimeout(() => { this.knob.style.transition = ''; }, 150);
     }
   }
 
